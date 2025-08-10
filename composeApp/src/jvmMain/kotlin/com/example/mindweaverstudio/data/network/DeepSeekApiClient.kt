@@ -3,7 +3,6 @@ package com.example.mindweaverstudio.data.network
 import com.example.mindweaverstudio.data.model.deepseek.ChatRequest
 import com.example.mindweaverstudio.data.model.deepseek.ChatResponse
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
@@ -36,7 +35,7 @@ class DeepSeekApiClient(
             val response = client.post("$baseUrl/chat/completions") {
                 contentType(ContentType.Application.Json)
                 headers {
-                    append(HttpHeaders.Authorization, "Bearer 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")
+                    append(HttpHeaders.Authorization, "Bearer $apiKey")
                     append("HTTP-Referer", "http://localhost")
                     append("X-Title", "MyApp")
                 }
