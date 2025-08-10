@@ -2,7 +2,8 @@ package com.example.mindweaverstudio.config
 
 data class ApiConfiguration(
     val deepSeekApiKey: String,
-    val openAiApiKey: String
+    val openAiApiKey: String,
+    val geminiApiKey: String
 ) {
     companion object {
         fun load(): ApiConfiguration {
@@ -22,10 +23,13 @@ data class ApiConfiguration(
             return ApiConfiguration(
                 deepSeekApiKey = properties.getProperty("deepseek.api.key") 
                     ?: System.getenv("DEEPSEEK_API_KEY") 
-                    ?: "your-deepseek-api-key-here",
+                    ?: "",
                 openAiApiKey = properties.getProperty("openai.api.key") 
                     ?: System.getenv("OPENAI_API_KEY") 
-                    ?: "your-openai-api-key-here"
+                    ?: "",
+                geminiApiKey = properties.getProperty("gemini.api.key")
+                    ?: System.getenv("GEMINI_API_KEY") 
+                    ?: ""
             )
         }
     }

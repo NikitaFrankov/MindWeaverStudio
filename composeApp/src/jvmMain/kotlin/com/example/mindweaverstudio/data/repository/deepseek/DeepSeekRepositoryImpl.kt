@@ -16,7 +16,7 @@ class DeepSeekRepositoryImpl(
         maxTokens: Int
     ): Result<String> {
         val request = ChatRequest(
-            model = "deepseek/deepseek-chat",
+            model = model,
             messages = messages,
             temperature = temperature,
             maxTokens = maxTokens

@@ -3,7 +3,6 @@ package com.example.mindweaverstudio.data.network
 import com.example.mindweaverstudio.data.model.deepseek.ChatRequest
 import com.example.mindweaverstudio.data.model.deepseek.ChatResponse
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
@@ -12,9 +11,9 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
-class ChatGPTApiClient(
+class GeminiApiClient(
     private val apiKey: String,
-    private val baseUrl: String = "https://api.openai.com/v1"
+    private val baseUrl: String = "https://generativelanguage.googleapis.com/v1beta/openai"
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -23,7 +22,7 @@ class ChatGPTApiClient(
     
     private val client = HttpClient {
         install(ContentNegotiation) {
-            json(this@ChatGPTApiClient.json)
+            json(this@GeminiApiClient.json)
         }
         install(Logging) {
             logger = Logger.DEFAULT
@@ -43,12 +42,12 @@ class ChatGPTApiClient(
             }
             
             val rawResponse = response.bodyAsText()
-            println("ChatGPT API Response: $rawResponse")
+            println("Gemini API Response: $rawResponse")
             
             val jsonResponse = json.decodeFromString<ChatResponse>(rawResponse)
             Result.success(jsonResponse)
         } catch (e: Exception) {
-            println("ChatGPT API Error: ${e.message}")
+            println("Gemini API Error: ${e.message}")
             e.printStackTrace()
             Result.failure(e)
         }

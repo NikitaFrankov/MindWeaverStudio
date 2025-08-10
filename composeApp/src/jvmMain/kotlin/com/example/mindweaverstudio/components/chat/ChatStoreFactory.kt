@@ -13,7 +13,9 @@ import kotlinx.coroutines.swing.Swing
 
 class ChatStoreFactory(
     private val storeFactory: StoreFactory,
-    private val neuralNetworkRepository: NeuralNetworkRepository
+    private val deepSeekRepository: NeuralNetworkRepository,
+    private val chatGPTRepository: NeuralNetworkRepository,
+    private val geminiRepository: NeuralNetworkRepository
 ) {
 
     fun create(): ChatStore =
@@ -50,32 +52,22 @@ class ChatStoreFactory(
     ) {
         override fun executeIntent(intent: ChatStore.Intent) {
             when (intent) {
-                is ChatStore.Intent.UpdateMessage -> {
-                    dispatch(Msg.UpdateMessage(intent.message))
-                }
+                is ChatStore.Intent.UpdateMessage -> dispatch(Msg.UpdateMessage(intent.message))
 
-                ChatStore.Intent.SendMessage -> {
+                is ChatStore.Intent.SendMessage -> {
                     val currentState = state()
                     if (currentState.currentMessage.isNotBlank() && !currentState.isLoading) {
                         sendMessage(currentState.currentMessage, currentState.messages, currentState.selectedModel)
                     }
                 }
 
-                ChatStore.Intent.ClearError -> {
-                    dispatch(Msg.ErrorCleared)
-                }
+                is ChatStore.Intent.ClearError -> dispatch(Msg.ErrorCleared)
 
-                ChatStore.Intent.ClearChat -> {
-                    dispatch(Msg.ChatCleared)
-                }
+                is ChatStore.Intent.ClearChat -> dispatch(Msg.ChatCleared)
 
-                is ChatStore.Intent.ChangeModel -> {
-                    dispatch(Msg.ModelChanged(intent.model))
-                }
+                is ChatStore.Intent.ChangeModel -> dispatch(Msg.ModelChanged(intent.model))
 
-                is ChatStore.Intent.ChangeProvider -> {
-                    dispatch(Msg.ProviderChanged(intent.provider))
-                }
+                is ChatStore.Intent.ChangeProvider -> dispatch(Msg.ProviderChanged(intent.provider))
             }
         }
 
@@ -88,7 +80,14 @@ class ChatStoreFactory(
             dispatch(Msg.MessagesUpdated(updatedMessages))
 
             scope.launch {
-                val result = neuralNetworkRepository.sendMessage(updatedMessages, model)
+                val repository = when (state().selectedProvider) {
+                    "DeepSeek" -> deepSeekRepository
+                    "ChatGPT" -> chatGPTRepository
+                    "Gemini" -> geminiRepository
+                    else -> deepSeekRepository
+                }
+                
+                val result = repository.sendMessage(updatedMessages, model)
                 result.fold(
                     onSuccess = { response ->
                         val assistantMessage = ChatMessage(ChatMessage.ROLE_ASSISTANT, response)
@@ -109,14 +108,22 @@ class ChatStoreFactory(
         override fun ChatStore.State.reduce(msg: Msg): ChatStore.State =
             when (msg) {
                 is Msg.UpdateMessage -> copy(currentMessage = msg.message)
-                Msg.MessageSent -> copy(currentMessage = "")
+                is Msg.MessageSent -> copy(currentMessage = "")
                 is Msg.MessagesUpdated -> copy(messages = msg.messages)
                 is Msg.LoadingChanged -> copy(isLoading = msg.isLoading)
                 is Msg.ErrorOccurred -> copy(error = msg.error)
-                Msg.ErrorCleared -> copy(error = null)
-                Msg.ChatCleared -> copy(messages = emptyList(), currentMessage = "", error = null)
+                is Msg.ErrorCleared -> copy(error = null)
+                is Msg.ChatCleared -> copy(messages = emptyList(), currentMessage = "", error = null)
                 is Msg.ModelChanged -> copy(selectedModel = msg.model)
-                is Msg.ProviderChanged -> copy(selectedProvider = msg.provider)
+                is Msg.ProviderChanged -> copy(
+                    selectedProvider = msg.provider,
+                    selectedModel = when (msg.provider) {
+                        "DeepSeek" -> "deepseek-chat"
+                        "ChatGPT" -> "gpt-3.5-turbo"
+                        "Gemini" -> "gemini-1.5-flash"
+                        else -> "deepseek-chat"
+                    }
+                )
             }
     }
 }

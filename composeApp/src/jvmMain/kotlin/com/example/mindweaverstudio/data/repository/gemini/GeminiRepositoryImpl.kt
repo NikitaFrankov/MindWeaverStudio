@@ -1,12 +1,12 @@
-package com.example.mindweaverstudio.data.repository.chatgpt
+package com.example.mindweaverstudio.data.repository.gemini
 
 import com.example.mindweaverstudio.data.model.deepseek.ChatMessage
 import com.example.mindweaverstudio.data.model.deepseek.ChatRequest
-import com.example.mindweaverstudio.data.network.ChatGPTApiClient
+import com.example.mindweaverstudio.data.network.GeminiApiClient
 import com.example.mindweaverstudio.data.repository.NeuralNetworkRepository
 
-class ChatGPTRepositoryImpl(
-    private val apiClient: ChatGPTApiClient
+class GeminiRepositoryImpl(
+    private val apiClient: GeminiApiClient
 ) : NeuralNetworkRepository {
 
     override suspend fun sendMessage(
@@ -25,7 +25,7 @@ class ChatGPTRepositoryImpl(
         return apiClient.createChatCompletion(request).fold(
             onSuccess = { response ->
                 response.error?.let { error ->
-                    return Result.failure(Exception("ChatGPT API Error: ${error.message}"))
+                    return Result.failure(Exception("Gemini API Error: ${error.message}"))
                 }
                 
                 val content = response.choices?.firstOrNull()?.message?.content

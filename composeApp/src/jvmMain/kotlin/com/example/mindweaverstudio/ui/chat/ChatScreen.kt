@@ -66,6 +66,11 @@ private fun ChatScreen(
                         label = { Text("ChatGPT") },
                         selected = state.selectedProvider == "ChatGPT"
                     )
+                    FilterChip(
+                        onClick = { intentHandler(ChatStore.Intent.ChangeProvider("Gemini")) },
+                        label = { Text("Gemini") },
+                        selected = state.selectedProvider == "Gemini"
+                    )
                 }
             }
             

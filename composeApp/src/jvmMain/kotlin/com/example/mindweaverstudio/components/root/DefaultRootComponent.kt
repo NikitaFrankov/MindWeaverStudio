@@ -42,9 +42,8 @@ class DefaultRootComponent(
 
     private fun chatComponent(componentContext: ComponentContext): ChatComponent {
         return DefaultChatComponent(
+            chatStoreFactory = get(),
             componentContext = componentContext,
-            neuralNetworkRepository = get(),
-            storeFactory = storeFactory,
         )
     }
 
