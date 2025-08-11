@@ -1,7 +1,7 @@
 package com.example.mindweaverstudio.data.repository.gemini
 
-import com.example.mindweaverstudio.data.model.deepseek.ChatMessage
-import com.example.mindweaverstudio.data.model.deepseek.ChatRequest
+import com.example.mindweaverstudio.data.model.chat.ChatMessage
+import com.example.mindweaverstudio.data.model.chat.ChatRequest
 import com.example.mindweaverstudio.data.network.GeminiApiClient
 import com.example.mindweaverstudio.data.repository.NeuralNetworkRepository
 

@@ -1,7 +1,7 @@
 package com.example.mindweaverstudio.data.network
 
-import com.example.mindweaverstudio.data.model.deepseek.ChatRequest
-import com.example.mindweaverstudio.data.model.deepseek.ChatResponse
+import com.example.mindweaverstudio.data.model.chat.ChatRequest
+import com.example.mindweaverstudio.data.model.chat.ChatResponse
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*

@@ -1,6 +1,6 @@
 package com.example.mindweaverstudio.data.repository
 
-import com.example.mindweaverstudio.data.model.deepseek.ChatMessage
+import com.example.mindweaverstudio.data.model.chat.ChatMessage
 
 interface NeuralNetworkRepository {
     suspend fun sendMessage(

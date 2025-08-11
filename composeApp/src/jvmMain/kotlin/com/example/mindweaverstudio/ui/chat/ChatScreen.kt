@@ -7,8 +7,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowCircleRight
+import androidx.compose.material.icons.filled.ArrowOutward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
+import androidx.compose.material.icons.filled.RampRight
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.SubdirectoryArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,7 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.example.mindweaverstudio.components.chat.ChatComponent
 import com.example.mindweaverstudio.components.chat.ChatStore
-import com.example.mindweaverstudio.data.model.deepseek.ChatMessage
+import com.example.mindweaverstudio.data.model.chat.ChatMessage
 
 @Composable
 fun ChatScreen(component: ChatComponent) {
@@ -135,7 +142,7 @@ private fun ChatScreen(
                 onClick = { intentHandler(ChatStore.Intent.SendMessage) },
                 enabled = state.currentMessage.isNotBlank() && !state.isLoading
             ) {
-                Icon(Icons.Default.Send, contentDescription = "Send")
+                Icon(Icons.Default.ChevronRight, contentDescription = "Send")
             }
         }
         

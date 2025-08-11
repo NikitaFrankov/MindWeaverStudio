@@ -5,7 +5,7 @@ import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
-import com.example.mindweaverstudio.data.model.deepseek.ChatMessage
+import com.example.mindweaverstudio.data.model.chat.ChatMessage
 import com.example.mindweaverstudio.data.repository.NeuralNetworkRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

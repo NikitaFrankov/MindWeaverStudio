@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.data.model.deepseek
+package com.example.mindweaverstudio.data.model.chat
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

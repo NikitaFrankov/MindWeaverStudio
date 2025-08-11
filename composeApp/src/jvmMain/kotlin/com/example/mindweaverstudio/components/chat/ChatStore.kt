@@ -1,7 +1,7 @@
 package com.example.mindweaverstudio.components.chat
 
 import com.arkivanov.mvikotlin.core.store.Store
-import com.example.mindweaverstudio.data.model.deepseek.ChatMessage
+import com.example.mindweaverstudio.data.model.chat.ChatMessage
 
 interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> {
 
