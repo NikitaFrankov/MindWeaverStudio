@@ -4,27 +4,28 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowCircleRight
-import androidx.compose.material.icons.filled.ArrowOutward
-import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
-import androidx.compose.material.icons.filled.RampRight
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.SubdirectoryArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.mindweaverstudio.components.chat.ChatComponent
 import com.example.mindweaverstudio.components.chat.ChatStore
 import com.example.mindweaverstudio.data.model.chat.ChatMessage
+import com.example.mindweaverstudio.data.model.chat.StructuredOutput
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 @Composable
 fun ChatScreen(component: ChatComponent) {
@@ -196,13 +197,95 @@ private fun MessageBubble(message: ChatMessage) {
                 .padding(12.dp)
         ) {
             Text(
-                text = message.content,
+                text = message.presentableContent,
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (isUser)
                     MaterialTheme.colorScheme.onPrimary
                 else
                     MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+fun StructuredOutputView(data: StructuredOutput) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+
+            // Главный ответ
+            val answerText = when (data.answer.type) {
+                "number" -> data.answer.value.jsonPrimitive.doubleOrNull?.toString() ?: data.answer.value.toString()
+                "string" -> data.answer.value.jsonPrimitive.contentOrNull ?: data.answer.value.toString()
+                "boolean" -> data.answer.value.jsonPrimitive.booleanOrNull?.toString() ?: data.answer.value.toString()
+                else -> data.answer.value.toString()
+            }
+
+            Text(
+                text = "Ответ: $answerText",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            // Шаги / пункты
+            if (data.points.isNotEmpty()) {
+                Text(
+                    "Шаги / важные моменты:",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 150.dp)
+                ) {
+                    itemsIndexed(data.points) { index, point ->
+                        val color = when (point.kind) {
+                            "step" -> Color(0xFF4CAF50) // зелёный для шага
+                            "fact" -> Color(0xFF2196F3) // синий для факта
+                            "note" -> Color(0xFFFFC107) // жёлтый для заметки
+                            else -> Color.Gray
+                        }
+                        Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                            Text(
+                                text = "${index + 1}.",
+                                color = color,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.width(24.dp)
+                            )
+                            Text(text = point.text)
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Summary
+            Text(
+                text = "Пояснение: ${data.summary.text}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            // Meta (если есть)
+            data.meta?.let { meta ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    meta.confidence?.let { conf ->
+                        Text(text = "Уверенность: ${(conf * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
+                    }
+                    meta.source?.let { src ->
+                        Text(text = "Источник: $src", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
         }
     }
 }
