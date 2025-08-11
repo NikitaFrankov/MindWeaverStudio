@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mindweaverstudio.components.chat.ChatComponent
 import com.example.mindweaverstudio.components.chat.ChatStore
 import com.example.mindweaverstudio.ui.model.UiChatMessage
@@ -25,7 +26,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 @Composable
 fun ChatScreen(component: ChatComponent) {
-    val state by component.state.collectAsState()
+    val state by component.state.collectAsStateWithLifecycle()
     
     ChatScreen(
         state = state,
