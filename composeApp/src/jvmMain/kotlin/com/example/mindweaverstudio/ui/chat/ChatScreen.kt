@@ -12,17 +12,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mindweaverstudio.components.chat.ChatComponent
 import com.example.mindweaverstudio.components.chat.ChatStore
 import com.example.mindweaverstudio.ui.model.UiChatMessage
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.doubleOrNull
-import kotlinx.serialization.json.jsonPrimitive
+import com.example.mindweaverstudio.ui.model.AssistantMessagePresentation
 
 @Composable
 fun ChatScreen(component: ChatComponent) {
@@ -43,48 +38,13 @@ private fun ChatScreen(
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Chat with ai assistant",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                
-                // Provider selector
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Provider:", style = MaterialTheme.typography.bodySmall)
-                    FilterChip(
-                        onClick = { intentHandler(ChatStore.Intent.ChangeProvider("DeepSeek")) },
-                        label = { Text("DeepSeek") },
-                        selected = state.selectedProvider == "DeepSeek"
-                    )
-                    FilterChip(
-                        onClick = { intentHandler(ChatStore.Intent.ChangeProvider("ChatGPT")) },
-                        label = { Text("ChatGPT") },
-                        selected = state.selectedProvider == "ChatGPT"
-                    )
-                    FilterChip(
-                        onClick = { intentHandler(ChatStore.Intent.ChangeProvider("Gemini")) },
-                        label = { Text("Gemini") },
-                        selected = state.selectedProvider == "Gemini"
-                    )
-                }
-            }
-            
-            IconButton(
-                onClick = { intentHandler(ChatStore.Intent.ClearChat) }
-            ) {
-                Icon(Icons.Default.Clear, contentDescription = "Clear Chat")
-            }
-        }
+        ChatHeader(
+            selectedProvider = state.selectedProvider,
+            onProviderChange = { provider -> 
+                intentHandler(ChatStore.Intent.ChangeProvider(provider)) 
+            },
+            onClearChat = { intentHandler(ChatStore.Intent.ClearChat) }
+        )
         
         Spacer(modifier = Modifier.height(16.dp))
         
@@ -134,7 +94,7 @@ private fun ChatScreen(
                 value = state.currentMessage,
                 onValueChange = { intentHandler(ChatStore.Intent.UpdateMessage(it)) },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Type your message...") },
+                placeholder = { Text(ChatStrings.MESSAGE_PLACEHOLDER) },
                 enabled = !state.isLoading,
                 maxLines = 3
             )
@@ -143,7 +103,7 @@ private fun ChatScreen(
                 onClick = { intentHandler(ChatStore.Intent.SendMessage) },
                 enabled = state.currentMessage.isNotBlank() && !state.isLoading
             ) {
-                Icon(Icons.Default.ChevronRight, contentDescription = "Send")
+                Icon(Icons.Default.ChevronRight, contentDescription = ChatStrings.SEND_DESCRIPTION)
             }
         }
         
@@ -168,10 +128,42 @@ private fun ChatScreen(
                     TextButton(
                         onClick = { intentHandler(ChatStore.Intent.ClearError) }
                     ) {
-                        Text("Dismiss")
+                        Text(ChatStrings.DISMISS_ERROR)
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ChatHeader(
+    selectedProvider: String,
+    onProviderChange: (String) -> Unit,
+    onClearChat: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = ChatStrings.HEADER_TITLE,
+                style = MaterialTheme.typography.headlineMedium
+            )
+            
+            ProviderSelector(
+                selectedProvider = selectedProvider,
+                onProviderChange = onProviderChange
+            )
+        }
+        
+        IconButton(onClick = onClearChat) {
+            Icon(
+                Icons.Default.Clear,
+                contentDescription = ChatStrings.CLEAR_CHAT_DESCRIPTION
+            )
         }
     }
 }
@@ -200,103 +192,19 @@ private fun UserMessageBubble(message: UiChatMessage.UserMessage) {
 
 @Composable
 fun AssistantMessage(message: UiChatMessage.AssistantMessage) {
+    val presentation = AssistantMessagePresentation.from(message.structuredOutput)
+    
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-
-            val data = message.structuredOutput
-            // Главный ответ
-            val answerText = when (data.answer.type) {
-                "number" -> data.answer.value.jsonPrimitive.doubleOrNull?.toString() ?: data.answer.value.toString()
-                "string" -> data.answer.value.jsonPrimitive.contentOrNull ?: data.answer.value.toString()
-                "boolean" -> data.answer.value.jsonPrimitive.booleanOrNull?.toString() ?: data.answer.value.toString()
-                else -> data.answer.value.toString()
-            }
-
-            Text(
-                text = "Ответ: $answerText",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Normal,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            // Шаги / пункты
-            if (data.steps.isNotEmpty()) {
-                Text(
-                    "Шаги:",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                data.steps.forEachIndexed { index, point ->
-                    val color = Color(0xFF4CAF50)
-                    Row(modifier = Modifier.padding(vertical = 4.dp)) {
-                        Text(
-                            text = "•",
-                            color = color,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.width(24.dp)
-                        )
-                        Text(text = point.text)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-
-            // Шаги / пункты
-            if (data.factAndPoints.isNotEmpty()) {
-                Text(
-                    "Важные моменты:",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                data.factAndPoints.forEachIndexed { index, point ->
-                    val color = when (point.kind) {
-                        "fact" -> Color.Blue // синий для факта
-                        "note" -> Color.Magenta // жёлтый для заметки
-                        else -> Color.Gray
-                    }
-                    Row(modifier = Modifier.padding(vertical = 4.dp)) {
-                        Text(
-                            text = "•",
-                            color = color,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.width(24.dp)
-                        )
-                        Text(text = point.text)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Summary
-            Text(
-                text = "Краткое описание: ${data.summary.text}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            // Meta (если есть)
-            data.meta?.let { meta ->
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    meta.confidence?.let { conf ->
-                        Text(text = "Уверенность: ${(conf * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
-                    }
-                    meta.source?.let { src ->
-                        Text(text = "Источник: $src", style = MaterialTheme.typography.labelSmall)
-                    }
-                }
-            }
+            AnswerSection(presentation.answerText)
+            StepsSection(presentation.steps)
+            FactsSection(presentation.factAndPoints)
+            SummarySection(presentation.summaryText)
+            MetaSection(presentation.confidence, presentation.source)
         }
     }
 }

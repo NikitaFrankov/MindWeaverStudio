@@ -4,6 +4,10 @@ import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.example.mindweaverstudio.components.chat.ChatStoreFactory
 import com.example.mindweaverstudio.config.ApiConfiguration
+import com.example.mindweaverstudio.services.PromptHeaderService
+import com.example.mindweaverstudio.services.DefaultPromptHeaderService
+import com.example.mindweaverstudio.services.RepositoryProvider
+import com.example.mindweaverstudio.services.DefaultRepositoryProvider
 import com.example.mindweaverstudio.data.network.ChatGPTApiClient
 import com.example.mindweaverstudio.data.network.DeepSeekApiClient
 import com.example.mindweaverstudio.data.network.GeminiApiClient
@@ -38,6 +42,16 @@ val appModule = module {
     // Default repository (can be configured)
     single<NeuralNetworkRepository> { get<NeuralNetworkRepository>(named("chatgpt")) }
     
+    // Services
+    single<PromptHeaderService> { DefaultPromptHeaderService() }
+    single<RepositoryProvider> { 
+        DefaultRepositoryProvider(
+            get(named("deepseek")),
+            get(named("chatgpt")),
+            get(named("gemini"))
+        )
+    }
+    
     // Store Factory
-    single { ChatStoreFactory(get(), get(named("deepseek")), get(named("chatgpt")), get(named("gemini"))) }
+    single { ChatStoreFactory(get(), get(), get()) }
 }
