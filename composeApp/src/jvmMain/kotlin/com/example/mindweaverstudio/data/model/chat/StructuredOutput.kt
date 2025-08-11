@@ -10,7 +10,14 @@ data class StructuredOutput(
     val points: List<Point> = emptyList(),
     val summary: Summary,
     val meta: Meta? = null
-)
+) {
+
+    val steps: List<Point>
+        get() = points.filter { it.kind == "step" }
+
+    val factAndPoints: List<Point>
+        get() = points.filter { it.kind != "step" }
+}
 
 @Serializable
 data class Answer(val value: JsonElement, val type: String)

@@ -1,10 +1,8 @@
 package com.example.mindweaverstudio.ui.chat
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,14 +12,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.mindweaverstudio.components.chat.ChatComponent
 import com.example.mindweaverstudio.components.chat.ChatStore
-import com.example.mindweaverstudio.data.model.chat.ChatMessage
-import com.example.mindweaverstudio.data.model.chat.StructuredOutput
+import com.example.mindweaverstudio.ui.model.UiChatMessage
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.doubleOrNull
@@ -100,7 +96,10 @@ private fun ChatScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(state.messages) { message ->
-                MessageBubble(message)
+                when(message) {
+                    is UiChatMessage.AssistantMessage -> AssistantMessage(message)
+                    is UiChatMessage.UserMessage -> UserMessageBubble(message)
+                }
             }
             
             if (state.isLoading) {
@@ -177,47 +176,37 @@ private fun ChatScreen(
 }
 
 @Composable
-private fun MessageBubble(message: ChatMessage) {
-    val isUser = message.role == ChatMessage.ROLE_USER
-    
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = if (isUser) Alignment.CenterEnd else Alignment.CenterStart
+private fun UserMessageBubble(message: UiChatMessage.UserMessage) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentWidth(Alignment.End)
+            .widthIn(max = 280.dp)
+            .padding(8.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        )
     ) {
-        Box(
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(
-                    if (isUser) 
-                        MaterialTheme.colorScheme.primary 
-                    else 
-                        MaterialTheme.colorScheme.surfaceVariant
-                )
-                .padding(12.dp)
-        ) {
-            Text(
-                text = message.presentableContent,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isUser)
-                    MaterialTheme.colorScheme.onPrimary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        Text(
+            text = message.presentableContent,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier.padding(12.dp)
+        )
     }
 }
 
 @Composable
-fun StructuredOutputView(data: StructuredOutput) {
-    Card(
+fun AssistantMessage(message: UiChatMessage.AssistantMessage) {
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        shape = MaterialTheme.shapes.medium
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
+            val data = message.structuredOutput
             // Главный ответ
             val answerText = when (data.answer.type) {
                 "number" -> data.answer.value.jsonPrimitive.doubleOrNull?.toString() ?: data.answer.value.toString()
@@ -228,37 +217,58 @@ fun StructuredOutputView(data: StructuredOutput) {
 
             Text(
                 text = "Ответ: $answerText",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Normal,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
             // Шаги / пункты
-            if (data.points.isNotEmpty()) {
+            if (data.steps.isNotEmpty()) {
                 Text(
-                    "Шаги / важные моменты:",
+                    "Шаги:",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                LazyColumn(
-                    modifier = Modifier.heightIn(max = 150.dp)
-                ) {
-                    itemsIndexed(data.points) { index, point ->
-                        val color = when (point.kind) {
-                            "step" -> Color(0xFF4CAF50) // зелёный для шага
-                            "fact" -> Color(0xFF2196F3) // синий для факта
-                            "note" -> Color(0xFFFFC107) // жёлтый для заметки
-                            else -> Color.Gray
-                        }
-                        Row(modifier = Modifier.padding(vertical = 4.dp)) {
-                            Text(
-                                text = "${index + 1}.",
-                                color = color,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.width(24.dp)
-                            )
-                            Text(text = point.text)
-                        }
+
+                data.steps.forEachIndexed { index, point ->
+                    val color = Color(0xFF4CAF50)
+                    Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                        Text(
+                            text = "•",
+                            color = color,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.width(24.dp)
+                        )
+                        Text(text = point.text)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+
+            // Шаги / пункты
+            if (data.factAndPoints.isNotEmpty()) {
+                Text(
+                    "Важные моменты:",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                data.factAndPoints.forEachIndexed { index, point ->
+                    val color = when (point.kind) {
+                        "fact" -> Color.Blue // синий для факта
+                        "note" -> Color.Magenta // жёлтый для заметки
+                        else -> Color.Gray
+                    }
+                    Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                        Text(
+                            text = "•",
+                            color = color,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.width(24.dp)
+                        )
+                        Text(text = point.text)
                     }
                 }
             }
@@ -267,7 +277,7 @@ fun StructuredOutputView(data: StructuredOutput) {
 
             // Summary
             Text(
-                text = "Пояснение: ${data.summary.text}",
+                text = "Краткое описание: ${data.summary.text}",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(bottom = 12.dp)
             )

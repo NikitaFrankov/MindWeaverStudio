@@ -1,12 +1,12 @@
 package com.example.mindweaverstudio.components.chat
 
 import com.arkivanov.mvikotlin.core.store.Store
-import com.example.mindweaverstudio.data.model.chat.ChatMessage
+import com.example.mindweaverstudio.ui.model.UiChatMessage
 
 interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> {
 
     data class State(
-        val messages: List<ChatMessage> = emptyList(),
+        val messages: List<UiChatMessage> = emptyList(),
         val currentMessage: String = "",
         val isLoading: Boolean = false,
         val error: String? = null,

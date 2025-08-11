@@ -7,11 +7,10 @@ import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import com.example.mindweaverstudio.data.model.chat.ChatMessage
 import com.example.mindweaverstudio.data.repository.NeuralNetworkRepository
+import com.example.mindweaverstudio.ui.model.UiChatMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonPrimitive
 
 class ChatStoreFactory(
     private val storeFactory: StoreFactory,
@@ -34,7 +33,7 @@ class ChatStoreFactory(
     private sealed class Msg {
         data class UpdateMessage(val message: String) : Msg()
         data object MessageSent : Msg()
-        data class MessagesUpdated(val messages: List<ChatMessage>) : Msg()
+        data class MessagesUpdated(val messages: List<UiChatMessage>) : Msg()
         data class LoadingChanged(val isLoading: Boolean) : Msg()
         data class ErrorOccurred(val error: String) : Msg()
         data object ErrorCleared : Msg()
@@ -73,15 +72,15 @@ class ChatStoreFactory(
             }
         }
 
-        private fun sendMessage(message: String, currentMessages: List<ChatMessage>, model: String) {
+        private fun sendMessage(message: String, currentMessages: List<UiChatMessage>, model: String) {
             dispatch(Msg.LoadingChanged(true))
             dispatch(Msg.MessageSent)
 
             val promptHeader = generatePromptHeader(message)
 
-            val userMessage = ChatMessage(ChatMessage.ROLE_USER, "$promptHeader\n\n$message")
-            val updatedMessages = currentMessages + userMessage
-            dispatch(Msg.MessagesUpdated(updatedMessages))
+            val userUiMessage = UiChatMessage.createUserMessage(message)
+            val updatedUiMessages = currentMessages + userUiMessage
+            dispatch(Msg.MessagesUpdated(updatedUiMessages))
 
             scope.launch {
                 val repository = when (state().selectedProvider) {
@@ -91,11 +90,15 @@ class ChatStoreFactory(
                     else -> deepSeekRepository
                 }
                 
-                val result = repository.sendMessage(updatedMessages, model)
+                // Convert UI messages to API messages for the request
+                val apiUserMessage = ChatMessage(ChatMessage.ROLE_USER, "$promptHeader\n\n$message")
+                val apiMessages = currentMessages.map { it.toApiMessage() } + apiUserMessage
+                
+                val result = repository.sendMessage(apiMessages, model)
                 result.fold(
                     onSuccess = { response ->
-                        val assistantMessage = ChatMessage(ChatMessage.ROLE_ASSISTANT, response.answer.value.jsonPrimitive.contentOrNull.orEmpty())
-                        dispatch(Msg.MessagesUpdated(updatedMessages + assistantMessage))
+                        val assistantUiMessage = UiChatMessage.createAssistantMessage(response)
+                        dispatch(Msg.MessagesUpdated(updatedUiMessages + assistantUiMessage))
                         dispatch(Msg.LoadingChanged(false))
                     },
                     onFailure = { error ->
@@ -143,20 +146,22 @@ class ChatStoreFactory(
             appendLine("Описание полей:")
             appendLine("""
 - formatVersion (string): Версия формата вывода, всегда "1.0" на данный момент.
-- type (string): Категория задачи или вопроса. Для математических вычислений используй "calculation". Другие возможные значения: "explanation", "comparison", "analysis".
+- type (string): Категория задачи или вопроса. Для математических вычислений используй "calculation". Другие возможные значения: "explanation", "comparison", "analysis", "simple".
 - answer (object):
     - value: Краткий итоговый ответ на вопрос. Число, если результат числовой; строка — в остальных случаях.
     - type: Тип данных значения. Допустимые: "number", "string", "boolean".
-- points (array of objects): Каждый элемент описывает важный шаг или факт, использованный для получения ответа.
+- points (array of objects): Каждый элемент описывает важный шаг или факт, использованный для получения ответа.  
+  Может быть пустым массивом, если детали не требуются.
     - kind: Тип пункта. Допустимые: "step" (шаг вычисления), "fact" (фактическая информация), "note" (важное примечание).
     - text: Человеко-понятное описание шага/факта/примечания. Кратко и ясно.
 - summary (object):
-    - text: Короткое или расширенное пояснение ответа на естественном языке.
-    - length: Уровень детализации. Допустимые: "short", "medium", "long".
+    - text: Короткое или расширенное пояснение ответа на естественном языке. Для простых вопросов допускается минимальный текст.
+    - length: Уровень детализации. Допустимые: "short", "medium", "long". Для простых запросов используйте "short".
 - meta (object):
     - confidence: Число от 0.0 до 1.0, отражающее степень уверенности в ответе.
     - source: Идентификатор модели или системы, сгенерировавшей ответ (например, "model-x").
-    """.trimIndent())
+""".trimIndent())
+
             appendLine()
             appendLine("Правила:")
             appendLine("- Вывод должен быть корректным JSON.")
@@ -164,8 +169,22 @@ class ChatStoreFactory(
             appendLine("- Применяй строго правильные типы данных.")
             appendLine("- Никогда не добавляй комментарии или пояснения вне JSON.")
             appendLine("- Все строки должны быть заключены в двойные кавычки.")
+            appendLine("- Если вопрос простой или разговорный, возвращай минимально возможный ответ: пустой points, короткий summary с length \"short\".")
             appendLine()
-            appendLine("Пример:")
+
+            appendLine("Пример минимального ответа на простой вопрос:")
+            appendLine(open)
+            appendLine("""
+{
+  "formatVersion": "1.0",
+  "type": "simple",
+  "answer": {"value": "Привет!", "type": "string"},
+  "points": [],
+  "meta": {"confidence": 0.99, "source": "model-x"}
+}
+""".trimIndent())
+
+            appendLine("Пример ответа на обычный или большой вопрос:")
             appendLine(open)
             appendLine("""
 {
@@ -185,36 +204,51 @@ class ChatStoreFactory(
 
 
         val sysEng = buildString {
-            appendLine("You are to return ONLY valid JSON between $open and $close.")
-            appendLine("Do not include any explanations, markdown code fences, or text outside these markers.")
-            appendLine("The JSON must strictly match the specified structure and field purposes described below.")
+            appendLine("You MUST return ONLY valid JSON strictly between $open and $close.")
+            appendLine("Do NOT add any explanations, code markdown blocks, or text outside these markers.")
+            appendLine("The JSON must strictly conform to the structure and field purposes described below.")
             appendLine()
             appendLine("Field descriptions:")
             appendLine("""
-- formatVersion (string): Version of the output format, always "1.0" for now.
-- type (string): Category of the task or question. For mathematical calculations use "calculation". Other possible values: "explanation", "comparison", "analysis".
+- formatVersion (string): Version of the output format, always \"1.0\" for now.
+- type (string): Category of the task or question. Use \"calculation\" for math calculations. Other possible values: \"explanation\", \"comparison\", \"analysis\", \"simple\".
 - answer (object):
-    - value: The concise final answer to the question. Numeric if it's a number, string otherwise.
-    - type: Data type of value. Allowed: "number", "string", "boolean".
-- points (array of objects): Each item describes an important step or fact used to produce the answer.
-    - kind: Nature of the point. Allowed: "step" (calculation step), "fact" (factual information), "note" (important note).
-    - text: Human-readable text describing the step/fact/note. Keep it short and clear.
+    - value: A concise final answer to the question. A number if numeric result; a string otherwise.
+    - type: Data type of the value. Allowed: \"number\", \"string\", \"boolean\".
+- points (array of objects): Each item describes an important step or fact used to produce the answer.  
+  Can be an empty array if no details are required.
+    - kind: Type of the item. Allowed: \"step\" (calculation step), \"fact\" (factual information), \"note\" (important note).
+    - text: Human-readable description of the step/fact/note. Keep it brief and clear.
 - summary (object):
-    - text: Short or extended natural language explanation of the answer.
-    - length: Level of detail. Allowed: "short", "medium", "long".
+    - text: Short or extended natural language explanation of the answer. Minimal text allowed for simple questions.
+    - length: Level of detail. Allowed: \"short\", \"medium\", \"long\". Use \"short\" for simple queries.
 - meta (object):
-    - confidence: Number from 0.0 to 1.0 estimating confidence in the answer.
-    - source: Identifier of the model or system producing the answer (e.g., "model-x").
-    """.trimIndent())
+    - confidence: Number from 0.0 to 1.0 indicating confidence in the answer.
+    - source: Identifier of the model or system producing the answer (e.g., \"model-x\").
+""".trimIndent())
             appendLine()
             appendLine("Rules:")
             appendLine("- The output must be valid JSON.")
-            appendLine("- Only include the specified fields, in the specified structure.")
-            appendLine("- Use the correct data types exactly as described.")
-            appendLine("- Never include commentary or explanation outside the JSON.")
+            appendLine("- Use only the specified fields and described structure.")
+            appendLine("- Apply strictly correct data types.")
+            appendLine("- Never include comments or explanations outside the JSON.")
             appendLine("- All strings must be double-quoted.")
+            appendLine("- For simple or conversational questions, return the minimal possible answer: empty points array, short summary with length \"short\".")
             appendLine()
-            appendLine("Example:")
+            appendLine("Example of a minimal answer to a simple question:")
+            appendLine(open)
+            appendLine("""
+{
+  "formatVersion": "1.0",
+  "type": "simple",
+  "answer": {"value": "Hello!", "type": "string"},
+  "points": [],
+  "summary": {"text": "A greeting message.", "length": "short"},
+  "meta": {"confidence": 0.99, "source": "model-x"}
+}
+""".trimIndent())
+            appendLine()
+            appendLine("Example of an answer to a regular or complex question:")
             appendLine(open)
             appendLine("""
 {
@@ -225,10 +259,10 @@ class ChatStoreFactory(
     {"kind": "step", "text": "2 * 3 = 6"},
     {"kind": "step", "text": "6 + 2 = 8"}
   ],
-  "summary": {"text": "итоговое значение равно 8.", "length": "short"},
+  "summary": {"text": "The final value is 8.", "length": "short"},
   "meta": {"confidence": 0.98, "source": "model-x"}
 }
-    """.trimIndent())
+""".trimIndent())
             appendLine(close)
         }
 

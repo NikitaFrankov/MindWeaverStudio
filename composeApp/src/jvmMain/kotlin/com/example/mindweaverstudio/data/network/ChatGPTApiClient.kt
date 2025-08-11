@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
 
 class ChatGPTApiClient(
     private val apiKey: String,
-    private val baseUrl: String = "https://api.openai.com/v1"
+    private val baseUrl: String = "https://openrouter.ai/api/v1"
 ) {
     private val json = Json {
         ignoreUnknownKeys = true

@@ -73,14 +73,15 @@ class StructuredOutputParser {
     /** Простая бизнес-валидация по правилам промпта */
     fun validateStructured(s: StructuredOutput): List<String> {
         val errs = mutableListOf<String>()
+
         if (s.formatVersion != "1.0") errs += "formatVersion must be \"1.0\""
-        val allowedTypes = setOf("calculation", "explanation", "comparison", "analysis")
+
+        val allowedTypes = setOf("calculation", "explanation", "comparison", "analysis", "simple")
         if (s.type !in allowedTypes) errs += "type must be one of $allowedTypes"
 
         val allowedAnswerTypes = setOf("number", "string", "boolean")
         if (s.answer.type !in allowedAnswerTypes) errs += "answer.type must be one of $allowedAnswerTypes"
 
-        // check that answer.value matches declared type
         val valElem = s.answer.value
         when (s.answer.type) {
             "number" -> if (valElem !is JsonPrimitive || !valElem.isStringOrNumber()) errs += "answer.value must be a number"
@@ -89,6 +90,7 @@ class StructuredOutputParser {
         }
 
         val allowedKinds = setOf("step", "fact", "note")
+        // points может быть пустым, но если есть элементы, проверяем каждый
         s.points.forEachIndexed { idx, p ->
             if (p.kind !in allowedKinds) errs += "points[$idx].kind must be one of $allowedKinds"
             if (p.text.isBlank()) errs += "points[$idx].text must not be empty"
@@ -98,9 +100,15 @@ class StructuredOutputParser {
         if (s.summary.length !in allowedLengths) errs += "summary.length must be one of $allowedLengths"
         if (s.summary.text.isBlank()) errs += "summary.text must not be empty"
 
+        // Для типа simple желательно, чтобы summary.length был "short"
+        if (s.type == "simple" && s.summary.length != "short") {
+            errs += "For type 'simple', summary.length should be 'short'"
+        }
+
         s.meta?.confidence?.let {
             if (it < 0.0 || it > 1.0) errs += "meta.confidence must be in [0.0,1.0]"
         }
+
         return errs
     }
 
