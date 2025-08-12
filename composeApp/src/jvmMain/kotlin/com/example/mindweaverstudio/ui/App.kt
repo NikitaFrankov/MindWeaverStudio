@@ -22,7 +22,6 @@ fun App(component: RootComponent) {
     }
 }
 
-
 @OptIn(ExperimentalAtomicApi::class)
 @Composable
 fun RootContent(component: RootComponent, modifier: Modifier = Modifier) {

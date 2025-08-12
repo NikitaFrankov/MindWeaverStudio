@@ -7,7 +7,7 @@ import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import com.example.mindweaverstudio.data.model.chat.ChatMessage
 import com.example.mindweaverstudio.data.model.chat.StructuredOutput
-import com.example.mindweaverstudio.services.PromptHeaderService
+import com.example.mindweaverstudio.services.SystemPromptService
 import com.example.mindweaverstudio.services.RepositoryProvider
 import com.example.mindweaverstudio.ui.model.UiChatMessage
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +17,7 @@ import kotlinx.coroutines.swing.Swing
 class ChatStoreFactory(
     private val storeFactory: StoreFactory,
     private val repositoryProvider: RepositoryProvider,
-    private val promptHeaderService: PromptHeaderService
+    private val systemPromptService: SystemPromptService
 ) {
 
     fun create(): ChatStore =
@@ -41,6 +41,7 @@ class ChatStoreFactory(
         data object ChatCleared : Msg()
         data class ModelChanged(val model: String) : Msg()
         data class ProviderChanged(val provider: String) : Msg()
+        data class PromptModeChanged(val promptModeId: String) : Msg()
     }
 
     private class BootstrapperImpl : CoroutineBootstrapper<Action>() {
@@ -70,6 +71,8 @@ class ChatStoreFactory(
                 is ChatStore.Intent.ChangeModel -> dispatch(Msg.ModelChanged(intent.model))
 
                 is ChatStore.Intent.ChangeProvider -> dispatch(Msg.ProviderChanged(intent.provider))
+
+                is ChatStore.Intent.ChangePromptMode -> dispatch(Msg.PromptModeChanged(intent.promptModeId))
             }
         }
 
@@ -98,9 +101,11 @@ class ChatStoreFactory(
         }
         
         private fun prepareApiMessages(message: String, currentMessages: List<UiChatMessage>): List<ChatMessage> {
-            val promptHeader = promptHeaderService.generatePromptHeader(message)
-            val apiUserMessage = ChatMessage(ChatMessage.ROLE_USER, "$promptHeader\n\n$message")
-            return currentMessages.map { it.toApiMessage() } + apiUserMessage
+            val systemPrompt = systemPromptService.getSystemPrompt(state().selectedPromptMode)
+            val systemMessage = ChatMessage(ChatMessage.ROLE_SYSTEM, systemPrompt)
+            val userMessage = ChatMessage(ChatMessage.ROLE_USER, message)
+            
+            return listOf(systemMessage) + currentMessages.map { it.toApiMessage() } + userMessage
         }
         
         private fun handleApiResponse(result: Result<StructuredOutput>) {
@@ -144,6 +149,7 @@ class ChatStoreFactory(
                         else -> "deepseek-chat"
                     }
                 )
+                is Msg.PromptModeChanged -> copy(selectedPromptMode = msg.promptModeId)
             }
     }
 }

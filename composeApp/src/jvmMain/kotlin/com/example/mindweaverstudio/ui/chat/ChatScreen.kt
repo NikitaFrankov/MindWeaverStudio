@@ -16,8 +16,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mindweaverstudio.components.chat.ChatComponent
 import com.example.mindweaverstudio.components.chat.ChatStore
+import com.example.mindweaverstudio.data.model.AppLocale
 import com.example.mindweaverstudio.ui.model.UiChatMessage
 import com.example.mindweaverstudio.ui.model.AssistantMessagePresentation
+import com.example.mindweaverstudio.ui.model.PromptModePresentation
 
 @Composable
 fun ChatScreen(component: ChatComponent) {
@@ -40,8 +42,13 @@ private fun ChatScreen(
     ) {
         ChatHeader(
             selectedProvider = state.selectedProvider,
+            selectedPromptMode = state.selectedPromptMode,
+            currentMessage = state.currentMessage,
             onProviderChange = { provider -> 
                 intentHandler(ChatStore.Intent.ChangeProvider(provider)) 
+            },
+            onPromptModeChange = { promptMode ->
+                intentHandler(ChatStore.Intent.ChangePromptMode(promptMode))
             },
             onClearChat = { intentHandler(ChatStore.Intent.ClearChat) }
         )
@@ -139,9 +146,18 @@ private fun ChatScreen(
 @Composable
 private fun ChatHeader(
     selectedProvider: String,
+    selectedPromptMode: String,
+    currentMessage: String,
     onProviderChange: (String) -> Unit,
+    onPromptModeChange: (String) -> Unit,
     onClearChat: () -> Unit
 ) {
+    val locale = remember(currentMessage) { 
+        if (currentMessage.isNotEmpty()) AppLocale.detectFromText(currentMessage) else AppLocale.getDefault() 
+    }
+    val availableModes = remember(locale) { 
+        PromptModePresentation.getAllLocalizedModes(locale) 
+    }
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -156,6 +172,15 @@ private fun ChatHeader(
             ProviderSelector(
                 selectedProvider = selectedProvider,
                 onProviderChange = onProviderChange
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            PromptModeSelector(
+                selectedModeId = selectedPromptMode,
+                onModeChange = onPromptModeChange,
+                availableModes = availableModes,
+                locale = locale
             )
         }
         
