@@ -3,15 +3,12 @@ package com.example.mindweaverstudio.data.repository.deepseek
 import com.example.mindweaverstudio.data.model.chat.ChatMessage
 import com.example.mindweaverstudio.data.model.chat.ChatRequest
 import com.example.mindweaverstudio.data.model.chat.ResponseContent
-import com.example.mindweaverstudio.data.model.chat.StructuredOutput
 import com.example.mindweaverstudio.data.network.DeepSeekApiClient
 import com.example.mindweaverstudio.data.parsers.ResponseContentParser
-import com.example.mindweaverstudio.data.parsers.StructuredOutputParser
 import com.example.mindweaverstudio.data.repository.NeuralNetworkRepository
 
 class DeepSeekRepositoryImpl(
     private val apiClient: DeepSeekApiClient,
-    private val parser: StructuredOutputParser,
     private val responseParser: ResponseContentParser
 ) : NeuralNetworkRepository {
 
@@ -40,39 +37,6 @@ class DeepSeekRepositoryImpl(
                     ?: return Result.failure(Exception("No response content available"))
                 
                 val result = responseParser.parseResponse(content)
-                Result.success(result)
-            },
-            onFailure = { error ->
-                Result.failure(error)
-            }
-        )
-    }
-    
-    override suspend fun sendStructuredMessage(
-        messages: List<ChatMessage>,
-        model: String,
-        temperature: Double,
-        maxTokens: Int
-    ): Result<StructuredOutput> {
-        val request = ChatRequest(
-            model = model,
-            messages = messages,
-            temperature = temperature,
-            maxTokens = maxTokens
-        )
-
-        return apiClient.createChatCompletion(request).fold(
-            onSuccess = { response ->
-                // Check for API error first
-                response.error?.let { error ->
-                    return Result.failure(Exception("DeepSeek API Error: ${error.message}"))
-                }
-                
-                // Extract content from successful response
-                val content = response.choices?.firstOrNull()?.message?.content
-                    ?: return Result.failure(Exception("No response content available"))
-                val result = parser.parseStructuredJson(raw = content)
-
                 Result.success(result)
             },
             onFailure = { error ->

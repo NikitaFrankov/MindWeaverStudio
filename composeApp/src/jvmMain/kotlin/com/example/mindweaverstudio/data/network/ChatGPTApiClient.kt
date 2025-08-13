@@ -3,6 +3,7 @@ package com.example.mindweaverstudio.data.network
 import com.example.mindweaverstudio.data.model.chat.ChatRequest
 import com.example.mindweaverstudio.data.model.chat.ChatResponse
 import io.ktor.client.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
@@ -27,6 +28,11 @@ class ChatGPTApiClient(
         install(Logging) {
             logger = Logger.DEFAULT
             level = LogLevel.INFO
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 1500000
+            connectTimeoutMillis = 500000
+            socketTimeoutMillis = 1000000
         }
     }
 

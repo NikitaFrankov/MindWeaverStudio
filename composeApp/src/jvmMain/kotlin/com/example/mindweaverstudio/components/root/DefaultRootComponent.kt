@@ -9,6 +9,8 @@ import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.example.mindweaverstudio.components.chat.ChatComponent
 import com.example.mindweaverstudio.components.chat.DefaultChatComponent
+import com.example.mindweaverstudio.components.pipeline.PipelineComponent
+import com.example.mindweaverstudio.components.pipeline.DefaultPipelineComponent
 import org.koin.core.component.KoinComponent
 import com.example.mindweaverstudio.components.root.RootComponent.Child
 import org.koin.core.component.get
@@ -37,6 +39,7 @@ class DefaultRootComponent(
     private fun child(config: Config, componentContext: ComponentContext): Child {
         return when(config) {
             is Config.Chat -> Child.Chat(chatComponent(componentContext))
+            is Config.Pipeline -> Child.Pipeline(pipelineComponent(componentContext))
         }
     }
 
@@ -47,12 +50,35 @@ class DefaultRootComponent(
         )
     }
 
+    private fun pipelineComponent(componentContext: ComponentContext): PipelineComponent {
+        return DefaultPipelineComponent(
+            pipelineStoreFactory = get(),
+            componentContext = componentContext,
+        )
+    }
+
     /** Child components callbacks */
 
+    override fun navigateToChat() {
+        navigation.navigate(
+            transformer = { _: List<Config> -> listOf(Config.Chat) },
+            onComplete = { _, _ -> }
+        )
+    }
+
+    override fun navigateToPipeline() {
+        navigation.navigate(
+            transformer = { _: List<Config> -> listOf(Config.Pipeline) },
+            onComplete = { _, _ -> }
+        )
+    }
 
     @kotlinx.serialization.Serializable
     private sealed interface Config {
         @kotlinx.serialization.Serializable
         data object Chat : Config
+        
+        @kotlinx.serialization.Serializable
+        data object Pipeline : Config
     }
 }
