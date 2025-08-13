@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.mindweaverstudio.ui.chat.utils.ChatStrings
 import com.example.mindweaverstudio.ui.model.AssistantMessagePresentation
 
 @Composable

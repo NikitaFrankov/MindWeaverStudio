@@ -1,6 +1,7 @@
 package com.example.mindweaverstudio.ui.model
 
 import com.example.mindweaverstudio.data.model.chat.ChatMessage
+import com.example.mindweaverstudio.data.model.chat.ResponseContent
 import com.example.mindweaverstudio.data.model.chat.StructuredOutput
 
 sealed class UiChatMessage {
@@ -21,7 +22,24 @@ sealed class UiChatMessage {
         val structuredOutput: StructuredOutput
     ) : UiChatMessage() {
         override fun toApiMessage(): ChatMessage {
-            return ChatMessage(role = "assistant", content = "")
+            return ChatMessage(role = "assistant", content = presentableContent)
+        }
+    }
+    
+    class PlainTextMessage(
+        override val presentableContent: String
+    ) : UiChatMessage() {
+        override fun toApiMessage(): ChatMessage {
+            return ChatMessage(role = "assistant", content = presentableContent)
+        }
+    }
+    
+    class RequirementsSummaryMessage(
+        override val presentableContent: String,
+        val summary: com.example.mindweaverstudio.data.model.chat.RequirementsSummary
+    ) : UiChatMessage() {
+        override fun toApiMessage(): ChatMessage {
+            return ChatMessage(role = "assistant", content = presentableContent)
         }
     }
     
@@ -37,6 +55,23 @@ sealed class UiChatMessage {
             )
         }
         
+        fun createAssistantMessage(responseContent: ResponseContent): UiChatMessage {
+            return when (responseContent) {
+                is ResponseContent.PlainText -> PlainTextMessage(
+                    presentableContent = responseContent.text
+                )
+                is ResponseContent.Structured -> AssistantMessage(
+                    presentableContent = responseContent.output.summary.text,
+                    structuredOutput = responseContent.output
+                )
+                is ResponseContent.RequirementsSummary -> RequirementsSummaryMessage(
+                    presentableContent = responseContent.summary.summary,
+                    summary = responseContent.summary
+                )
+            }
+        }
+        
+        @Deprecated("Use createAssistantMessage with ResponseContent")
         fun createAssistantMessage(structuredOutput: StructuredOutput): AssistantMessage {
             return AssistantMessage(
                 presentableContent = structuredOutput.summary.text,

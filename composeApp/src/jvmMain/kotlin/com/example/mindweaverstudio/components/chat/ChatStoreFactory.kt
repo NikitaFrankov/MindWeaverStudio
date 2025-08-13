@@ -6,7 +6,8 @@ import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import com.example.mindweaverstudio.data.model.chat.ChatMessage
-import com.example.mindweaverstudio.data.model.chat.StructuredOutput
+import com.example.mindweaverstudio.data.model.chat.ResponseContent
+import com.example.mindweaverstudio.data.model.PromptMode
 import com.example.mindweaverstudio.services.SystemPromptService
 import com.example.mindweaverstudio.services.RepositoryProvider
 import com.example.mindweaverstudio.ui.model.UiChatMessage
@@ -42,6 +43,8 @@ class ChatStoreFactory(
         data class ModelChanged(val model: String) : Msg()
         data class ProviderChanged(val provider: String) : Msg()
         data class PromptModeChanged(val promptModeId: String) : Msg()
+        data object RequirementsGatheringStarted : Msg()
+        data object RequirementsGatheringEnded : Msg()
     }
 
     private class BootstrapperImpl : CoroutineBootstrapper<Action>() {
@@ -72,7 +75,21 @@ class ChatStoreFactory(
 
                 is ChatStore.Intent.ChangeProvider -> dispatch(Msg.ProviderChanged(intent.provider))
 
-                is ChatStore.Intent.ChangePromptMode -> dispatch(Msg.PromptModeChanged(intent.promptModeId))
+                is ChatStore.Intent.ChangePromptMode -> {
+                    // Prevent mode changes during requirements gathering
+                    if (!state().isInRequirementsGathering) {
+                        dispatch(Msg.PromptModeChanged(intent.promptModeId))
+                        
+                        // Start requirements gathering if switching to that mode
+                        if (intent.promptModeId == PromptMode.REQUIREMENTS_GATHERING_MODE.id) {
+                            dispatch(Msg.RequirementsGatheringStarted)
+                        }
+                    }
+                }
+                
+                is ChatStore.Intent.StartRequirementsGathering -> dispatch(Msg.RequirementsGatheringStarted)
+                
+                is ChatStore.Intent.EndRequirementsGathering -> dispatch(Msg.RequirementsGatheringEnded)
             }
         }
 
@@ -108,12 +125,18 @@ class ChatStoreFactory(
             return listOf(systemMessage) + currentMessages.map { it.toApiMessage() } + userMessage
         }
         
-        private fun handleApiResponse(result: Result<StructuredOutput>) {
+        private fun handleApiResponse(result: Result<ResponseContent>) {
             result.fold(
-                onSuccess = { structuredOutput ->
-                    val assistantUiMessage = UiChatMessage.createAssistantMessage(structuredOutput)
+                onSuccess = { responseContent ->
+                    val assistantUiMessage = UiChatMessage.createAssistantMessage(responseContent)
                     dispatch(Msg.MessagesUpdated(state().messages + assistantUiMessage))
                     dispatch(Msg.LoadingChanged(false))
+                    
+                    // End requirements gathering if we received a requirements summary
+                    if (responseContent is ResponseContent.RequirementsSummary && state().isInRequirementsGathering) {
+                        dispatch(Msg.RequirementsGatheringEnded)
+                        dispatch(Msg.PromptModeChanged(PromptMode.DEFAULT_MODE.id))
+                    }
                 },
                 onFailure = { error ->
                     handleError(error)
@@ -150,6 +173,8 @@ class ChatStoreFactory(
                     }
                 )
                 is Msg.PromptModeChanged -> copy(selectedPromptMode = msg.promptModeId)
+                is Msg.RequirementsGatheringStarted -> copy(isInRequirementsGathering = true)
+                is Msg.RequirementsGatheringEnded -> copy(isInRequirementsGathering = false)
             }
     }
 }

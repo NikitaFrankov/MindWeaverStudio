@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import com.example.mindweaverstudio.ui.chat.utils.ChatStrings
 
 @Composable
 fun ProviderSelector(

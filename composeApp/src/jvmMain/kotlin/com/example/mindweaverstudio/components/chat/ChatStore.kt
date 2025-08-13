@@ -13,7 +13,8 @@ interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> 
         val error: String? = null,
         val selectedModel: String = "deepseek-chat",
         val selectedProvider: String = "DeepSeek",
-        val selectedPromptMode: String = PromptMode.DEFAULT_MODE.id
+        val selectedPromptMode: String = PromptMode.DEFAULT_MODE.id,
+        val isInRequirementsGathering: Boolean = false
     )
 
     sealed class Intent {
@@ -24,6 +25,8 @@ interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> 
         data class ChangeModel(val model: String) : Intent()
         data class ChangeProvider(val provider: String) : Intent()
         data class ChangePromptMode(val promptModeId: String) : Intent()
+        data object StartRequirementsGathering : Intent()
+        data object EndRequirementsGathering : Intent()
     }
 
     sealed class Label {

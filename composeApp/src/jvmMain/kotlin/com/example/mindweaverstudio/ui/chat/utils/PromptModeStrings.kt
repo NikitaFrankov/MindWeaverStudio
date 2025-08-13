@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.ui.chat
+package com.example.mindweaverstudio.ui.chat.utils
 
 import com.example.mindweaverstudio.data.model.AppLocale
 

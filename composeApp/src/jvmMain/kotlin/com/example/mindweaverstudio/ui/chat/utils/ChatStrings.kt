@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.ui.chat
+package com.example.mindweaverstudio.ui.chat.utils
 
 object ChatStrings {
     const val HEADER_TITLE = "Chat with ai assistant"

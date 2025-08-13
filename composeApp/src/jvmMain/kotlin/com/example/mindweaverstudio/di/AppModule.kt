@@ -12,6 +12,7 @@ import com.example.mindweaverstudio.data.network.ChatGPTApiClient
 import com.example.mindweaverstudio.data.network.DeepSeekApiClient
 import com.example.mindweaverstudio.data.network.GeminiApiClient
 import com.example.mindweaverstudio.data.parsers.StructuredOutputParser
+import com.example.mindweaverstudio.data.parsers.ResponseContentParser
 import com.example.mindweaverstudio.data.repository.NeuralNetworkRepository
 import com.example.mindweaverstudio.data.repository.chatgpt.ChatGPTRepositoryImpl
 import com.example.mindweaverstudio.data.repository.deepseek.DeepSeekRepositoryImpl
@@ -33,11 +34,12 @@ val appModule = module {
     single(named("gemini")) { GeminiApiClient(get<ApiConfiguration>().geminiApiKey) }
 
     factoryOf(::StructuredOutputParser)
+    single { ResponseContentParser(get<StructuredOutputParser>()) }
     
     // Repositories
-    single<NeuralNetworkRepository>(named("deepseek")) { DeepSeekRepositoryImpl(get(named("deepseek")), get()) }
-    single<NeuralNetworkRepository>(named("chatgpt")) { ChatGPTRepositoryImpl(get(named("chatgpt")), get()) }
-    single<NeuralNetworkRepository>(named("gemini")) { GeminiRepositoryImpl(get(named("gemini")), get()) }
+    single<NeuralNetworkRepository>(named("deepseek")) { DeepSeekRepositoryImpl(get(named("deepseek")), get(), get()) }
+    single<NeuralNetworkRepository>(named("chatgpt")) { ChatGPTRepositoryImpl(get(named("chatgpt")), get(), get()) }
+    single<NeuralNetworkRepository>(named("gemini")) { GeminiRepositoryImpl(get(named("gemini")), get(), get()) }
     
     // Default repository (can be configured)
     single<NeuralNetworkRepository> { get<NeuralNetworkRepository>(named("chatgpt")) }

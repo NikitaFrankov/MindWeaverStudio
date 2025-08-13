@@ -17,6 +17,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mindweaverstudio.components.chat.ChatComponent
 import com.example.mindweaverstudio.components.chat.ChatStore
 import com.example.mindweaverstudio.data.model.AppLocale
+import com.example.mindweaverstudio.ui.chat.utils.ChatStrings
+import com.example.mindweaverstudio.ui.chat.utils.PromptModeSelector
 import com.example.mindweaverstudio.ui.model.UiChatMessage
 import com.example.mindweaverstudio.ui.model.AssistantMessagePresentation
 import com.example.mindweaverstudio.ui.model.PromptModePresentation
@@ -44,6 +46,7 @@ private fun ChatScreen(
             selectedProvider = state.selectedProvider,
             selectedPromptMode = state.selectedPromptMode,
             currentMessage = state.currentMessage,
+            isInRequirementsGathering = state.isInRequirementsGathering,
             onProviderChange = { provider -> 
                 intentHandler(ChatStore.Intent.ChangeProvider(provider)) 
             },
@@ -66,6 +69,8 @@ private fun ChatScreen(
             items(state.messages) { message ->
                 when(message) {
                     is UiChatMessage.AssistantMessage -> AssistantMessage(message)
+                    is UiChatMessage.PlainTextMessage -> PlainTextMessage(message)
+                    is UiChatMessage.RequirementsSummaryMessage -> RequirementsSummaryMessage(message)
                     is UiChatMessage.UserMessage -> UserMessageBubble(message)
                 }
             }
@@ -148,6 +153,7 @@ private fun ChatHeader(
     selectedProvider: String,
     selectedPromptMode: String,
     currentMessage: String,
+    isInRequirementsGathering: Boolean,
     onProviderChange: (String) -> Unit,
     onPromptModeChange: (String) -> Unit,
     onClearChat: () -> Unit
@@ -175,12 +181,13 @@ private fun ChatHeader(
             )
             
             Spacer(modifier = Modifier.height(4.dp))
-            
+
             PromptModeSelector(
                 selectedModeId = selectedPromptMode,
                 onModeChange = onPromptModeChange,
                 availableModes = availableModes,
-                locale = locale
+                locale = locale,
+                enabled = !isInRequirementsGathering
             )
         }
         
@@ -230,6 +237,77 @@ fun AssistantMessage(message: UiChatMessage.AssistantMessage) {
             FactsSection(presentation.factAndPoints)
             SummarySection(presentation.summaryText)
             MetaSection(presentation.confidence, presentation.source)
+        }
+    }
+}
+
+@Composable
+fun PlainTextMessage(message: UiChatMessage.PlainTextMessage) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Text(
+            text = message.presentableContent,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@Composable
+fun RequirementsSummaryMessage(message: UiChatMessage.RequirementsSummaryMessage) {
+    val summary = message.summary
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Requirements Summary",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Project: ${summary.projectName}",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            
+            Text(
+                text = "Category: ${summary.category}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = summary.summary,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Confidence: ${(summary.meta.confidence * 100).toInt()}%",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
         }
     }
 }

@@ -2,7 +2,7 @@ package com.example.mindweaverstudio.ui.model
 
 import com.example.mindweaverstudio.data.model.AppLocale
 import com.example.mindweaverstudio.data.model.PromptMode
-import com.example.mindweaverstudio.ui.chat.PromptModeStrings
+import com.example.mindweaverstudio.ui.chat.utils.PromptModeStrings
 
 data class PromptModePresentation(
     val id: String,

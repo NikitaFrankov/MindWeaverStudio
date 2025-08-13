@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.ui.chat
+package com.example.mindweaverstudio.ui.chat.utils
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -17,7 +17,8 @@ fun PromptModeSelector(
     selectedModeId: String,
     onModeChange: (String) -> Unit,
     availableModes: List<PromptModePresentation>,
-    locale: AppLocale = AppLocale.getDefault()
+    locale: AppLocale = AppLocale.getDefault(),
+    enabled: Boolean = true
 ) {
     var expanded by remember { mutableStateOf(false) }
     val selectedMode = availableModes.find { it.id == selectedModeId } 
@@ -34,7 +35,8 @@ fun PromptModeSelector(
         
         Box {
             FilterChip(
-                onClick = { expanded = true },
+                onClick = { if (enabled) expanded = true },
+                enabled = enabled,
                 label = { 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
