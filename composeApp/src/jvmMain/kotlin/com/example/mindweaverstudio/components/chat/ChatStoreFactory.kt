@@ -5,12 +5,15 @@ import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
+import com.example.mindweaverstudio.components.chat.ChatStoreFactory.Msg.*
 import com.example.mindweaverstudio.data.model.chat.ChatMessage
 import com.example.mindweaverstudio.data.model.chat.ResponseContent
 import com.example.mindweaverstudio.data.model.PromptMode
+import com.example.mindweaverstudio.data.network.MCPClient
 import com.example.mindweaverstudio.services.SystemPromptService
 import com.example.mindweaverstudio.services.RepositoryProvider
 import com.example.mindweaverstudio.ui.model.UiChatMessage
+import io.modelcontextprotocol.kotlin.sdk.TextResourceContents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
@@ -18,7 +21,8 @@ import kotlinx.coroutines.swing.Swing
 class ChatStoreFactory(
     private val storeFactory: StoreFactory,
     private val repositoryProvider: RepositoryProvider,
-    private val systemPromptService: SystemPromptService
+    private val systemPromptService: SystemPromptService,
+    private val mcpClient: MCPClient,
 ) {
 
     fun create(): ChatStore =
@@ -58,7 +62,7 @@ class ChatStoreFactory(
     ) {
         override fun executeIntent(intent: ChatStore.Intent) {
             when (intent) {
-                is ChatStore.Intent.UpdateMessage -> dispatch(Msg.UpdateMessage(intent.message))
+                is ChatStore.Intent.UpdateMessage -> dispatch(UpdateMessage(intent.message))
 
                 is ChatStore.Intent.SendMessage -> {
                     val currentState = state()
@@ -67,29 +71,40 @@ class ChatStoreFactory(
                     }
                 }
 
-                is ChatStore.Intent.ClearError -> dispatch(Msg.ErrorCleared)
+                is ChatStore.Intent.ClearError -> dispatch(ErrorCleared)
 
-                is ChatStore.Intent.ClearChat -> dispatch(Msg.ChatCleared)
+                is ChatStore.Intent.ClearChat -> dispatch(ChatCleared)
 
-                is ChatStore.Intent.ChangeModel -> dispatch(Msg.ModelChanged(intent.model))
+                is ChatStore.Intent.ChangeModel -> dispatch(ModelChanged(intent.model))
 
-                is ChatStore.Intent.ChangeProvider -> dispatch(Msg.ProviderChanged(intent.provider))
+                is ChatStore.Intent.ChangeProvider -> dispatch(ProviderChanged(intent.provider))
 
                 is ChatStore.Intent.ChangePromptMode -> {
                     // Prevent mode changes during requirements gathering
                     if (!state().isInRequirementsGathering) {
-                        dispatch(Msg.PromptModeChanged(intent.promptModeId))
+                        dispatch(PromptModeChanged(intent.promptModeId))
                         
                         // Start requirements gathering if switching to that mode
                         if (intent.promptModeId == PromptMode.REQUIREMENTS_GATHERING_MODE.id) {
-                            dispatch(Msg.RequirementsGatheringStarted)
+                            dispatch(RequirementsGatheringStarted)
                         }
                     }
                 }
                 
-                is ChatStore.Intent.StartRequirementsGathering -> dispatch(Msg.RequirementsGatheringStarted)
+                is ChatStore.Intent.StartRequirementsGathering -> dispatch(RequirementsGatheringStarted)
                 
-                is ChatStore.Intent.EndRequirementsGathering -> dispatch(Msg.RequirementsGatheringEnded)
+                is ChatStore.Intent.EndRequirementsGathering -> dispatch(RequirementsGatheringEnded)
+                ChatStore.Intent.RequestMcp -> fetchMcpData()
+            }
+        }
+
+        private fun fetchMcpData() {
+            scope.launch {
+                val data = mcpClient.getFileFromMcp()
+                val text = data?.contents?.first() as TextResourceContents
+                val responseContent = ResponseContent.PlainText("file text: ${text.text}, uri: ${text.uri}")
+                val assistantUiMessage = UiChatMessage.createAssistantMessage(responseContent)
+                dispatch(MessagesUpdated(state().messages + assistantUiMessage))
             }
         }
 
@@ -110,11 +125,11 @@ class ChatStoreFactory(
         }
         
         private fun startMessageSending(message: String, currentMessages: List<UiChatMessage>) {
-            dispatch(Msg.LoadingChanged(true))
-            dispatch(Msg.MessageSent)
+            dispatch(LoadingChanged(true))
+            dispatch(MessageSent)
             
             val userUiMessage = UiChatMessage.createUserMessage(message)
-            dispatch(Msg.MessagesUpdated(currentMessages + userUiMessage))
+            dispatch(MessagesUpdated(currentMessages + userUiMessage))
         }
         
         private fun prepareApiMessages(message: String, currentMessages: List<UiChatMessage>): List<ChatMessage> {
@@ -129,13 +144,13 @@ class ChatStoreFactory(
             result.fold(
                 onSuccess = { responseContent ->
                     val assistantUiMessage = UiChatMessage.createAssistantMessage(responseContent)
-                    dispatch(Msg.MessagesUpdated(state().messages + assistantUiMessage))
-                    dispatch(Msg.LoadingChanged(false))
+                    dispatch(MessagesUpdated(state().messages + assistantUiMessage))
+                    dispatch(LoadingChanged(false))
                     
                     // End requirements gathering if we received a requirements summary
                     if (responseContent is ResponseContent.RequirementsSummary && state().isInRequirementsGathering) {
-                        dispatch(Msg.RequirementsGatheringEnded)
-                        dispatch(Msg.PromptModeChanged(PromptMode.DEFAULT_MODE.id))
+                        dispatch(RequirementsGatheringEnded)
+                        dispatch(PromptModeChanged(PromptMode.DEFAULT_MODE.id))
                     }
                 },
                 onFailure = { error ->
@@ -146,8 +161,8 @@ class ChatStoreFactory(
         
         private fun handleError(error: Throwable) {
             val errorMessage = error.message ?: "Unknown error occurred"
-            dispatch(Msg.ErrorOccurred(errorMessage))
-            dispatch(Msg.LoadingChanged(false))
+            dispatch(ErrorOccurred(errorMessage))
+            dispatch(LoadingChanged(false))
             publish(ChatStore.Label.ShowError(errorMessage))
         }
     }
@@ -155,15 +170,15 @@ class ChatStoreFactory(
     private object ReducerImpl : Reducer<ChatStore.State, Msg> {
         override fun ChatStore.State.reduce(msg: Msg): ChatStore.State =
             when (msg) {
-                is Msg.UpdateMessage -> copy(currentMessage = msg.message)
-                is Msg.MessageSent -> copy(currentMessage = "")
-                is Msg.MessagesUpdated -> copy(messages = msg.messages)
-                is Msg.LoadingChanged -> copy(isLoading = msg.isLoading)
-                is Msg.ErrorOccurred -> copy(error = msg.error)
-                is Msg.ErrorCleared -> copy(error = null)
-                is Msg.ChatCleared -> copy(messages = emptyList(), currentMessage = "", error = null)
-                is Msg.ModelChanged -> copy(selectedModel = msg.model)
-                is Msg.ProviderChanged -> copy(
+                is UpdateMessage -> copy(currentMessage = msg.message)
+                is MessageSent -> copy(currentMessage = "")
+                is MessagesUpdated -> copy(messages = msg.messages)
+                is LoadingChanged -> copy(isLoading = msg.isLoading)
+                is ErrorOccurred -> copy(error = msg.error)
+                is ErrorCleared -> copy(error = null)
+                is ChatCleared -> copy(messages = emptyList(), currentMessage = "", error = null)
+                is ModelChanged -> copy(selectedModel = msg.model)
+                is ProviderChanged -> copy(
                     selectedProvider = msg.provider,
                     selectedModel = when (msg.provider) {
                         "DeepSeek" -> "deepseek-chat"
@@ -172,9 +187,9 @@ class ChatStoreFactory(
                         else -> "deepseek-chat"
                     }
                 )
-                is Msg.PromptModeChanged -> copy(selectedPromptMode = msg.promptModeId)
-                is Msg.RequirementsGatheringStarted -> copy(isInRequirementsGathering = true)
-                is Msg.RequirementsGatheringEnded -> copy(isInRequirementsGathering = false)
+                is PromptModeChanged -> copy(selectedPromptMode = msg.promptModeId)
+                is RequirementsGatheringStarted -> copy(isInRequirementsGathering = true)
+                is RequirementsGatheringEnded -> copy(isInRequirementsGathering = false)
             }
     }
 }

@@ -47,13 +47,14 @@ private fun ChatScreen(
             selectedPromptMode = state.selectedPromptMode,
             currentMessage = state.currentMessage,
             isInRequirementsGathering = state.isInRequirementsGathering,
-            onProviderChange = { provider -> 
-                intentHandler(ChatStore.Intent.ChangeProvider(provider)) 
+            onProviderChange = { provider ->
+                intentHandler(ChatStore.Intent.ChangeProvider(provider))
             },
             onPromptModeChange = { promptMode ->
                 intentHandler(ChatStore.Intent.ChangePromptMode(promptMode))
             },
-            onClearChat = { intentHandler(ChatStore.Intent.ClearChat) }
+            onClearChat = { intentHandler(ChatStore.Intent.ClearChat) },
+            onRequestMcp = { intentHandler(ChatStore.Intent.RequestMcp) }
         )
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -156,7 +157,8 @@ private fun ChatHeader(
     isInRequirementsGathering: Boolean,
     onProviderChange: (String) -> Unit,
     onPromptModeChange: (String) -> Unit,
-    onClearChat: () -> Unit
+    onClearChat: () -> Unit,
+    onRequestMcp: () -> Unit
 ) {
     val locale = remember(currentMessage) { 
         if (currentMessage.isNotEmpty()) AppLocale.detectFromText(currentMessage) else AppLocale.getDefault() 
@@ -189,6 +191,12 @@ private fun ChatHeader(
                 locale = locale,
                 enabled = !isInRequirementsGathering
             )
+        }
+
+        Button(
+            onClick = onRequestMcp
+        ) {
+            Text("Get data from MCP")
         }
         
         IconButton(onClick = onClearChat) {

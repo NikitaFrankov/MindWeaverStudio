@@ -1,5 +1,7 @@
 package com.example.mindweaverstudio.config
 
+import java.util.Properties
+
 data class ApiConfiguration(
     val deepSeekApiKey: String,
     val openAiApiKey: String,
@@ -7,7 +9,7 @@ data class ApiConfiguration(
 ) {
     companion object {
         fun load(): ApiConfiguration {
-            val properties = java.util.Properties()
+            val properties = Properties()
             
             // Try to load from config file first
             try {

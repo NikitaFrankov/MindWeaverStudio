@@ -1,4 +1,10 @@
 {
+  "statusLine": {
+    "type": "command",
+    "command": "/opt/homebrew/bin/ccusage statusline",
+    "padding": 0
+  },
+  "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [
       "Bash(./gradlew:*)"

@@ -22,7 +22,9 @@ import com.example.mindweaverstudio.data.repository.deepseek.DeepSeekRepositoryI
 import com.example.mindweaverstudio.data.repository.gemini.GeminiRepositoryImpl
 import com.example.mindweaverstudio.data.model.pipeline.Agent
 import com.example.mindweaverstudio.data.model.pipeline.AgentPipelineData
+import com.example.mindweaverstudio.data.network.MCPClient
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -37,6 +39,9 @@ val appModule = module {
     single(named("deepseek")) { DeepSeekApiClient(get<ApiConfiguration>().deepSeekApiKey) }
     single(named("chatgpt")) { ChatGPTApiClient(get<ApiConfiguration>().openAiApiKey) }
     single(named("gemini")) { GeminiApiClient(get<ApiConfiguration>().geminiApiKey) }
+
+    // MCP clients
+    single { MCPClient() }
 
     factoryOf(::StructuredOutputParser)
     single { ResponseContentParser(get<StructuredOutputParser>()) }
@@ -60,7 +65,7 @@ val appModule = module {
     }
     
     // Store Factory
-    single { ChatStoreFactory(get(), get(), get()) }
+    singleOf(::ChatStoreFactory)
 
     
     // Pipeline Agents

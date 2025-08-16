@@ -22,6 +22,7 @@ interface ChatStore : Store<ChatStore.Intent, ChatStore.State, ChatStore.Label> 
         data object SendMessage : Intent()
         data object ClearError : Intent()
         data object ClearChat : Intent()
+        data object RequestMcp : Intent()
         data class ChangeModel(val model: String) : Intent()
         data class ChangeProvider(val provider: String) : Intent()
         data class ChangePromptMode(val promptModeId: String) : Intent()
