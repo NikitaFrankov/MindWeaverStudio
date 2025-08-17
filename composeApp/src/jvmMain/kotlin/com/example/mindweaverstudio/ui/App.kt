@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -15,6 +16,7 @@ import com.example.mindweaverstudio.components.root.RootComponent
 import com.example.mindweaverstudio.components.root.RootComponent.Child
 import com.example.mindweaverstudio.ui.chat.ChatScreen
 import com.example.mindweaverstudio.ui.pipeline.PipelineScreen
+import com.example.mindweaverstudio.ui.repositoryManagement.RepositoryManagementScreen
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @Composable
@@ -56,6 +58,13 @@ fun RootContent(component: RootComponent, modifier: Modifier = Modifier) {
                     selected = currentChild is Child.Pipeline,
                     onClick = component::navigateToPipeline
                 )
+                
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Storage, contentDescription = null) },
+                    label = { Text("Repository") },
+                    selected = currentChild is Child.RepositoryManagement,
+                    onClick = component::navigateToRepositoryManagement
+                )
             }
         }
     ) { innerPadding ->
@@ -67,6 +76,7 @@ fun RootContent(component: RootComponent, modifier: Modifier = Modifier) {
             when (val child = it.instance) {
                 is Child.Chat -> ChatScreen(child.component)
                 is Child.Pipeline -> PipelineScreen(child.component)
+                is Child.RepositoryManagement -> RepositoryManagementScreen(child.component)
             }
         }
     }

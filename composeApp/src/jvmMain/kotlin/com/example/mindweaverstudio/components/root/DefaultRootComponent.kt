@@ -11,6 +11,8 @@ import com.example.mindweaverstudio.components.chat.ChatComponent
 import com.example.mindweaverstudio.components.chat.DefaultChatComponent
 import com.example.mindweaverstudio.components.pipeline.PipelineComponent
 import com.example.mindweaverstudio.components.pipeline.DefaultPipelineComponent
+import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementComponent
+import com.example.mindweaverstudio.components.repositoryManagement.DefaultRepositoryManagementComponent
 import org.koin.core.component.KoinComponent
 import com.example.mindweaverstudio.components.root.RootComponent.Child
 import org.koin.core.component.get
@@ -40,6 +42,7 @@ class DefaultRootComponent(
         return when(config) {
             is Config.Chat -> Child.Chat(chatComponent(componentContext))
             is Config.Pipeline -> Child.Pipeline(pipelineComponent(componentContext))
+            is Config.RepositoryManagement -> Child.RepositoryManagement(repositoryManagementComponent(componentContext))
         }
     }
 
@@ -53,6 +56,13 @@ class DefaultRootComponent(
     private fun pipelineComponent(componentContext: ComponentContext): PipelineComponent {
         return DefaultPipelineComponent(
             pipelineStoreFactory = get(),
+            componentContext = componentContext,
+        )
+    }
+
+    private fun repositoryManagementComponent(componentContext: ComponentContext): RepositoryManagementComponent {
+        return DefaultRepositoryManagementComponent(
+            repositoryManagementStoreFactory = get(),
             componentContext = componentContext,
         )
     }
@@ -73,6 +83,13 @@ class DefaultRootComponent(
         )
     }
 
+    override fun navigateToRepositoryManagement() {
+        navigation.navigate(
+            transformer = { _: List<Config> -> listOf(Config.RepositoryManagement) },
+            onComplete = { _, _ -> }
+        )
+    }
+
     @kotlinx.serialization.Serializable
     private sealed interface Config {
         @kotlinx.serialization.Serializable
@@ -80,5 +97,8 @@ class DefaultRootComponent(
         
         @kotlinx.serialization.Serializable
         data object Pipeline : Config
+        
+        @kotlinx.serialization.Serializable
+        data object RepositoryManagement : Config
     }
 }

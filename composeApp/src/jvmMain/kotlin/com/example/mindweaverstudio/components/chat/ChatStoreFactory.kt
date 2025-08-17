@@ -13,8 +13,8 @@ import com.example.mindweaverstudio.data.network.MCPClient
 import com.example.mindweaverstudio.services.SystemPromptService
 import com.example.mindweaverstudio.services.RepositoryProvider
 import com.example.mindweaverstudio.ui.model.UiChatMessage
-import io.modelcontextprotocol.kotlin.sdk.TextResourceContents
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 
@@ -100,11 +100,14 @@ class ChatStoreFactory(
 
         private fun fetchMcpData() {
             scope.launch {
-                val data = mcpClient.getFileFromMcp()
-                val text = data?.contents?.first() as TextResourceContents
-                val responseContent = ResponseContent.PlainText("file text: ${text.text}, uri: ${text.uri}")
-                val assistantUiMessage = UiChatMessage.createAssistantMessage(responseContent)
+                async { mcpClient.init() }.await()
+                val messages = async { mcpClient.summarizeCommits("NikitaFrankov", "MindWeaverStudio") }.await()
+                    .orEmpty()
+                    .joinToString { "\n\n" + it.text.orEmpty() }
+
+                val assistantUiMessage = UiChatMessage.createAssistantMessage(ResponseContent.PlainText(messages))
                 dispatch(MessagesUpdated(state().messages + assistantUiMessage))
+                dispatch(LoadingChanged(false))
             }
         }
 
@@ -136,7 +139,7 @@ class ChatStoreFactory(
             val systemPrompt = systemPromptService.getSystemPrompt(state().selectedPromptMode)
             val systemMessage = ChatMessage(ChatMessage.ROLE_SYSTEM, systemPrompt)
             val userMessage = ChatMessage(ChatMessage.ROLE_USER, message)
-            
+
             return listOf(systemMessage) + currentMessages.map { it.toApiMessage() } + userMessage
         }
         

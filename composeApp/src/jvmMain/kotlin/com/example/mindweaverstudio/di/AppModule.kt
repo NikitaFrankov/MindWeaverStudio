@@ -4,6 +4,7 @@ import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.example.mindweaverstudio.components.chat.ChatStoreFactory
 import com.example.mindweaverstudio.components.pipeline.PipelineStoreFactory
+import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStoreFactory
 import com.example.mindweaverstudio.config.ApiConfiguration
 import com.example.mindweaverstudio.data.agents.TextReviewerAgent
 import com.example.mindweaverstudio.data.agents.TextSummarizerAgent
@@ -64,8 +65,9 @@ val appModule = module {
         )
     }
     
-    // Store Factory
+    // Store Factories
     singleOf(::ChatStoreFactory)
+    singleOf(::RepositoryManagementStoreFactory)
 
     
     // Pipeline Agents

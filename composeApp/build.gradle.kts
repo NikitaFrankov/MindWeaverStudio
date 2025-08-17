@@ -46,6 +46,7 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
             implementation(libs.ktor.client.cio)
+            implementation("io.ktor:ktor-server-netty-jvm:3.0.3")
             implementation("io.modelcontextprotocol:kotlin-sdk:0.6.0")
             implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.0")
         }

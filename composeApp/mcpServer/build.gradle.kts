@@ -14,6 +14,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.0")
     implementation("org.jetbrains.kotlinx-io-okio:0.8.0")
 
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.contentNegotiation)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.cio)
+
     testImplementation(kotlin("test"))
 }
 
