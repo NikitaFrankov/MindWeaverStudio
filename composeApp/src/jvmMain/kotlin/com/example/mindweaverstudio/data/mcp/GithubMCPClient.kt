@@ -1,5 +1,7 @@
 package com.example.mindweaverstudio.data.mcp
 
+import com.example.mindweaverstudio.data.models.mcp.github.Commit
+import com.example.mindweaverstudio.data.models.mcp.base.ToolCall
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -26,7 +28,6 @@ import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport
 import kotlinx.io.asSink
 import kotlinx.io.asSource
 import kotlinx.io.buffered
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -36,38 +37,7 @@ import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.util.Properties
 
-val httpClient = HttpClient(CIO) {
-    install(ContentNegotiation) {
-        json(
-            Json {
-                ignoreUnknownKeys = true
-                prettyPrint = true
-            }
-        )
-    }
-
-    install(Logging) {
-        level = LogLevel.INFO
-    }
-
-    val properties = Properties()
-
-    defaultRequest {
-        url {
-            protocol = URLProtocol.HTTPS
-            host = "api.github.com"
-        }
-
-        val token = properties.getProperty("github.api.key")
-        if (!token.isNullOrEmpty()) {
-            header("Authorization", "Bearer $token")
-        }
-        header("Accept", "application/vnd.github+json")
-
-    }
-}
-
-class MCPClient() {
+class GithubMCPClient() {
     private val clientOut = PipedOutputStream()
     private val serverIn = PipedInputStream(clientOut)
     private val serverOut = PipedOutputStream()
@@ -80,6 +50,8 @@ class MCPClient() {
         inputStream = serverIn.asSource().buffered(),
         outputStream = serverOut.asSink().buffered()
     )
+    val httpClient = createHttpClient()
+
     private val server = Server(
         serverInfo = Implementation(
             name = "example-server",
@@ -129,6 +101,54 @@ class MCPClient() {
             )
             val commits = httpClient.getCommits(owner, repo)
             CallToolResult(content = commits.map { TextContent(it) })
+        }
+
+        server.addTool(
+            name = "run_project_container",
+            description = "Builds and runs a Docker container from a given project name. Returns stdout and stderr from execution.",
+            inputSchema = Tool.Input(
+                properties = buildJsonObject {
+                    putJsonObject("projectName") {
+                        put("type", "string")
+                        put("description", "The name of the project to be launched in the container")
+                    }
+                },
+                required = listOf("buildPath")
+            )
+        ) { request ->
+            val projectName = request.arguments["projectName"]?.jsonPrimitive?.content
+                ?: return@addTool CallToolResult(content = listOf(TextContent("The 'projectName' parameter is required.")))
+            val buildPath = getBuildPathByName(projectName)
+            val tag = getTagByName(projectName)
+
+            // Сборка образа
+            val buildResult = ProcessRunner.runCommand(
+                listOf("docker", "compose", "build")
+            )
+            val buildResult2 = ProcessRunner.runCommand(
+                listOf("docker", "compose", "up", "-d")
+            )
+            val buildResult3 = ProcessRunner.runCommand(
+                listOf("docker", "compose", "wait", "mcp-app")
+            )
+
+
+            if (buildResult.contains("error", ignoreCase = true)) {
+                return@addTool CallToolResult(content = listOf(TextContent("Build failed:\n$buildResult")))
+            }
+            if (buildResult2.contains("error", ignoreCase = true)) {
+                return@addTool CallToolResult(content = listOf(TextContent("Build failed:\n$buildResult")))
+            }
+            if (buildResult3.contains("error", ignoreCase = true)) {
+                return@addTool CallToolResult(content = listOf(TextContent("Build failed:\n$buildResult")))
+            }
+
+            // Подготовка docker run
+            val args = mutableListOf("docker", "run", "--rm", "mcp-app")
+
+            val runResult = ProcessRunner.runCommand(args)
+
+            CallToolResult(content = listOf(TextContent(runResult)))
         }
 
     }
@@ -185,6 +205,64 @@ class MCPClient() {
 
         return result?.content as List<TextContent>?
     }
+
+    suspend fun runContainer() {
+        val arguments = buildJsonObject {
+            put("projectName", "MindWeaverServer")
+            put("tag", "mcp-app")
+        }
+        val result = client.callTool(request = CallToolRequest(
+            name = "run_container",
+            arguments = arguments,
+        ))
+
+        val string = (result?.content.orEmpty() as List<TextContent>).first().text.orEmpty()
+        string
+    }
+
+    private fun createHttpClient() = HttpClient(CIO) {
+        install(ContentNegotiation) {
+            json(
+                Json {
+                    ignoreUnknownKeys = true
+                    prettyPrint = true
+                }
+            )
+        }
+
+        install(Logging) {
+            level = LogLevel.INFO
+        }
+
+        val properties = Properties()
+
+        defaultRequest {
+            url {
+                protocol = URLProtocol.HTTPS
+                host = "api.github.com"
+            }
+
+            val token = properties.getProperty("github.api.key")
+            if (!token.isNullOrEmpty()) {
+                header("Authorization", "Bearer $token")
+            }
+            header("Accept", "application/vnd.github+json")
+        }
+    }
+
+    private fun getBuildPathByName(projectName: String): String {
+        return when(projectName) {
+            "MindWeaverServer" -> "/Users/nikitaradionov/IdeaProjects/MindWeaverServer"
+            else -> "no such directory"
+        }
+    }
+
+    private fun getTagByName(projectName: String): String {
+        return when(projectName) {
+            "MindWeaverServer" -> "mcp-app"
+            else -> "no such tag"
+        }
+    }
 }
 
 
@@ -200,30 +278,3 @@ private suspend fun HttpClient.getCommits(owner: String, repo: String): List<Str
         """.trimIndent()
     }
 }
-
-// Data classes для GitHub API (как в сэмпле)
-@Serializable
-data class Commit(
-    val sha: String,
-    val commit: CommitDetails
-)
-
-@Serializable
-data class CommitDetails(
-    val author: Author,
-    val message: String
-)
-
-@Serializable
-data class Author(
-    val name: String,
-    val email: String,
-    val date: String
-)
-
-@Serializable
-data class ToolCall(
-    val action: String,
-    val tool: String,
-    val params: Map<String, String> = emptyMap()
-)

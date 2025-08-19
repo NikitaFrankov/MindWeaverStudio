@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.data.model.chat
+package com.example.mindweaverstudio.data.models.chat
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -9,6 +9,6 @@ data class ChatRequest(
     val messages: List<ChatMessage>,
     val temperature: Double = 0.7,
     @SerialName("max_tokens")
-    val maxTokens: Int = 1000,
+    val maxTokens: Int? = 1000,
     val stream: Boolean = false
 )

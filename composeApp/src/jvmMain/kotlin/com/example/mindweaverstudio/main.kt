@@ -8,7 +8,7 @@ import com.arkivanov.decompose.extensions.compose.lifecycle.LifecycleController
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.example.mindweaverstudio.components.root.DefaultRootComponent
 import com.example.mindweaverstudio.di.appModule
-import com.example.mindweaverstudio.ui.App
+import com.example.mindweaverstudio.ui.app.App
 import org.koin.core.context.startKoin
 
 fun main() {

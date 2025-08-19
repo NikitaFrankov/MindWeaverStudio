@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mindweaverstudio.components.pipeline.PipelineComponent
 import com.example.mindweaverstudio.components.pipeline.PipelineStore
-import com.example.mindweaverstudio.data.model.pipeline.AgentResult
+import com.example.mindweaverstudio.data.models.pipeline.AgentResult
 
 @Composable
 fun PipelineScreen(component: PipelineComponent) {

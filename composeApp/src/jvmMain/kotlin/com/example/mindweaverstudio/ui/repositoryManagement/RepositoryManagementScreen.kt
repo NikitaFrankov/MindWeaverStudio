@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementComponent
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStore
-import com.example.mindweaverstudio.ui.model.UiRepositoryMessage
+import com.example.mindweaverstudio.ui.repositoryManagement.models.UiRepositoryMessage
 
 @Composable
 fun RepositoryManagementScreen(component: RepositoryManagementComponent) {
@@ -37,14 +37,8 @@ private fun RepositoryManagementScreen(
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
-        RepositoryManagementHeader(
-            selectedProvider = state.selectedProvider,
-            onProviderChange = { provider ->
-                intentHandler(RepositoryManagementStore.Intent.ChangeProvider(provider))
-            },
-            onClearChat = { intentHandler(RepositoryManagementStore.Intent.ClearChat) }
-        )
-        
+        RepositoryManagementHeader()
+
         Spacer(modifier = Modifier.height(16.dp))
         
         // Messages
@@ -126,75 +120,16 @@ private fun RepositoryManagementScreen(
 }
 
 @Composable
-private fun RepositoryManagementHeader(
-    selectedProvider: String,
-    onProviderChange: (String) -> Unit,
-    onClearChat: () -> Unit
-) {
+private fun RepositoryManagementHeader() {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
-            Text(
-                text = "Repository Management",
-                style = MaterialTheme.typography.headlineMedium
-            )
-            
-            ProviderSelector(
-                selectedProvider = selectedProvider,
-                onProviderChange = onProviderChange
-            )
-        }
-        
-        IconButton(onClick = onClearChat) {
-            Icon(
-                Icons.Default.Clear,
-                contentDescription = "Clear chat"
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ProviderSelector(
-    selectedProvider: String,
-    onProviderChange: (String) -> Unit
-) {
-    val providers = listOf("DeepSeek", "ChatGPT", "Gemini")
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
-        OutlinedTextField(
-            value = selectedProvider,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Provider") },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            modifier = Modifier.menuAnchor().width(200.dp)
+        Text(
+            text = "Repository Management",
+            style = MaterialTheme.typography.headlineMedium
         )
-
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            providers.forEach { provider ->
-                DropdownMenuItem(
-                    text = { Text(provider) },
-                    onClick = {
-                        onProviderChange(provider)
-                        expanded = false
-                    }
-                )
-            }
-        }
     }
 }
 

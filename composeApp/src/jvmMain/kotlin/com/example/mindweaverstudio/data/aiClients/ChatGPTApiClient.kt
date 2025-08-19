@@ -1,7 +1,11 @@
 package com.example.mindweaverstudio.data.aiClients
 
-import com.example.mindweaverstudio.data.model.chat.ChatRequest
-import com.example.mindweaverstudio.data.model.chat.ChatResponse
+import com.example.mindweaverstudio.data.config.ApiConfiguration
+import com.example.mindweaverstudio.data.models.ai.AiResponse
+import com.example.mindweaverstudio.data.models.ai.AiResponse.Companion.createTextResponse
+import com.example.mindweaverstudio.data.models.chat.ChatMessage
+import com.example.mindweaverstudio.data.models.chat.ChatRequest
+import com.example.mindweaverstudio.data.models.chat.ChatResponse
 import io.ktor.client.*
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.*
@@ -13,9 +17,9 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 class ChatGPTApiClient(
-    private val apiKey: String,
+    private val configuration: ApiConfiguration
+) : AiClient {
     private val baseUrl: String = "https://openrouter.ai/api/v1"
-) {
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
@@ -36,22 +40,40 @@ class ChatGPTApiClient(
         }
     }
 
-    suspend fun createChatCompletion(request: ChatRequest): Result<ChatResponse> {
+    override suspend fun createChatCompletion(
+        messages: List<ChatMessage>,
+        temperature: Double,
+        maxTokens: Int,
+    ): Result<AiResponse> {
+        val request = ChatRequest(
+            model = "qwen/qwen2.5-vl-32b-instruct:free",
+            messages = messages,
+            temperature = temperature,
+            maxTokens = 3000,
+        )
+
         return try {
             val response = client.post("$baseUrl/chat/completions") {
                 contentType(ContentType.Application.Json)
                 headers {
-                    append(HttpHeaders.Authorization, "Bearer $apiKey")
+                    append(HttpHeaders.Authorization, "Bearer ${configuration.openAiApiKey}")
                     append("Content-Type", "application/json")
                 }
                 setBody(request)
             }
             
             val rawResponse = response.bodyAsText()
-            println("ChatGPT API Response: $rawResponse")
-            
             val jsonResponse = json.decodeFromString<ChatResponse>(rawResponse)
-            Result.success(jsonResponse)
+            val error = jsonResponse.error
+            if (error != null) {
+                println("Error in ai response ${error.message + "\n\nError code: ${error.code}"}")
+                return Result.failure(Exception(error.message + "\n\nError code: ${error.code}"))
+            }
+            val content = jsonResponse.choices?.firstOrNull()?.message?.content
+                ?: return Result.failure(Exception("No response content available"))
+
+            println("Api response $content")
+            Result.success(createTextResponse(content))
         } catch (e: Exception) {
             println("ChatGPT API Error: ${e.message}")
             e.printStackTrace()

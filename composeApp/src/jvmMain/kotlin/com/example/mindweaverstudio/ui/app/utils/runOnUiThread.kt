@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.ui.utils
+package com.example.mindweaverstudio.ui.app.utils
 
 import javax.swing.SwingUtilities
 

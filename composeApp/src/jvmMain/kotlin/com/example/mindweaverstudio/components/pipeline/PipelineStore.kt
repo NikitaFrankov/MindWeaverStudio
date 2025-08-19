@@ -1,7 +1,7 @@
 package com.example.mindweaverstudio.components.pipeline
 
 import com.arkivanov.mvikotlin.core.store.Store
-import com.example.mindweaverstudio.data.model.pipeline.AgentResult
+import com.example.mindweaverstudio.data.models.pipeline.AgentResult
 
 interface PipelineStore : Store<PipelineStore.Intent, PipelineStore.State, PipelineStore.Label> {
 

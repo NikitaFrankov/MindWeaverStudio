@@ -1,6 +1,6 @@
-package com.example.mindweaverstudio.ui.model
+package com.example.mindweaverstudio.ui.repositoryManagement.models
 
-import com.example.mindweaverstudio.data.model.chat.ChatMessage
+import com.example.mindweaverstudio.data.models.chat.ChatMessage
 
 sealed class UiRepositoryMessage {
     abstract val content: String

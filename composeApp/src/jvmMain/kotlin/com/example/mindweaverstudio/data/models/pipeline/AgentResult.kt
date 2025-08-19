@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.data.model.pipeline
+package com.example.mindweaverstudio.data.models.pipeline
 
 import kotlinx.serialization.Serializable
 

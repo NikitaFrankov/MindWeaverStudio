@@ -1,15 +1,16 @@
 package com.example.mindweaverstudio.data.agents
 
-import com.example.mindweaverstudio.data.model.chat.ChatMessage
-import com.example.mindweaverstudio.data.model.pipeline.Agent
-import com.example.mindweaverstudio.data.model.pipeline.AgentPipelineData
-import com.example.mindweaverstudio.data.model.pipeline.AgentPipelineParser
-import com.example.mindweaverstudio.data.repository.NeuralNetworkRepository
+import com.example.mindweaverstudio.data.aiClients.AiClient
+import com.example.mindweaverstudio.data.models.chat.ChatMessage
+import com.example.mindweaverstudio.data.models.pipeline.Agent
+import com.example.mindweaverstudio.data.models.pipeline.AgentPipelineData
+import com.example.mindweaverstudio.data.models.pipeline.AgentPipelineParser
+import com.example.mindweaverstudio.data.models.pipeline.TEXT_SUMMARIZER_AGENT
 
 class TextSummarizerAgent(
-    private val repository: NeuralNetworkRepository,
+    private val client: AiClient,
 ) : Agent<AgentPipelineData, AgentPipelineData> {
-    override val name: String = "Text Summarizer"
+    override val name: String = TEXT_SUMMARIZER_AGENT
 
     override suspend fun run(input: AgentPipelineData): AgentPipelineData {
         val systemPrompt = """
@@ -65,11 +66,11 @@ class TextSummarizerAgent(
         val systemMessage = ChatMessage(ChatMessage.ROLE_SYSTEM, systemPrompt)
         val userMessage = ChatMessage(ChatMessage.ROLE_USER, jsonInput)
 
-        val result = repository.sendMessage(messages = listOf(systemMessage, userMessage), model = "gpt-3.5-turbo")
+        val result = client.createChatCompletion(messages = listOf(systemMessage, userMessage))
 
         return result.fold(
             onSuccess = { responseContent ->
-                AgentPipelineParser.fromJson(responseContent)
+                AgentPipelineParser.fromJson(responseContent.message)
             },
             onFailure = { error ->
                 throw error

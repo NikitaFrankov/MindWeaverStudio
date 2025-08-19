@@ -3,26 +3,25 @@ package com.example.mindweaverstudio.components.pipeline
 import com.arkivanov.mvikotlin.core.store.Reducer
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
+import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
-import com.example.mindweaverstudio.data.model.pipeline.Agent
-import com.example.mindweaverstudio.data.model.pipeline.AgentPipelineData
-import com.example.mindweaverstudio.data.model.pipeline.AgentPipelineData.Companion.createInitial
-import com.example.mindweaverstudio.data.model.pipeline.AgentResult
-import com.example.mindweaverstudio.data.agents.AgentPipeline
+import com.example.mindweaverstudio.data.models.pipeline.AgentResult
+import com.example.mindweaverstudio.data.agents.TextAnalyzerAgentPipeline
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 
 class PipelineStoreFactory(
     private val storeFactory: StoreFactory,
-    private val agents: List<Agent<AgentPipelineData, AgentPipelineData>>
+    private val textAnalyzerAgentPipeline: TextAnalyzerAgentPipeline,
 ) {
 
     fun create(): PipelineStore =
         object : PipelineStore, Store<PipelineStore.Intent, PipelineStore.State, PipelineStore.Label> by storeFactory.create(
             name = "PipelineStore",
             initialState = PipelineStore.State(),
-            bootstrapper = null,
+            bootstrapper = Bootstrapper(),
             executorFactory = ::ExecutorImpl,
             reducer = ReducerImpl
         ) {}
@@ -39,6 +38,12 @@ class PipelineStoreFactory(
         data object ResultsCleared : Msg()
         data class LogAdded(val log: String) : Msg()
         data class LogsCleared(val logs: List<String>) : Msg()
+    }
+
+    private inner class Bootstrapper: CoroutineBootstrapper<Action>() {
+        override fun invoke() {
+
+        }
     }
 
     private inner class ExecutorImpl : CoroutineExecutor<PipelineStore.Intent, Action, PipelineStore.State, Msg, PipelineStore.Label>(
@@ -67,17 +72,11 @@ class PipelineStoreFactory(
         private fun runPipeline(input: String) {
             dispatch(Msg.RunningChanged(true))
             dispatch(Msg.LogAdded("Pipeline execution started"))
-            val initialInput = createInitial(
-                prompt = input,
-                agentName = agents.first().name
-            )
             
             scope.launch {
                 try {
-                    val pipeline = AgentPipeline(agents)
-
-                    pipeline.run(
-                        initialInput = initialInput,
+                    textAnalyzerAgentPipeline.run(
+                        prompt = input,
                         onStart = { agentName ->
                             dispatch(Msg.LogAdded("Agent \"$agentName\" start task"))
                         },

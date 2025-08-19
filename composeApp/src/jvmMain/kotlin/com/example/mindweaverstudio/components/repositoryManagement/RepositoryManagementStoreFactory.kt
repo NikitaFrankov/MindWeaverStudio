@@ -6,32 +6,32 @@ import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStoreFactory.Msg.*
-import com.example.mindweaverstudio.data.repository.RepositoryProvider
-import com.example.mindweaverstudio.ui.model.UiRepositoryMessage
+import com.example.mindweaverstudio.data.aiClients.AiClient
+import com.example.mindweaverstudio.data.extensions.getToolReportFormat
+import com.example.mindweaverstudio.ui.repositoryManagement.models.UiRepositoryMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
-import com.example.mindweaverstudio.data.model.chat.ChatMessage
-import com.example.mindweaverstudio.data.mcp.MCPClient
-import com.example.mindweaverstudio.data.mcp.ToolCall
+import com.example.mindweaverstudio.data.models.chat.ChatMessage
+import com.example.mindweaverstudio.data.mcp.GithubMCPClient
+import com.example.mindweaverstudio.data.models.mcp.base.ToolCall
 import io.modelcontextprotocol.kotlin.sdk.Tool
 import kotlinx.serialization.json.Json
+import kotlin.collections.plus
 
 class RepositoryManagementStoreFactory(
+    private val githubMcpClient: GithubMCPClient,
     private val storeFactory: StoreFactory,
-    private val repositoryProvider: RepositoryProvider,
-    private val mcpClient: MCPClient,
+    private val aiClient: AiClient,
 ) {
 
-    fun create(): RepositoryManagementStore =
-        object : RepositoryManagementStore,
-            Store<RepositoryManagementStore.Intent, RepositoryManagementStore.State, RepositoryManagementStore.Label> by storeFactory.create(
-                name = "RepositoryManagementStore",
-                initialState = RepositoryManagementStore.State(),
-                bootstrapper = BootstrapperImpl(),
-                executorFactory = ::ExecutorImpl,
-                reducer = ReducerImpl
-            ) {}
+    fun create(): RepositoryManagementStore = object : RepositoryManagementStore, Store<RepositoryManagementStore.Intent, RepositoryManagementStore.State, RepositoryManagementStore.Label> by storeFactory.create(
+        name = "RepositoryManagementStore",
+        initialState = RepositoryManagementStore.State(),
+        bootstrapper = BootstrapperImpl(),
+        executorFactory = ::ExecutorImpl,
+        reducer = ReducerImpl
+    ) {}
 
     private sealed class Action
 
@@ -43,14 +43,12 @@ class RepositoryManagementStoreFactory(
         data class ErrorOccurred(val error: String) : Msg()
         data object ErrorCleared : Msg()
         data object ChatCleared : Msg()
-        data class ModelChanged(val model: String) : Msg()
-        data class ProviderChanged(val provider: String) : Msg()
     }
 
     private inner class BootstrapperImpl : CoroutineBootstrapper<Action>() {
         override fun invoke() {
             scope.launch {
-                mcpClient.init()
+                githubMcpClient.init()
             }
         }
     }
@@ -66,61 +64,88 @@ class RepositoryManagementStoreFactory(
                 is RepositoryManagementStore.Intent.SendMessage -> {
                     val currentState = state()
                     if (currentState.currentMessage.isNotBlank() && !currentState.isLoading) {
-                        sendMessage(currentState.currentMessage, currentState.messages, currentState.selectedModel)
+                        sendMessage(currentState.currentMessage, currentState.messages)
                     }
                 }
 
                 is RepositoryManagementStore.Intent.ClearError -> dispatch(ErrorCleared)
 
                 is RepositoryManagementStore.Intent.ClearChat -> dispatch(ChatCleared)
+            }
+        }
 
-                is RepositoryManagementStore.Intent.ChangeModel -> dispatch(ModelChanged(intent.model))
+        private fun sendAssistantMessage(
+            message: String,
+            currentMessages: List<UiRepositoryMessage>,
+        ) {
+            scope.launch {
+                try {
+                    val apiMessages = prepareApiMessages(
+                        currentMessages = currentMessages,
+                        isAssistantMessage = true,
+                        message = message,
+                    )
 
-                is RepositoryManagementStore.Intent.ChangeProvider -> dispatch(ProviderChanged(intent.provider))
+                    val result = aiClient.createChatCompletion(messages = apiMessages,)
+
+                    result.fold(
+                        onSuccess = { responseContent ->
+                            val message = responseContent.message
+
+                            val finalMessages = (currentMessages + UiRepositoryMessage.createAssistantMessage(message))
+
+                            dispatch(MessagesUpdated(finalMessages))
+                            dispatch(LoadingChanged(false))
+                        },
+                        onFailure = { error ->
+                            // Remove thinking message and show error
+                            val errorMessages = currentMessages
+                            dispatch(MessagesUpdated(errorMessages))
+                            dispatch(ErrorOccurred(error.message ?: "Unknown error occurred"))
+                            dispatch(LoadingChanged(false))
+                        }
+                    )
+                } catch (e: Exception) {
+                    // Remove thinking message and show error
+                    val errorMessages = currentMessages
+                    dispatch(MessagesUpdated(errorMessages))
+                    dispatch(ErrorOccurred(e.message ?: "Unknown error occurred"))
+                    dispatch(LoadingChanged(false))
+                }
             }
         }
 
         private fun sendMessage(
             message: String,
             currentMessages: List<UiRepositoryMessage>,
-            selectedModel: String,
-            isToolCall: Boolean = false
         ) {
             val userMessage = UiRepositoryMessage.createUserMessage(message)
             val thinkingMessage = UiRepositoryMessage.createThinkingMessage()
 
             // Add user message and thinking placeholder
-            if (!isToolCall) {
-                val updatedMessages = currentMessages + userMessage + thinkingMessage
-                dispatch(MessagesUpdated(updatedMessages))
-                dispatch(MessageSent)
-                dispatch(LoadingChanged(true))
-            }
+            val updatedMessages = currentMessages + userMessage + thinkingMessage
+            dispatch(MessagesUpdated(updatedMessages))
+            dispatch(MessageSent)
+            dispatch(LoadingChanged(true))
 
             scope.launch {
                 try {
-                    val repository = repositoryProvider.getRepository(state().selectedProvider)
-                    val apiMessages = prepareApiMessages(message, currentMessages, isToolCall)
+                    val apiMessages = prepareApiMessages(message, currentMessages)
 
-                    val result = repository.sendMessage(
+                    val result = aiClient.createChatCompletion(
                         messages = apiMessages,
-                        model = selectedModel,
                     )
 
                     result.fold(
                         onSuccess = { responseContent ->
-                            if (!isToolCall && responseContent.contains("{")) {
-                                handleToolCall(responseContent)
+                            val message = responseContent.message
+
+                            if (message.contains("call_tool")) {
+                                handleToolCall(message)
                                 return@fold
                             }
 
-                            // Remove thinking message and add actual response
-                            val finalMessages = if (isToolCall) {
-                                (currentMessages + UiRepositoryMessage.createAssistantMessage(responseContent))
-                            } else {
-                                (currentMessages + userMessage +
-                                        UiRepositoryMessage.createAssistantMessage(responseContent))
-                            }
+                            val finalMessages = (currentMessages + userMessage + UiRepositoryMessage.createAssistantMessage(message))
 
                             dispatch(MessagesUpdated(finalMessages))
                             dispatch(LoadingChanged(false))
@@ -150,13 +175,15 @@ class RepositoryManagementStoreFactory(
             }
 
             val toolCall = json.decodeFromString(ToolCall.serializer(), resultText)
-            val toolResult = mcpClient.callTool(toolCall)
+            val toolResult = githubMcpClient.callTool(toolCall)
                 .orEmpty()
                 .joinToString { "\n\n" + it.text.orEmpty() }
 
             val string = """
-                Проведи аналитику следующих данных:
+                Данные из tool "${toolCall.tool}":
                 $toolResult
+                
+                Проведи анализ данных, не добавляй форматирование mardown
             """.trimIndent()
 
             val messages = buildList {
@@ -164,11 +191,9 @@ class RepositoryManagementStoreFactory(
                 removeIf { it is UiRepositoryMessage.ThinkingMessage }
             }
 
-            sendMessage(
+            sendAssistantMessage(
                 message = string,
                 currentMessages = messages,
-                selectedModel = state().selectedModel,
-                isToolCall = true,
             )
         }
     }
@@ -188,82 +213,98 @@ class RepositoryManagementStoreFactory(
                     error = null,
                     isLoading = false
                 )
-
-                is ModelChanged -> copy(selectedModel = msg.model)
-                is ProviderChanged -> copy(selectedProvider = msg.provider)
             }
     }
 
     private suspend fun prepareApiMessages(
         message: String,
         currentMessages: List<UiRepositoryMessage>,
-        isToolCall: Boolean,
+        isAssistantMessage: Boolean = false,
     ): List<ChatMessage> {
-        val tools = mcpClient.getTools()
+        val tools = githubMcpClient.getTools()
         val systemPrompt = generateSystemPrompt(tools)
         val systemMessage = ChatMessage(ChatMessage.ROLE_SYSTEM, systemPrompt)
-        val userMessage = ChatMessage(ChatMessage.ROLE_USER, message)
-
-        return if (isToolCall) {
-            (currentMessages.map { it.toChatMessage() } + userMessage)
-        } else {
-            listOf(systemMessage) + (currentMessages.map { it.toChatMessage() } + userMessage)
+        val role = when(isAssistantMessage) {
+            true -> ChatMessage.ROLE_ASSISTANT
+            false -> ChatMessage.ROLE_USER
         }
-    }
+        val newMessage = ChatMessage(role = role, content = message)
 
-    fun extractBetween(text: String, open: String, close: String): String? {
-        val s = text.indexOf(open).takeIf { it >= 0 } ?: return null
-        val e = text.indexOf(close, s + open.length).takeIf { it > s } ?: return null
-        return text.substring(s + open.length, e).trim()
+        return listOf(systemMessage) + (currentMessages.map { it.toChatMessage() } + newMessage)
     }
 
     fun generateSystemPrompt(tools: List<Tool>): String {
         val toolsString = tools.mapIndexed { index, tool ->
             """
+             {
               "name": "${tool.name}",
               "description": "${tool.description}",
               "inputSchema": ${tool.inputSchema},
+              "report_format": ${tool.getToolReportFormat()}
+              },
             """.trimIndent()
         }
 
-
         return """
-            Ты работаешь в режиме агент+инструменты для работы с репозиторием.
-            Информация о репозитории: owner = NikitaFrankov, repo = MindWeaverStudio
-        
+            Ты работаешь в режиме агента с инструментами для работы с репозиторием.
+            Информация о репозитории:
+                owner = NikitaFrankov
+                repo = MindWeaverStudio
+            
             У тебя есть список доступных инструментов (tools), которые можно вызвать через MCP.
             Вот список:
-            $toolsString
+                [$toolsString]
             
-           
-            Формат вызова инструмента строго определён и не подлежит изменению
-           
-            {
-              "action": "call_tool",
-              "tool": "<название_инструмента (name)>",
-              "params": { <ключи и значения параметров (inputSchema)> }
-            }
-        
+            Для каждого инструмента в списке может быть задано поле report_format — шаблон текста отчета, который необходимо использовать при анализе результата вызова этого инструмента. Формат отчета:
+            - строго текстовый, без Markdown, HTML или эмодзи
+            - пробелы, переносы строк и нумерация обязательны
+            - структура отчета и вложенные элементы задаются через нумерацию 1., 2., … и * для подпунктов
+            - не раскрывать содержимое данных, а только фиксировать результат вызова инструмента и статус отправки отчета
+            - не добавлять форматирование markdown
             
-            Вот пример ответа:
-      
-            {
-              "action": "call_tool",
-              "tool": "get_commits",
-              "params": { "owner": "NikitaFrankov", "repo": "MindWeaverStudio" }
-            }
-        
-            
-            Требования:
-            - Если для ответа нужно вызвать инструмент — возвращай ТОЛЬКО этот JSON, без текста, без комментариев, без форматирования сверху или снизу.
-            - Не добавляй никакого текста или объяснений вокруг JSON.
-            - Всегда соблюдай правильный JSON-формат.
-            - Если для ответа не нужен вызов инструмента — верни обычный текстовый ответ (без JSON).
-            - Никогда не смешивай текст и JSON в одном ответе.
-            - Никогда не придумывай инструменты, которых нет в списке.
-            - Если MCP вызов был сделан и данные вернулись, ты можешь анализировать их и отвечать в свободном текстовом формате.
-            
-            Помни: твоя задача — либо вызвать инструмент (строго JSON), либо выдать текстовый ответ. Ничего между этим быть не может.
+            Правила работы:
+                1. JSON = вызов инструмента
+                   Любой JSON строго в формате:
+                   {
+                     "action": "call_tool",
+                     "tool": "<название инструмента>",
+                     "params": { <ключи и значения параметров> }
+                   }
+                   Никакой дополнительной информации вокруг JSON быть не должно: ни текста, ни комментариев, ни пробелов сверху или снизу, ни форматирования Markdown.
+               
+                   {
+                     "action": "call_tool",
+                     "tool": "<название инструмента>",
+                     "params": { ... },
+                   }
+                   Не придумывай инструменты, которых нет в списке.
+                
+                2. Текст = обычный ответ пользователю
+                   Если для ответа инструмент не нужен, возвращай текст в обычном формате без JSON.
+                   Никогда не смешивай текст и JSON в одном сообщении.
+                
+                3. Обработка истории сообщений
+                   Используй результаты предыдущих вызовов только для анализа и формирования текстового ответа.
+                   Никогда не включай данные предыдущих инструментов в новый JSON. JSON создается только для нового запроса пользователя.
+                
+                4. Порядок сообщений
+                   Системный промпт → запрос пользователя → (если нужен) JSON для инструмента → анализ данных → текстовый ответ.
+                   Всегда соблюдай этот порядок.
+                
+                5. Общие требования к JSON
+                   Поля action, tool и params обязательны.
+                   Пустой params допустим, если инструмент не требует аргументов.
+                   Всегда возвращай корректный JSON, который может быть распарсен без ошибок.
+                
+                6. Безопасность и строгость
+                   Никогда не отклоняйся от формата JSON при необходимости вызова инструмента.
+                   Текстовый ответ никогда не должен содержать JSON, если инструмент не вызывается.
+                   JSON для вызова инструмента формируется только один раз для каждого уникального запроса пользователя.
+                
+                7. Использование report_format
+                   - При получении результата вызова инструмента используй указанный report_format для формирования текстового отчета.
+                   - Отчет должен быть презентабельным.
+                   - Никогда не раскрывай данные вызова, только фиксируй статус успешности или ошибки.
         """.trimIndent()
     }
 }

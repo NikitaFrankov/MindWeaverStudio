@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.ui
+package com.example.mindweaverstudio.ui.app
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -33,12 +33,6 @@ fun RootContent(component: RootComponent, modifier: Modifier = Modifier) {
     
     Scaffold(
         modifier = modifier,
-        topBar = {
-            @OptIn(ExperimentalMaterial3Api::class)
-            TopAppBar(
-                title = { Text("MindWeaver Studio") }
-            )
-        },
         bottomBar = {
             NavigationBar {
                 val currentChild = stack.active.instance
