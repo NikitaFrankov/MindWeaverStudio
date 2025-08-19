@@ -69,7 +69,7 @@ class TextSummarizerAgent(
 
         return result.fold(
             onSuccess = { responseContent ->
-                AgentPipelineParser.fromJson(responseContent.resultText)
+                AgentPipelineParser.fromJson(responseContent)
             },
             onFailure = { error ->
                 throw error

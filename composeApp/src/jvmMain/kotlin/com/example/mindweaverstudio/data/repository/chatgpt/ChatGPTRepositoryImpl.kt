@@ -2,14 +2,11 @@ package com.example.mindweaverstudio.data.repository.chatgpt
 
 import com.example.mindweaverstudio.data.model.chat.ChatMessage
 import com.example.mindweaverstudio.data.model.chat.ChatRequest
-import com.example.mindweaverstudio.data.model.chat.ResponseContent
-import com.example.mindweaverstudio.data.network.ChatGPTApiClient
-import com.example.mindweaverstudio.data.parsers.ResponseContentParser
+import com.example.mindweaverstudio.data.aiClients.ChatGPTApiClient
 import com.example.mindweaverstudio.data.repository.NeuralNetworkRepository
 
 class ChatGPTRepositoryImpl(
-    private val apiClient: ChatGPTApiClient,
-    private val responseParser: ResponseContentParser
+    private val apiClient: ChatGPTApiClient
 ) : NeuralNetworkRepository {
 
     override suspend fun sendMessage(
@@ -17,7 +14,7 @@ class ChatGPTRepositoryImpl(
         model: String,
         temperature: Double,
         maxTokens: Int
-    ): Result<ResponseContent> {
+    ): Result<String> {
         val request = ChatRequest(
             model = model,
             messages = messages,
@@ -33,9 +30,8 @@ class ChatGPTRepositoryImpl(
                 
                 val content = response.choices?.firstOrNull()?.message?.content
                     ?: return Result.failure(Exception("No response content available"))
-                val result = responseParser.parseResponse(content)
 
-                Result.success(result)
+                Result.success(content)
             },
             onFailure = { error ->
                 Result.failure(error)

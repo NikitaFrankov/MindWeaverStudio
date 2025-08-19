@@ -7,14 +7,13 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
-import com.example.mindweaverstudio.components.chat.ChatComponent
-import com.example.mindweaverstudio.components.chat.DefaultChatComponent
 import com.example.mindweaverstudio.components.pipeline.PipelineComponent
 import com.example.mindweaverstudio.components.pipeline.DefaultPipelineComponent
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementComponent
 import com.example.mindweaverstudio.components.repositoryManagement.DefaultRepositoryManagementComponent
 import org.koin.core.component.KoinComponent
 import com.example.mindweaverstudio.components.root.RootComponent.Child
+import kotlinx.serialization.Serializable
 import org.koin.core.component.get
 
 class DefaultRootComponent(
@@ -31,7 +30,7 @@ class DefaultRootComponent(
     override val stack: Value<ChildStack<*, Child>> = childStack(
         source = navigation,
         serializer = Config.serializer(),
-        initialConfiguration = Config.Chat,
+        initialConfiguration = Config.Pipeline,
         handleBackButton = true,
         childFactory = ::child
     )
@@ -40,17 +39,9 @@ class DefaultRootComponent(
 
     private fun child(config: Config, componentContext: ComponentContext): Child {
         return when(config) {
-            is Config.Chat -> Child.Chat(chatComponent(componentContext))
             is Config.Pipeline -> Child.Pipeline(pipelineComponent(componentContext))
             is Config.RepositoryManagement -> Child.RepositoryManagement(repositoryManagementComponent(componentContext))
         }
-    }
-
-    private fun chatComponent(componentContext: ComponentContext): ChatComponent {
-        return DefaultChatComponent(
-            chatStoreFactory = get(),
-            componentContext = componentContext,
-        )
     }
 
     private fun pipelineComponent(componentContext: ComponentContext): PipelineComponent {
@@ -69,13 +60,6 @@ class DefaultRootComponent(
 
     /** Child components callbacks */
 
-    override fun navigateToChat() {
-        navigation.navigate(
-            transformer = { _: List<Config> -> listOf(Config.Chat) },
-            onComplete = { _, _ -> }
-        )
-    }
-
     override fun navigateToPipeline() {
         navigation.navigate(
             transformer = { _: List<Config> -> listOf(Config.Pipeline) },
@@ -90,15 +74,13 @@ class DefaultRootComponent(
         )
     }
 
-    @kotlinx.serialization.Serializable
+    @Serializable
     private sealed interface Config {
-        @kotlinx.serialization.Serializable
-        data object Chat : Config
         
-        @kotlinx.serialization.Serializable
+        @Serializable
         data object Pipeline : Config
         
-        @kotlinx.serialization.Serializable
+        @Serializable
         data object RepositoryManagement : Config
     }
 }

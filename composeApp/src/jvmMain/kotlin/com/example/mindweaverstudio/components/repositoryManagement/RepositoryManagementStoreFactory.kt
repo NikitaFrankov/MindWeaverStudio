@@ -6,14 +6,14 @@ import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStoreFactory.Msg.*
-import com.example.mindweaverstudio.services.RepositoryProvider
+import com.example.mindweaverstudio.data.repository.RepositoryProvider
 import com.example.mindweaverstudio.ui.model.UiRepositoryMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import com.example.mindweaverstudio.data.model.chat.ChatMessage
-import com.example.mindweaverstudio.data.network.MCPClient
-import com.example.mindweaverstudio.data.network.ToolCall
+import com.example.mindweaverstudio.data.mcp.MCPClient
+import com.example.mindweaverstudio.data.mcp.ToolCall
 import io.modelcontextprotocol.kotlin.sdk.Tool
 import kotlinx.serialization.json.Json
 
@@ -105,24 +105,21 @@ class RepositoryManagementStoreFactory(
                     val result = repository.sendMessage(
                         messages = apiMessages,
                         model = selectedModel,
-                        temperature = 0.7,
-                        maxTokens = 3800
                     )
 
                     result.fold(
                         onSuccess = { responseContent ->
-                            if (!isToolCall && responseContent.resultText.contains("{")) {
-                                handleToolCall(responseContent.resultText)
+                            if (!isToolCall && responseContent.contains("{")) {
+                                handleToolCall(responseContent)
                                 return@fold
                             }
 
-
                             // Remove thinking message and add actual response
                             val finalMessages = if (isToolCall) {
-                                (currentMessages + UiRepositoryMessage.createAssistantMessage(responseContent.resultText))
+                                (currentMessages + UiRepositoryMessage.createAssistantMessage(responseContent))
                             } else {
                                 (currentMessages + userMessage +
-                                        UiRepositoryMessage.createAssistantMessage(responseContent.resultText))
+                                        UiRepositoryMessage.createAssistantMessage(responseContent))
                             }
 
                             dispatch(MessagesUpdated(finalMessages))

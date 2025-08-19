@@ -1,8 +1,9 @@
-package com.example.mindweaverstudio.data.network
+package com.example.mindweaverstudio.data.aiClients
 
 import com.example.mindweaverstudio.data.model.chat.ChatRequest
 import com.example.mindweaverstudio.data.model.chat.ChatResponse
 import io.ktor.client.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
@@ -11,9 +12,9 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
-class GeminiApiClient(
+class ChatGPTApiClient(
     private val apiKey: String,
-    private val baseUrl: String = "https://generativelanguage.googleapis.com/v1beta/openai"
+    private val baseUrl: String = "https://openrouter.ai/api/v1"
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -22,11 +23,16 @@ class GeminiApiClient(
     
     private val client = HttpClient {
         install(ContentNegotiation) {
-            json(this@GeminiApiClient.json)
+            json(this@ChatGPTApiClient.json)
         }
         install(Logging) {
             logger = Logger.DEFAULT
             level = LogLevel.INFO
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 1500000
+            connectTimeoutMillis = 500000
+            socketTimeoutMillis = 1000000
         }
     }
 
@@ -42,12 +48,12 @@ class GeminiApiClient(
             }
             
             val rawResponse = response.bodyAsText()
-            println("Gemini API Response: $rawResponse")
+            println("ChatGPT API Response: $rawResponse")
             
             val jsonResponse = json.decodeFromString<ChatResponse>(rawResponse)
             Result.success(jsonResponse)
         } catch (e: Exception) {
-            println("Gemini API Error: ${e.message}")
+            println("ChatGPT API Error: ${e.message}")
             e.printStackTrace()
             Result.failure(e)
         }

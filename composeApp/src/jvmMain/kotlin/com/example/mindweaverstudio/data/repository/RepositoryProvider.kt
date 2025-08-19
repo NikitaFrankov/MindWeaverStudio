@@ -1,6 +1,4 @@
-package com.example.mindweaverstudio.services
-
-import com.example.mindweaverstudio.data.repository.NeuralNetworkRepository
+package com.example.mindweaverstudio.data.repository
 
 interface RepositoryProvider {
     fun getRepository(providerName: String): NeuralNetworkRepository

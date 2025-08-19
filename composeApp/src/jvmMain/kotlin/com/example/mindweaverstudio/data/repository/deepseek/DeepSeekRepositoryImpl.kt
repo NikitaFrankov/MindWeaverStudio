@@ -2,14 +2,11 @@ package com.example.mindweaverstudio.data.repository.deepseek
 
 import com.example.mindweaverstudio.data.model.chat.ChatMessage
 import com.example.mindweaverstudio.data.model.chat.ChatRequest
-import com.example.mindweaverstudio.data.model.chat.ResponseContent
-import com.example.mindweaverstudio.data.network.DeepSeekApiClient
-import com.example.mindweaverstudio.data.parsers.ResponseContentParser
+import com.example.mindweaverstudio.data.aiClients.DeepSeekApiClient
 import com.example.mindweaverstudio.data.repository.NeuralNetworkRepository
 
 class DeepSeekRepositoryImpl(
-    private val apiClient: DeepSeekApiClient,
-    private val responseParser: ResponseContentParser
+    private val apiClient: DeepSeekApiClient
 ) : NeuralNetworkRepository {
 
     override suspend fun sendMessage(
@@ -17,7 +14,7 @@ class DeepSeekRepositoryImpl(
         model: String,
         temperature: Double,
         maxTokens: Int
-    ): Result<ResponseContent> {
+    ): Result<String> {
         val request = ChatRequest(
             model = model,
             messages = messages,
@@ -35,9 +32,8 @@ class DeepSeekRepositoryImpl(
                 // Extract content from successful response
                 val content = response.choices?.firstOrNull()?.message?.content
                     ?: return Result.failure(Exception("No response content available"))
-                
-                val result = responseParser.parseResponse(content)
-                Result.success(result)
+
+                Result.success(content)
             },
             onFailure = { error ->
                 Result.failure(error)

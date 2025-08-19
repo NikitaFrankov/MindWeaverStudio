@@ -2,29 +2,23 @@ package com.example.mindweaverstudio.di
 
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
-import com.example.mindweaverstudio.components.chat.ChatStoreFactory
 import com.example.mindweaverstudio.components.pipeline.PipelineStoreFactory
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStoreFactory
-import com.example.mindweaverstudio.config.ApiConfiguration
+import com.example.mindweaverstudio.data.config.ApiConfiguration
 import com.example.mindweaverstudio.data.agents.TextReviewerAgent
 import com.example.mindweaverstudio.data.agents.TextSummarizerAgent
-import com.example.mindweaverstudio.services.SystemPromptService
-import com.example.mindweaverstudio.services.DefaultSystemPromptService
-import com.example.mindweaverstudio.services.RepositoryProvider
-import com.example.mindweaverstudio.services.DefaultRepositoryProvider
-import com.example.mindweaverstudio.data.network.ChatGPTApiClient
-import com.example.mindweaverstudio.data.network.DeepSeekApiClient
-import com.example.mindweaverstudio.data.network.GeminiApiClient
-import com.example.mindweaverstudio.data.parsers.StructuredOutputParser
-import com.example.mindweaverstudio.data.parsers.ResponseContentParser
+import com.example.mindweaverstudio.data.repository.RepositoryProvider
+import com.example.mindweaverstudio.data.repository.DefaultRepositoryProvider
+import com.example.mindweaverstudio.data.aiClients.ChatGPTApiClient
+import com.example.mindweaverstudio.data.aiClients.DeepSeekApiClient
+import com.example.mindweaverstudio.data.aiClients.GeminiApiClient
 import com.example.mindweaverstudio.data.repository.NeuralNetworkRepository
 import com.example.mindweaverstudio.data.repository.chatgpt.ChatGPTRepositoryImpl
 import com.example.mindweaverstudio.data.repository.deepseek.DeepSeekRepositoryImpl
 import com.example.mindweaverstudio.data.repository.gemini.GeminiRepositoryImpl
 import com.example.mindweaverstudio.data.model.pipeline.Agent
 import com.example.mindweaverstudio.data.model.pipeline.AgentPipelineData
-import com.example.mindweaverstudio.data.network.MCPClient
-import org.koin.core.module.dsl.factoryOf
+import com.example.mindweaverstudio.data.mcp.MCPClient
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -43,20 +37,16 @@ val appModule = module {
 
     // MCP clients
     single { MCPClient() }
-
-    factoryOf(::StructuredOutputParser)
-    single { ResponseContentParser(get<StructuredOutputParser>()) }
     
     // Repositories
-    single<NeuralNetworkRepository>(named("deepseek")) { DeepSeekRepositoryImpl(get(named("deepseek")), get()) }
-    single<NeuralNetworkRepository>(named("chatgpt")) { ChatGPTRepositoryImpl(get(named("chatgpt")), get()) }
-    single<NeuralNetworkRepository>(named("gemini")) { GeminiRepositoryImpl(get(named("gemini")), get()) }
+    single<NeuralNetworkRepository>(named("deepseek")) { DeepSeekRepositoryImpl(get(named("deepseek"))) }
+    single<NeuralNetworkRepository>(named("chatgpt")) { ChatGPTRepositoryImpl(get(named("chatgpt"))) }
+    single<NeuralNetworkRepository>(named("gemini")) { GeminiRepositoryImpl(get(named("gemini"))) }
     
     // Default repository (can be configured)
     single<NeuralNetworkRepository> { get<NeuralNetworkRepository>(named("chatgpt")) }
     
     // Services
-    single<SystemPromptService> { DefaultSystemPromptService() }
     single<RepositoryProvider> { 
         DefaultRepositoryProvider(
             get(named("deepseek")),
@@ -66,7 +56,6 @@ val appModule = module {
     }
     
     // Store Factories
-    singleOf(::ChatStoreFactory)
     singleOf(::RepositoryManagementStoreFactory)
 
     

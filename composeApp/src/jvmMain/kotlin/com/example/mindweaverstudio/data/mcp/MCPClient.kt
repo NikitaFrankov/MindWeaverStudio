@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.data.network
+package com.example.mindweaverstudio.data.mcp
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -15,11 +15,9 @@ import io.modelcontextprotocol.kotlin.sdk.CallToolRequest
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.ListToolsRequest
-import io.modelcontextprotocol.kotlin.sdk.ListToolsResult
 import io.modelcontextprotocol.kotlin.sdk.ServerCapabilities
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.Tool
-import io.modelcontextprotocol.kotlin.sdk.ToolAnnotations
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.StdioClientTransport
 import io.modelcontextprotocol.kotlin.sdk.server.Server
@@ -30,11 +28,7 @@ import kotlinx.io.asSource
 import kotlinx.io.buffered
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject

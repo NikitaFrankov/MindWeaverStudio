@@ -8,7 +8,7 @@ import com.example.mindweaverstudio.data.model.pipeline.Agent
 import com.example.mindweaverstudio.data.model.pipeline.AgentPipelineData
 import com.example.mindweaverstudio.data.model.pipeline.AgentPipelineData.Companion.createInitial
 import com.example.mindweaverstudio.data.model.pipeline.AgentResult
-import com.example.mindweaverstudio.services.AgentPipeline
+import com.example.mindweaverstudio.data.agents.AgentPipeline
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing

@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.data.network
+package com.example.mindweaverstudio.data.aiClients
 
 import com.example.mindweaverstudio.data.model.chat.ChatRequest
 import com.example.mindweaverstudio.data.model.chat.ChatResponse
