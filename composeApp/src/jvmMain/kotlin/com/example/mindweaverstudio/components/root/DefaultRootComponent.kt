@@ -11,6 +11,8 @@ import com.example.mindweaverstudio.components.pipeline.PipelineComponent
 import com.example.mindweaverstudio.components.pipeline.DefaultPipelineComponent
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementComponent
 import com.example.mindweaverstudio.components.repositoryManagement.DefaultRepositoryManagementComponent
+import com.example.mindweaverstudio.components.codeeditor.CodeEditorComponent
+import com.example.mindweaverstudio.components.codeeditor.DefaultCodeEditorComponent
 import org.koin.core.component.KoinComponent
 import com.example.mindweaverstudio.components.root.RootComponent.Child
 import kotlinx.serialization.Serializable
@@ -30,7 +32,7 @@ class DefaultRootComponent(
     override val stack: Value<ChildStack<*, Child>> = childStack(
         source = navigation,
         serializer = Config.serializer(),
-        initialConfiguration = Config.Pipeline,
+        initialConfiguration = Config.CodeEditor,
         handleBackButton = true,
         childFactory = ::child
     )
@@ -41,6 +43,7 @@ class DefaultRootComponent(
         return when(config) {
             is Config.Pipeline -> Child.Pipeline(pipelineComponent(componentContext))
             is Config.RepositoryManagement -> Child.RepositoryManagement(repositoryManagementComponent(componentContext))
+            is Config.CodeEditor -> Child.CodeEditor(codeEditorComponent(componentContext))
         }
     }
 
@@ -54,6 +57,13 @@ class DefaultRootComponent(
     private fun repositoryManagementComponent(componentContext: ComponentContext): RepositoryManagementComponent {
         return DefaultRepositoryManagementComponent(
             repositoryManagementStoreFactory = get(),
+            componentContext = componentContext,
+        )
+    }
+
+    private fun codeEditorComponent(componentContext: ComponentContext): CodeEditorComponent {
+        return DefaultCodeEditorComponent(
+            codeEditorStoreFactory = get(),
             componentContext = componentContext,
         )
     }
@@ -74,6 +84,13 @@ class DefaultRootComponent(
         )
     }
 
+    override fun navigateToCodeEditor() {
+        navigation.navigate(
+            transformer = { _: List<Config> -> listOf(Config.CodeEditor) },
+            onComplete = { _, _ -> }
+        )
+    }
+
     @Serializable
     private sealed interface Config {
         
@@ -82,5 +99,8 @@ class DefaultRootComponent(
         
         @Serializable
         data object RepositoryManagement : Config
+        
+        @Serializable
+        data object CodeEditor : Config
     }
 }
