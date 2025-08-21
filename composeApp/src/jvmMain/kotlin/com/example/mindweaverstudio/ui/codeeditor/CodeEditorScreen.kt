@@ -16,6 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
@@ -25,12 +26,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.mindweaverstudio.components.codeeditor.models.ChatMessage
+import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorComponent
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore
 import com.example.mindweaverstudio.components.codeeditor.models.LogEntry
-import com.example.mindweaverstudio.components.codeeditor.models.LogLevel
-import com.example.mindweaverstudio.components.codeeditor.models.Panel
+import com.example.mindweaverstudio.components.codeeditor.models.UiLogLevel
+import com.example.mindweaverstudio.components.codeeditor.models.UiPanel
 import com.example.mindweaverstudio.components.codeeditor.models.FileNode
 import java.text.SimpleDateFormat
 import java.util.*
@@ -85,7 +86,7 @@ private fun CodeEditorScreen(
                         val deltaWidth = with(density) { delta.x.toDp() }
                         val newWidth = ((leftWidth + deltaWidth) / totalWidth).coerceIn(0.1f, 0.8f)
                         leftPanelWidth = newWidth
-                        intentHandler(CodeEditorStore.Intent.UpdatePanelWidth(Panel.LEFT, newWidth))
+                        intentHandler(CodeEditorStore.Intent.UpdatePanelWidth(UiPanel.LEFT, newWidth))
                     }
                 )
                 
@@ -94,7 +95,8 @@ private fun CodeEditorScreen(
                     modifier = Modifier.width(centerWidth),
                     selectedFile = state.selectedFile,
                     content = state.editorContent,
-                    onContentChanged = { intentHandler(CodeEditorStore.Intent.UpdateEditorContent(it)) }
+                    onContentChanged = { intentHandler(CodeEditorStore.Intent.UpdateEditorContent(it)) },
+                    onTestCreateClick = { intentHandler.invoke(CodeEditorStore.Intent.OnCreateTestClick) },
                 )
                 
                 // Right divider
@@ -103,7 +105,7 @@ private fun CodeEditorScreen(
                         val deltaWidth = with(density) { delta.x.toDp() }
                         val newWidth = ((rightWidth - deltaWidth) / totalWidth).coerceIn(0.1f, 0.8f)
                         rightPanelWidth = newWidth
-                        intentHandler(CodeEditorStore.Intent.UpdatePanelWidth(Panel.RIGHT, newWidth))
+                        intentHandler(CodeEditorStore.Intent.UpdatePanelWidth(UiPanel.RIGHT, newWidth))
                     }
                 )
                 
@@ -112,8 +114,11 @@ private fun CodeEditorScreen(
                     modifier = Modifier.width(rightWidth),
                     messages = state.chatMessages,
                     chatInput = state.chatInput,
+                    isLoading = state.isLoading,
+                    error = state.error,
                     onInputChanged = { intentHandler(CodeEditorStore.Intent.UpdateChatInput(it)) },
-                    onSendMessage = { intentHandler(CodeEditorStore.Intent.SendChatMessage) }
+                    onSendMessage = { intentHandler(CodeEditorStore.Intent.SendChatMessage) },
+                    onClearError = { intentHandler(CodeEditorStore.Intent.ClearError) }
                 )
             }
         }
@@ -224,7 +229,8 @@ private fun EditorPanel(
     modifier: Modifier = Modifier,
     selectedFile: FileNode?,
     content: String,
-    onContentChanged: (String) -> Unit
+    onContentChanged: (String) -> Unit,
+    onTestCreateClick: () -> Unit,
 ) {
     Card(
         modifier = modifier.fillMaxHeight(),
@@ -235,11 +241,21 @@ private fun EditorPanel(
         Column(
             modifier = Modifier.padding(8.dp)
         ) {
-            Text(
-                text = selectedFile?.name ?: "No file selected",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = selectedFile?.name ?: "No file selected",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp).align(Alignment.CenterStart)
+                )
+
+                Button(
+                    onClick = onTestCreateClick,
+                    enabled = selectedFile != null,
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                ) {
+                    Text(text = "Create tests for this code")
+                }
+            }
             
             BasicTextField(
                 value = content,
@@ -261,10 +277,13 @@ private fun EditorPanel(
 @Composable
 private fun ChatPanel(
     modifier: Modifier = Modifier,
-    messages: List<ChatMessage>,
+    messages: List<UiChatMessage>,
     chatInput: String,
+    isLoading: Boolean,
+    error: String?,
     onInputChanged: (String) -> Unit,
-    onSendMessage: () -> Unit
+    onSendMessage: () -> Unit,
+    onClearError: () -> Unit
 ) {
     Card(
         modifier = modifier.fillMaxHeight(),
@@ -289,7 +308,11 @@ private fun ChatPanel(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(messages) { message ->
-                    ChatMessageItem(message = message)
+                    when (message) {
+                        is UiChatMessage.UserMessage -> UserChatMessageItem(message = message)
+                        is UiChatMessage.AssistantMessage -> AssistantChatMessageItem(message = message)
+                        is UiChatMessage.ThinkingMessage -> ThinkingChatMessageItem(message = message)
+                    }
                 }
             }
             
@@ -310,6 +333,7 @@ private fun ChatPanel(
                     onValueChange = onInputChanged,
                     modifier = Modifier.weight(1f),
                     placeholder = { Text("Type a message...") },
+                    enabled = !isLoading,
                     maxLines = 3
                 )
                 
@@ -317,9 +341,36 @@ private fun ChatPanel(
                 
                 IconButton(
                     onClick = onSendMessage,
-                    enabled = chatInput.isNotBlank()
+                    enabled = chatInput.isNotBlank() && !isLoading
                 ) {
                     Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+                }
+            }
+        }
+        
+        // Error handling
+        error?.let { errorMessage ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    TextButton(
+                        onClick = onClearError
+                    ) {
+                        Text("Dismiss")
+                    }
                 }
             }
         }
@@ -327,19 +378,16 @@ private fun ChatPanel(
 }
 
 @Composable
-private fun ChatMessageItem(message: ChatMessage) {
+private fun UserChatMessageItem(message: UiChatMessage.UserMessage) {
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
+        horizontalArrangement = Arrangement.End
     ) {
         Card(
             colors = CardDefaults.cardColors(
-                containerColor = if (message.isUser) 
-                    MaterialTheme.colorScheme.primaryContainer
-                else 
-                    MaterialTheme.colorScheme.secondaryContainer
+                containerColor = MaterialTheme.colorScheme.primaryContainer
             ),
             modifier = Modifier.widthIn(max = 280.dp)
         ) {
@@ -350,10 +398,7 @@ private fun ChatMessageItem(message: ChatMessage) {
                     Text(
                         text = message.content,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (message.isUser) 
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        else 
-                            MaterialTheme.colorScheme.onSecondaryContainer
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
                 
@@ -362,13 +407,68 @@ private fun ChatMessageItem(message: ChatMessage) {
                 Text(
                     text = timeFormat.format(Date(message.timestamp)),
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (message.isUser) 
-                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    else 
-                        MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AssistantChatMessageItem(message: UiChatMessage.AssistantMessage) {
+    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start
+    ) {
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            ),
+            modifier = Modifier.widthIn(max = 280.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp)
+            ) {
+                SelectionContainer {
+                    Text(
+                        text = message.content,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Text(
+                    text = timeFormat.format(Date(message.timestamp)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThinkingChatMessageItem(message: UiChatMessage.ThinkingMessage) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(16.dp),
+            strokeWidth = 2.dp
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = message.content,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -431,10 +531,10 @@ private fun LogEntryItem(log: LogEntry) {
         
         Text(
             text = when (log.level) {
-                LogLevel.INFO -> "ℹ️"
-                LogLevel.WARNING -> "⚠️"
-                LogLevel.ERROR -> "❌"
-                LogLevel.DEBUG -> "🐛"
+                UiLogLevel.INFO -> "ℹ️"
+                UiLogLevel.WARNING -> "⚠️"
+                UiLogLevel.ERROR -> "❌"
+                UiLogLevel.DEBUG -> "🐛"
             },
             modifier = Modifier.width(24.dp)
         )
@@ -446,8 +546,8 @@ private fun LogEntryItem(log: LogEntry) {
                     fontFamily = FontFamily.Monospace
                 ),
                 color = when (log.level) {
-                    LogLevel.ERROR -> MaterialTheme.colorScheme.error
-                    LogLevel.WARNING -> Color(0xFFFF9800)
+                    UiLogLevel.ERROR -> MaterialTheme.colorScheme.error
+                    UiLogLevel.WARNING -> Color(0xFFFF9800)
                     else -> MaterialTheme.colorScheme.onSurface
                 }
             )
@@ -457,7 +557,7 @@ private fun LogEntryItem(log: LogEntry) {
 
 @Composable
 private fun VerticalDivider(
-    onDrag: (delta: androidx.compose.ui.geometry.Offset) -> Unit
+    onDrag: (delta: Offset) -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -474,7 +574,7 @@ private fun VerticalDivider(
 
 @Composable
 private fun HorizontalDivider(
-    onDrag: (delta: androidx.compose.ui.geometry.Offset) -> Unit
+    onDrag: (delta: Offset) -> Unit
 ) {
     Box(
         modifier = Modifier

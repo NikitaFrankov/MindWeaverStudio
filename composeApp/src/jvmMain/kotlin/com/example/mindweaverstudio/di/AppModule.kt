@@ -13,6 +13,7 @@ import com.example.mindweaverstudio.data.aiClients.AiClient
 import com.example.mindweaverstudio.data.aiClients.ChatGPTApiClient
 import com.example.mindweaverstudio.data.aiClients.DeepSeekApiClient
 import com.example.mindweaverstudio.data.aiClients.GeminiApiClient
+import com.example.mindweaverstudio.data.mcp.DockerMCPClient
 import com.example.mindweaverstudio.data.models.pipeline.Agent
 import com.example.mindweaverstudio.data.models.pipeline.AgentPipelineData
 import com.example.mindweaverstudio.data.mcp.GithubMCPClient
@@ -41,6 +42,7 @@ val appModule = module {
 
     // MCP clients
     singleOf(::GithubMCPClient)
+    singleOf(::DockerMCPClient)
 
     // Pipeline Agents
     factory<Agent<AgentPipelineData, AgentPipelineData>>(named(TEXT_SUMMARIZER_AGENT)) {
@@ -61,7 +63,13 @@ val appModule = module {
     // Stores
     singleOf(::DefaultStoreFactory) bind StoreFactory::class
     factoryOf(::PipelineStoreFactory)
-    factoryOf(::CodeEditorStoreFactory)
+    factory {
+        CodeEditorStoreFactory(
+            dockerMCPClient = get(),
+            storeFactory = get(),
+            aiClient = get<AiClient>(named("chatgpt"))
+        )
+    }
     factory {
         RepositoryManagementStoreFactory(
             githubMcpClient = get(),

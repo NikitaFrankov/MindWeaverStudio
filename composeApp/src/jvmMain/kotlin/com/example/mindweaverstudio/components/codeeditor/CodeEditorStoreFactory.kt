@@ -5,23 +5,32 @@ import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
-import com.example.mindweaverstudio.components.codeeditor.models.ChatMessage
 import com.example.mindweaverstudio.components.codeeditor.models.FileNode
 import com.example.mindweaverstudio.components.codeeditor.models.LogEntry
-import com.example.mindweaverstudio.components.codeeditor.models.LogLevel
-import com.example.mindweaverstudio.components.codeeditor.models.Panel
+import com.example.mindweaverstudio.components.codeeditor.models.UiLogLevel
+import com.example.mindweaverstudio.components.codeeditor.models.UiPanel
+import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage
 import com.example.mindweaverstudio.components.codeeditor.utils.scanDirectoryToFileNode
+import com.example.mindweaverstudio.data.aiClients.AiClient
+import com.example.mindweaverstudio.data.mcp.DockerMCPClient
+import com.example.mindweaverstudio.data.models.chat.ChatMessage
+import com.example.mindweaverstudio.data.models.mcp.base.ToolCall
+import io.modelcontextprotocol.kotlin.sdk.Tool
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
+import kotlinx.serialization.json.Json
+import kotlin.collections.plus
 import kotlin.math.max
 import kotlin.math.min
 
 class CodeEditorStoreFactory(
-    private val storeFactory: StoreFactory
+    private val dockerMCPClient: DockerMCPClient,
+    private val storeFactory: StoreFactory,
+    private val aiClient: AiClient,
 ) {
 
-    private val filePath: String = "/Users/nikitaradionov/IdeaProjects/SimpleProject"
+    private val rootFilePath: String = ""
 
     fun create(): CodeEditorStore =
         object : CodeEditorStore, Store<CodeEditorStore.Intent, CodeEditorStore.State, CodeEditorStore.Label> by storeFactory.create(
@@ -40,8 +49,12 @@ class CodeEditorStoreFactory(
         class FileSelected(val file: FileNode) : Msg()
         class EditorContentUpdated(val content: String) : Msg()
         class ChatInputUpdated(val input: String) : Msg()
-        class ChatMessageAdded(val message: ChatMessage) : Msg()
-        class PanelWidthUpdated(val panel: Panel, val width: Float) : Msg()
+        class ChatMessageAdded(val message: UiChatMessage) : Msg()
+        class MessagesUpdated(val messages: List<UiChatMessage>) : Msg()
+        class LoadingChanged(val isLoading: Boolean) : Msg()
+        class ErrorOccurred(val error: String) : Msg()
+        data object ErrorCleared : Msg()
+        class PanelWidthUpdated(val uiPanel: UiPanel, val width: Float) : Msg()
         class BottomPanelHeightUpdated(val height: Float) : Msg()
         class LogEntryAdded(val entry: LogEntry) : Msg()
         class OnNodesReceived(val node: FileNode) : Msg()
@@ -51,7 +64,14 @@ class CodeEditorStoreFactory(
         mainContext = Dispatchers.Swing
     ) {
         override fun executeAction(action: Action) = when(action) {
-            Action.Init -> fetchRootNode(filePath)
+            Action.Init -> {
+                initMcpServer()
+                fetchRootNode(rootFilePath)
+            }
+        }
+
+        private fun initMcpServer() {
+            scope.launch { dockerMCPClient.init() }
         }
 
         private fun fetchRootNode(filePath: String) {
@@ -67,12 +87,14 @@ class CodeEditorStoreFactory(
                     if (!intent.file.isDirectory) {
                         dispatch(Msg.FileSelected(intent.file))
                         dispatch(Msg.EditorContentUpdated(intent.file.content.orEmpty()))
-                        dispatch(Msg.LogEntryAdded(
-                            LogEntry(
-                                "Opened file: ${intent.file.name}",
-                                LogLevel.INFO
+                        dispatch(
+                            Msg.LogEntryAdded(
+                                LogEntry(
+                                    "Opened file: ${intent.file.name}",
+                                    UiLogLevel.INFO
+                                )
                             )
-                        ))
+                        )
                     }
                 }
                 
@@ -84,11 +106,18 @@ class CodeEditorStoreFactory(
                     dispatch(Msg.ChatInputUpdated(intent.input))
                 }
                 
-                is CodeEditorStore.Intent.SendChatMessage -> Unit
+                is CodeEditorStore.Intent.SendChatMessage -> {
+                    val currentState = state()
+                    if (currentState.chatInput.isNotBlank() && !currentState.isLoading) {
+                        sendMessage(currentState.chatInput, currentState.chatMessages)
+                    }
+                }
+                
+                is CodeEditorStore.Intent.ClearError -> dispatch(Msg.ErrorCleared)
 
                 is CodeEditorStore.Intent.UpdatePanelWidth -> {
                     val clampedWidth = min(0.8f, max(0.1f, intent.width))
-                    dispatch(Msg.PanelWidthUpdated(intent.panel, clampedWidth))
+                    dispatch(Msg.PanelWidthUpdated(intent.uiPanel, clampedWidth))
                 }
                 
                 is CodeEditorStore.Intent.UpdateBottomPanelHeight -> {
@@ -99,7 +128,226 @@ class CodeEditorStoreFactory(
                 is CodeEditorStore.Intent.AddLogEntry -> {
                     dispatch(Msg.LogEntryAdded(intent.entry))
                 }
+
+                CodeEditorStore.Intent.OnCreateTestClick -> sendTestCreationPrompt(state().chatMessages)
             }
+        }
+
+        private fun sendTestCreationPrompt(
+            currentMessages: List<UiChatMessage>,
+        ) {
+            val selectedFile = state().selectedFile
+            val fileContent = selectedFile?.content.orEmpty()
+            val testPrompt = """
+                Create and run jUnit tests for this kotlin file:
+                
+                $fileContent
+            """.trimIndent()
+            val displayedMessage = "Create jUnit tests for ${state().selectedFile?.name}"
+
+            val userMessage = UiChatMessage.createUserMessage(displayedMessage)
+            val thinkingMessage = UiChatMessage.createThinkingMessage()
+
+            // Add user message and thinking placeholder
+            val updatedMessages = currentMessages + userMessage + thinkingMessage
+            dispatch(Msg.MessagesUpdated(updatedMessages))
+            dispatch(Msg.ChatInputUpdated(""))
+            dispatch(Msg.LoadingChanged(true))
+
+            scope.launch {
+                try {
+                    val apiMessages = prepareApiMessages(testPrompt, currentMessages)
+
+                    val result = aiClient.createChatCompletion(
+                        messages = apiMessages,
+                    )
+
+                    result.fold(
+                        onSuccess = { responseContent ->
+                           try {
+                               val responseMessage = responseContent.message
+
+                               if (responseMessage.contains("run_junit_tests")) {
+                                   handleRunDockerWithCodeToolCall(
+                                       message = responseMessage,
+                                       filePath = selectedFile?.path.orEmpty(),
+                                       currentMessages = currentMessages
+                                   )
+                               } else {
+                                   throw IllegalStateException("tool_call was now existing in ai response, response - $responseMessage")
+                               }
+                           } catch (error: Exception) {
+                               val errorMessages = currentMessages + userMessage
+                               dispatch(Msg.MessagesUpdated(errorMessages))
+                               dispatch(Msg.ErrorOccurred(error.message ?: "Unknown error occurred"))
+                               dispatch(Msg.LoadingChanged(false))
+                           }
+
+                        },
+                        onFailure = { error ->
+                            // Remove thinking message and show error
+                            val errorMessages = currentMessages + userMessage
+                            dispatch(Msg.MessagesUpdated(errorMessages))
+                            dispatch(Msg.ErrorOccurred(error.message ?: "Unknown error occurred"))
+                            dispatch(Msg.LoadingChanged(false))
+                        }
+                    )
+                } catch (e: Exception) {
+                    // Remove thinking message and show error
+                    val errorMessages = currentMessages + userMessage
+                    dispatch(Msg.MessagesUpdated(errorMessages))
+                    dispatch(Msg.ErrorOccurred(e.message ?: "Unknown error occurred"))
+                    dispatch(Msg.LoadingChanged(false))
+                }
+            }
+        }
+
+        private suspend fun handleMcpToolCall(message: String) {
+            val json = Json {
+                ignoreUnknownKeys = true
+                isLenient = true
+            }
+
+            val toolCall = json.decodeFromString(ToolCall.serializer(), message)
+
+            val result = dockerMCPClient.callTool(toolCall)?.firstOrNull()?.text.orEmpty()
+            val logEntry = LogEntry(
+                message = result,
+                level = UiLogLevel.INFO,
+            )
+            dispatch(Msg.LogEntryAdded(logEntry))
+        }
+
+        private suspend fun handleRunDockerWithCodeToolCall(
+            message: String,
+            filePath: String,
+            currentMessages: List<UiChatMessage>
+        ) {
+            val json = Json {
+                ignoreUnknownKeys = true
+                isLenient = true
+            }
+
+            val toolCall = json.decodeFromString(ToolCall.serializer(), message)
+            val currentToolCall = toolCall.copy(
+                params = buildMap {
+                    putAll(toolCall.params)
+                    replace("file_path", rootFilePath + filePath)
+                }
+            )
+            println("current tool call is - $currentToolCall")
+
+            val result: String = dockerMCPClient.callTool(currentToolCall)?.firstOrNull()?.text.orEmpty()
+
+            println("mcpresult - $result")
+            val logEntry = LogEntry(
+                message = result,
+                level = UiLogLevel.INFO,
+            )
+
+            val assistantMessage = UiChatMessage.createAssistantMessage(result.substringBeforeLast("Output"))
+            fetchRootNode(rootFilePath)
+            dispatch(Msg.MessagesUpdated(currentMessages + listOf(assistantMessage)))
+            dispatch(Msg.LoadingChanged(false))
+            dispatch(Msg.LogEntryAdded(logEntry))
+        }
+
+        private fun sendMessage(
+            message: String,
+            currentMessages: List<UiChatMessage>,
+        ) {
+            val userMessage = UiChatMessage.createUserMessage(message)
+            val thinkingMessage = UiChatMessage.createThinkingMessage()
+
+            // Add user message and thinking placeholder
+            val updatedMessages = currentMessages + userMessage + thinkingMessage
+            dispatch(Msg.MessagesUpdated(updatedMessages))
+            dispatch(Msg.ChatInputUpdated(""))
+            dispatch(Msg.LoadingChanged(true))
+
+            scope.launch {
+                try {
+                    val apiMessages = prepareApiMessages(message, currentMessages)
+
+                    val result = aiClient.createChatCompletion(
+                        messages = apiMessages,
+                    )
+
+                    result.fold(
+                        onSuccess = { responseContent ->
+                            val responseMessage = responseContent.message
+
+                            val finalMessages = (currentMessages + userMessage + UiChatMessage.createAssistantMessage(responseMessage))
+
+                            dispatch(Msg.MessagesUpdated(finalMessages))
+                            dispatch(Msg.LoadingChanged(false))
+                        },
+                        onFailure = { error ->
+                            // Remove thinking message and show error
+                            val errorMessages = currentMessages + userMessage
+                            dispatch(Msg.MessagesUpdated(errorMessages))
+                            dispatch(Msg.ErrorOccurred(error.message ?: "Unknown error occurred"))
+                            dispatch(Msg.LoadingChanged(false))
+                        }
+                    )
+                } catch (e: Exception) {
+                    // Remove thinking message and show error
+                    val errorMessages = currentMessages + userMessage
+                    dispatch(Msg.MessagesUpdated(errorMessages))
+                    dispatch(Msg.ErrorOccurred(e.message ?: "Unknown error occurred"))
+                    dispatch(Msg.LoadingChanged(false))
+                }
+            }
+        }
+
+        private suspend fun prepareApiMessages(
+            message: String,
+            currentMessages: List<UiChatMessage>,
+        ): List<ChatMessage> {
+            val tools = dockerMCPClient.getTools()
+            val systemPrompt = generateSystemPrompt(tools)
+            val systemMessage = ChatMessage(ChatMessage.ROLE_SYSTEM, systemPrompt)
+            val newMessage = ChatMessage(role = ChatMessage.ROLE_USER, content = message)
+
+            return listOf(systemMessage) + (currentMessages.map { it.toChatMessage() } + newMessage)
+        }
+
+        private fun generateSystemPrompt(tools: List<Tool>): String {
+            return """
+You are an AI agent integrated with a mcp server.  
+You must follow these rules strictly:
+
+1. You are given a list of tools:
+    $tools
+
+2. When the user makes a request that can be satisfied by one of the tools,  
+   you must respond **only** with a JSON object of the following form:
+
+   {
+     "action": "call_tool",
+     "tool": "<tool_name>",
+     "params": { <key-value pairs> }
+   }
+
+3. Never include explanations, natural language, comments, or any additional text.  
+   Your output must always be a **valid JSON object only**, parsable by standard JSON parsers.  
+
+4. If the request cannot be mapped to any available tool, respond with:
+
+   {
+     "action": "no_tool",
+     "reason": "<short machine-readable reason>"
+   }
+
+5. Do not invent tools, parameters, or functionality.  
+   Only use the provided tool list.  
+
+6. Preserve the integrity of code and text passed as parameters (do not escape or reformat unnecessarily).  
+
+This system prompt establishes a strict contract:  
+You are a JSON-only tool invocation layer.  
+No additional conversation, no reasoning, no markdown formatting.  
+            """.trimIndent()
         }
     }
 
@@ -110,13 +358,17 @@ class CodeEditorStoreFactory(
                 is Msg.EditorContentUpdated -> copy(editorContent = msg.content)
                 is Msg.ChatInputUpdated -> copy(chatInput = msg.input)
                 is Msg.ChatMessageAdded -> copy(chatMessages = chatMessages + msg.message)
-                is Msg.PanelWidthUpdated -> when (msg.panel) {
-                    Panel.LEFT -> copy(leftPanelWidth = msg.width)
-                    Panel.RIGHT -> copy(rightPanelWidth = msg.width)
+                is Msg.PanelWidthUpdated -> when (msg.uiPanel) {
+                    UiPanel.LEFT -> copy(leftPanelWidth = msg.width)
+                    UiPanel.RIGHT -> copy(rightPanelWidth = msg.width)
                 }
                 is Msg.BottomPanelHeightUpdated -> copy(bottomPanelHeight = msg.height)
                 is Msg.LogEntryAdded -> copy(logs = logs + msg.entry)
                 is Msg.OnNodesReceived -> copy(projectTree = msg.node.children)
+                is Msg.MessagesUpdated -> copy(chatMessages = msg.messages)
+                is Msg.LoadingChanged -> copy(isLoading = msg.isLoading)
+                is Msg.ErrorOccurred -> copy(error = msg.error, isLoading = false)
+                is Msg.ErrorCleared -> copy(error = null)
             }
     }
 }
