@@ -18,9 +18,7 @@ fun main() {
 
     application {
         val lifecycle = LifecycleRegistry()
-        val root = DefaultRootComponent(
-            componentContext = DefaultComponentContext(lifecycle = lifecycle),
-        )
+        val root = DefaultRootComponent(componentContext = DefaultComponentContext(lifecycle = lifecycle),)
 
         val windowState = rememberWindowState()
         LifecycleController(lifecycle, windowState)
@@ -30,6 +28,8 @@ fun main() {
             state = windowState,
             title = "mindweaverstudio"
         ) {
+            window.minimumSize = java.awt.Dimension(800, 600)
+
             App(component = root)
         }
     }

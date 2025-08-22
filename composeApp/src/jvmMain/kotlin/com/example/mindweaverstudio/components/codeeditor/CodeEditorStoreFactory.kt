@@ -11,6 +11,7 @@ import com.example.mindweaverstudio.components.codeeditor.models.UiLogLevel
 import com.example.mindweaverstudio.components.codeeditor.models.UiPanel
 import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage
 import com.example.mindweaverstudio.components.codeeditor.utils.scanDirectoryToFileNode
+import com.example.mindweaverstudio.components.projectselection.Project
 import com.example.mindweaverstudio.data.aiClients.AiClient
 import com.example.mindweaverstudio.data.mcp.DockerMCPClient
 import com.example.mindweaverstudio.data.models.chat.ChatMessage
@@ -30,12 +31,10 @@ class CodeEditorStoreFactory(
     private val aiClient: AiClient,
 ) {
 
-    private val rootFilePath: String = ""
-
-    fun create(): CodeEditorStore =
+    fun create(project: Project): CodeEditorStore =
         object : CodeEditorStore, Store<CodeEditorStore.Intent, CodeEditorStore.State, CodeEditorStore.Label> by storeFactory.create(
             name = "CodeEditorStore",
-            initialState = CodeEditorStore.State(),
+            initialState = CodeEditorStore.State(project = project),
             bootstrapper = SimpleBootstrapper(Action.Init),
             executorFactory = ::ExecutorImpl,
             reducer = ReducerImpl
@@ -66,7 +65,7 @@ class CodeEditorStoreFactory(
         override fun executeAction(action: Action) = when(action) {
             Action.Init -> {
                 initMcpServer()
-                fetchRootNode(rootFilePath)
+                fetchRootNode(state().project.path)
             }
         }
 
@@ -232,7 +231,7 @@ class CodeEditorStoreFactory(
             val currentToolCall = toolCall.copy(
                 params = buildMap {
                     putAll(toolCall.params)
-                    replace("file_path", rootFilePath + filePath)
+                    replace("file_path", state().project.path + filePath)
                 }
             )
             println("current tool call is - $currentToolCall")
@@ -246,7 +245,7 @@ class CodeEditorStoreFactory(
             )
 
             val assistantMessage = UiChatMessage.createAssistantMessage(result.substringBeforeLast("Output"))
-            fetchRootNode(rootFilePath)
+            fetchRootNode(filePath = state().project.path)
             dispatch(Msg.MessagesUpdated(currentMessages + listOf(assistantMessage)))
             dispatch(Msg.LoadingChanged(false))
             dispatch(Msg.LogEntryAdded(logEntry))

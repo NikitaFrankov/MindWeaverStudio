@@ -5,10 +5,12 @@ import com.example.mindweaverstudio.components.codeeditor.models.FileNode
 import com.example.mindweaverstudio.components.codeeditor.models.LogEntry
 import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage
 import com.example.mindweaverstudio.components.codeeditor.models.UiPanel
+import com.example.mindweaverstudio.components.projectselection.Project
 
 interface CodeEditorStore : Store<CodeEditorStore.Intent, CodeEditorStore.State, CodeEditorStore.Label> {
 
     data class State(
+        val project: Project,
         val projectTree: List<FileNode> = emptyList(),
         val selectedFile: FileNode? = null,
         val editorContent: String = "",

@@ -5,6 +5,7 @@ import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.example.mindweaverstudio.components.pipeline.PipelineStoreFactory
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStoreFactory
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStoreFactory
+import com.example.mindweaverstudio.components.projectselection.ProjectSelectionStoreFactory
 import com.example.mindweaverstudio.data.agents.TextAnalyzerAgentPipeline
 import com.example.mindweaverstudio.data.config.ApiConfiguration
 import com.example.mindweaverstudio.data.agents.TextReviewerAgent
@@ -63,6 +64,7 @@ val appModule = module {
     // Stores
     singleOf(::DefaultStoreFactory) bind StoreFactory::class
     factoryOf(::PipelineStoreFactory)
+    factoryOf(::ProjectSelectionStoreFactory)
     factory {
         CodeEditorStoreFactory(
             dockerMCPClient = get(),
