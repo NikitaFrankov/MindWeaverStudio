@@ -43,7 +43,8 @@ suspend fun scanDirectoryToFileNode(
             name = p.fileName?.toString() ?: p.toString(),
             path = uiPathFor(p),
             isDirectory = Files.isDirectory(p, LinkOption.NOFOLLOW_LINKS),
-            children = emptyList()
+            children = emptyList(),
+            expanded = depth == 0 // Only root level expanded by default
         )
 
         val isDir = Files.isDirectory(p, LinkOption.NOFOLLOW_LINKS)
@@ -58,6 +59,7 @@ suspend fun scanDirectoryToFileNode(
                         path = pathStr,
                         isDirectory = isDir,
                         children = emptyList(),
+                        expanded = depth == 0
                     )
                 }
             } catch (_: IOException) {}
@@ -74,7 +76,8 @@ suspend fun scanDirectoryToFileNode(
                 name = name,
                 path = pathStr,
                 isDirectory = false,
-                content = content
+                content = content,
+                expanded = false // Files don't need expanded state
             )
         }
 
@@ -82,11 +85,11 @@ suspend fun scanDirectoryToFileNode(
         val real = try { p.toRealPath(LinkOption.NOFOLLOW_LINKS) } catch (e: IOException) { p.toAbsolutePath() }
         if (!visited.add(real)) {
             // already visited (symlink loop) — return empty children to avoid recursion
-            return FileNode(name = name, path = pathStr, isDirectory = true, children = emptyList())
+            return FileNode(name = name, path = pathStr, isDirectory = true, children = emptyList(), expanded = depth == 0)
         }
 
         if (depth >= maxDepth) {
-            return FileNode(name = name, path = pathStr, isDirectory = true, children = emptyList())
+            return FileNode(name = name, path = pathStr, isDirectory = true, children = emptyList(), expanded = depth == 0)
         }
 
         val children = ArrayList<FileNode>()
@@ -108,7 +111,7 @@ suspend fun scanDirectoryToFileNode(
 
         // sort children by name for stable UI order
         children.sortBy { it.name }
-        return FileNode(name = name, path = pathStr, isDirectory = true, children = children)
+        return FileNode(name = name, path = pathStr, isDirectory = true, children = children, expanded = depth == 0)
     }
 
     walk(rootReal, 0)

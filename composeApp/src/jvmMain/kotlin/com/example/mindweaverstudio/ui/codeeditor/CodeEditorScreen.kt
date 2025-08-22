@@ -10,6 +10,11 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -77,7 +82,8 @@ private fun CodeEditorScreen(
                     modifier = Modifier.width(leftWidth),
                     projectTree = state.projectTree,
                     selectedFile = state.selectedFile,
-                    onFileSelected = { intentHandler(CodeEditorStore.Intent.SelectFile(it)) }
+                    onFileSelected = { intentHandler(CodeEditorStore.Intent.SelectFile(it)) },
+                    onFolderToggle = { folderPath -> intentHandler(CodeEditorStore.Intent.ToggleFolderExpanded(folderPath)) }
                 )
                 
                 // Left divider
@@ -146,7 +152,8 @@ private fun ProjectTreePanel(
     modifier: Modifier = Modifier,
     projectTree: List<FileNode>,
     selectedFile: FileNode?,
-    onFileSelected: (FileNode) -> Unit
+    onFileSelected: (FileNode) -> Unit,
+    onFolderToggle: (String) -> Unit
 ) {
     Card(
         modifier = modifier.fillMaxHeight(),
@@ -171,6 +178,7 @@ private fun ProjectTreePanel(
                         node = node,
                         isSelected = selectedFile?.path == node.path,
                         onFileSelected = onFileSelected,
+                        onFolderToggle = onFolderToggle,
                         level = 0,
                         selectedFile = selectedFile
                     )
@@ -185,6 +193,7 @@ private fun FileNodeItem(
     node: FileNode,
     isSelected: Boolean,
     onFileSelected: (FileNode) -> Unit,
+    onFolderToggle: (String) -> Unit,
     level: Int,
     selectedFile: FileNode?
 ) {
@@ -198,24 +207,64 @@ private fun FileNodeItem(
                     if (isSelected) MaterialTheme.colorScheme.primaryContainer
                     else Color.Transparent
                 )
-                .clickable { onFileSelected(node) }
-                .padding(vertical = 4.dp, horizontal = 8.dp),
+                .clickable { 
+                    if (node.isDirectory) {
+                        onFolderToggle(node.path)
+                    } else {
+                        onFileSelected(node)
+                    }
+                }
+                .padding(vertical = 4.dp, horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Expand/collapse icon for directories
+            if (node.isDirectory) {
+                Icon(
+                    imageVector = if (node.expanded) Icons.Default.ExpandMore else Icons.Default.ChevronRight,
+                    contentDescription = if (node.expanded) "Collapse folder" else "Expand folder",
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            } else {
+                // Spacer for files to align with folder content
+                Spacer(modifier = Modifier.width(20.dp))
+            }
+            
+            // File/folder icon
+            Icon(
+                imageVector = when {
+                    node.isDirectory && node.expanded -> Icons.Default.FolderOpen
+                    node.isDirectory -> Icons.Default.Folder
+                    else -> Icons.AutoMirrored.Filled.InsertDriveFile
+                },
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = when {
+                    node.isDirectory -> MaterialTheme.colorScheme.primary
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            )
+            
+            Spacer(modifier = Modifier.width(8.dp))
+            
+            // File/folder name
             Text(
-                text = if (node.isDirectory) "📁 ${node.name}" else "📄 ${node.name}",
+                text = node.name,
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
                        else MaterialTheme.colorScheme.onSurface
             )
         }
         
-        if (node.isDirectory) {
+        // Render children only if directory is expanded
+        if (node.isDirectory && node.expanded && node.children.isNotEmpty()) {
             node.children.forEach { child ->
                 FileNodeItem(
                     node = child,
                     isSelected = selectedFile?.path == child.path,
                     onFileSelected = onFileSelected,
+                    onFolderToggle = onFolderToggle,
                     level = level + 1,
                     selectedFile = selectedFile
                 )

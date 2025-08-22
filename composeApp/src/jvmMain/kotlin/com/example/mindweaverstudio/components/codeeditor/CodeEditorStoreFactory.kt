@@ -57,6 +57,7 @@ class CodeEditorStoreFactory(
         class BottomPanelHeightUpdated(val height: Float) : Msg()
         class LogEntryAdded(val entry: LogEntry) : Msg()
         class OnNodesReceived(val node: FileNode) : Msg()
+        class ProjectTreeUpdated(val tree: List<FileNode>) : Msg()
     }
 
     private inner class ExecutorImpl : CoroutineExecutor<CodeEditorStore.Intent, Action, CodeEditorStore.State, Msg, CodeEditorStore.Label>(
@@ -80,6 +81,18 @@ class CodeEditorStoreFactory(
             }
         }
 
+        private fun toggleFolderExpansion(nodes: List<FileNode>, targetPath: String): List<FileNode> {
+            return nodes.map { node ->
+                if (node.path == targetPath && node.isDirectory) {
+                    node.copy(expanded = !node.expanded)
+                } else if (node.isDirectory && node.children.isNotEmpty()) {
+                    node.copy(children = toggleFolderExpansion(node.children, targetPath))
+                } else {
+                    node
+                }
+            }
+        }
+
         override fun executeIntent(intent: CodeEditorStore.Intent) {
             when (intent) {
                 is CodeEditorStore.Intent.SelectFile -> {
@@ -95,6 +108,12 @@ class CodeEditorStoreFactory(
                             )
                         )
                     }
+                }
+                
+                is CodeEditorStore.Intent.ToggleFolderExpanded -> {
+                    val currentTree = state().projectTree
+                    val updatedTree = toggleFolderExpansion(currentTree, intent.folderPath)
+                    dispatch(Msg.ProjectTreeUpdated(updatedTree))
                 }
                 
                 is CodeEditorStore.Intent.UpdateEditorContent -> {
@@ -364,6 +383,7 @@ No additional conversation, no reasoning, no markdown formatting.
                 is Msg.BottomPanelHeightUpdated -> copy(bottomPanelHeight = msg.height)
                 is Msg.LogEntryAdded -> copy(logs = logs + msg.entry)
                 is Msg.OnNodesReceived -> copy(projectTree = msg.node.children)
+                is Msg.ProjectTreeUpdated -> copy(projectTree = msg.tree)
                 is Msg.MessagesUpdated -> copy(chatMessages = msg.messages)
                 is Msg.LoadingChanged -> copy(isLoading = msg.isLoading)
                 is Msg.ErrorOccurred -> copy(error = msg.error, isLoading = false)

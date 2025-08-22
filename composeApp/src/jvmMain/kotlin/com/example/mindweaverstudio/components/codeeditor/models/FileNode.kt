@@ -5,5 +5,6 @@ data class FileNode(
     val path: String,
     val isDirectory: Boolean,
     val content: String? = null,
-    val children: List<FileNode> = emptyList()
+    val children: List<FileNode> = emptyList(),
+    val expanded: Boolean = true
 )

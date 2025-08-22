@@ -26,6 +26,7 @@ interface CodeEditorStore : Store<CodeEditorStore.Intent, CodeEditorStore.State,
 
     sealed class Intent {
         data class SelectFile(val file: FileNode) : Intent()
+        data class ToggleFolderExpanded(val folderPath: String) : Intent()
         data class UpdateEditorContent(val content: String) : Intent()
         data class UpdateChatInput(val input: String) : Intent()
         data object SendChatMessage : Intent()
