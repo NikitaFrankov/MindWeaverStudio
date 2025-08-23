@@ -8,7 +8,7 @@ import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStoreFactory.Msg.*
 import com.example.mindweaverstudio.data.aiClients.AiClient
 import com.example.mindweaverstudio.data.extensions.getToolReportFormat
-import com.example.mindweaverstudio.ui.repositoryManagement.models.UiRepositoryMessage
+import com.example.mindweaverstudio.ui.screens.repositoryManagement.models.UiRepositoryMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing

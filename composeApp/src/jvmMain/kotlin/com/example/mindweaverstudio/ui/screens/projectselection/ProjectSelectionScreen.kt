@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.ui.projectselection
+package com.example.mindweaverstudio.ui.screens.projectselection
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

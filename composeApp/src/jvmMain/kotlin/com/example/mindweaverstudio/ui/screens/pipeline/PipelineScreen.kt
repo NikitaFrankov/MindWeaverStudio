@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.ui.pipeline
+package com.example.mindweaverstudio.ui.screens.pipeline
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

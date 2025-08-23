@@ -1,7 +1,7 @@
 package com.example.mindweaverstudio.components.repositoryManagement
 
 import com.arkivanov.mvikotlin.core.store.Store
-import com.example.mindweaverstudio.ui.repositoryManagement.models.UiRepositoryMessage
+import com.example.mindweaverstudio.ui.screens.repositoryManagement.models.UiRepositoryMessage
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStore.Intent
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStore.Label
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStore.State

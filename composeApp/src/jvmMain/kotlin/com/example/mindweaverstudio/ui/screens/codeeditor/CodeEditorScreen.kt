@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.ui.codeeditor
+package com.example.mindweaverstudio.ui.screens.codeeditor
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -17,7 +17,6 @@ import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +27,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,7 +44,7 @@ import java.util.*
 @Composable
 fun CodeEditorScreen(component: CodeEditorComponent) {
     val state by component.state.collectAsStateWithLifecycle()
-    
+
     CodeEditorScreen(
         state = state,
         intentHandler = component::onIntent
@@ -58,90 +58,107 @@ private fun CodeEditorScreen(
     intentHandler: (CodeEditorStore.Intent) -> Unit
 ) {
     val density = LocalDensity.current
-    
-    // Panel sizes
-    var leftPanelWidth by rememberSaveable { mutableFloatStateOf(state.leftPanelWidth) }
-    var rightPanelWidth by rememberSaveable { mutableFloatStateOf(state.rightPanelWidth) }
-    var bottomPanelHeight by rememberSaveable { mutableFloatStateOf(state.bottomPanelHeight) }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Top workspace section
-        BoxWithConstraints(
-            modifier = Modifier.weight(1f - bottomPanelHeight)
-        ) {
-            val totalWidth = maxWidth
-            val leftWidth = (totalWidth * leftPanelWidth).coerceIn(100.dp, totalWidth - 200.dp)
-            val rightWidth = (totalWidth * rightPanelWidth).coerceIn(100.dp, totalWidth - leftWidth - 100.dp)
-            val centerWidth = totalWidth - leftWidth - rightWidth - 8.dp // 8.dp for dividers
-            
-            Row(modifier = Modifier.fillMaxSize()) {
-                // Left panel - Project Tree
-                ProjectTreePanel(
-                    modifier = Modifier.width(leftWidth),
-                    projectTree = state.projectTree,
-                    selectedFile = state.selectedFile,
-                    onFileSelected = { intentHandler(CodeEditorStore.Intent.SelectFile(it)) },
-                    onFolderToggle = { folderPath -> intentHandler(CodeEditorStore.Intent.ToggleFolderExpanded(folderPath)) }
-                )
-                
-                // Left divider
-                VerticalDivider(
-                    onDrag = { delta ->
-                        val deltaWidth = with(density) { delta.x.toDp() }
-                        val newWidth = ((leftWidth + deltaWidth) / totalWidth).coerceIn(0.1f, 0.8f)
-                        leftPanelWidth = newWidth
-                        intentHandler(CodeEditorStore.Intent.UpdatePanelWidth(UiPanel.LEFT, newWidth))
-                    }
-                )
-                
-                // Center panel - Editor
-                EditorPanel(
-                    modifier = Modifier.width(centerWidth),
-                    selectedFile = state.selectedFile,
-                    content = state.editorContent,
-                    onContentChanged = { intentHandler(CodeEditorStore.Intent.UpdateEditorContent(it)) },
-                    onTestCreateClick = { intentHandler.invoke(CodeEditorStore.Intent.OnCreateTestClick) },
-                )
-                
-                // Right divider
-                VerticalDivider(
-                    onDrag = { delta ->
-                        val deltaWidth = with(density) { delta.x.toDp() }
-                        val newWidth = ((rightWidth - deltaWidth) / totalWidth).coerceIn(0.1f, 0.8f)
-                        rightPanelWidth = newWidth
-                        intentHandler(CodeEditorStore.Intent.UpdatePanelWidth(UiPanel.RIGHT, newWidth))
-                    }
-                )
-                
-                // Right panel - Chat
-                ChatPanel(
-                    modifier = Modifier.width(rightWidth),
-                    messages = state.chatMessages,
-                    chatInput = state.chatInput,
-                    isLoading = state.isLoading,
-                    error = state.error,
-                    onInputChanged = { intentHandler(CodeEditorStore.Intent.UpdateChatInput(it)) },
-                    onSendMessage = { intentHandler(CodeEditorStore.Intent.SendChatMessage) },
-                    onClearError = { intentHandler(CodeEditorStore.Intent.ClearError) }
-                )
-            }
-        }
-        
-        // Bottom divider
-        HorizontalDivider(
-            onDrag = { delta ->
-                val deltaRatio = delta.y / 1000f // Simple ratio calculation
-                val newHeight = (bottomPanelHeight - deltaRatio).coerceIn(0.1f, 0.7f)
-                bottomPanelHeight = newHeight
-                intentHandler(CodeEditorStore.Intent.UpdateBottomPanelHeight(newHeight))
-            }
+    var leftPanelWidth by remember { mutableStateOf(240.dp) }
+    var rightPanelWidth by remember { mutableStateOf(300.dp) }
+    var bottomPanelHeight by remember { mutableStateOf(200.dp) }
+
+    Box(Modifier.fillMaxSize()) {
+
+        // ==== Слой 1: Project Tree ====
+        ProjectTreePanel(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(end = 0.dp),
+            projectTree = state.projectTree,
+            selectedFile = state.selectedFile,
+            onFileSelected = { intentHandler(CodeEditorStore.Intent.SelectFile(it)) },
+            onFolderToggle = { folderPath -> intentHandler(CodeEditorStore.Intent.ToggleFolderExpanded(folderPath)) }
         )
-        
-        // Bottom panel - Logs
+
+        // draggable граница дерева
+        Box(
+            Modifier
+                .offset { IntOffset(leftPanelWidth.roundToPx(), 0) }
+                .width(6.dp)
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.outline)
+                .pointerInput(Unit) {
+                    detectDragGestures { _, drag ->
+                        val dx = with(density) { drag.x.toDp() }
+                        leftPanelWidth = (leftPanelWidth + dx).coerceIn(120.dp, 600.dp)
+                        intentHandler(CodeEditorStore.Intent.UpdatePanelWidth(UiPanel.LEFT, leftPanelWidth.value))
+                    }
+                }
+        )
+
+        // ==== Слой 2: Editor ====
+        EditorPanel(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(start = leftPanelWidth + 6.dp, bottom = bottomPanelHeight),
+            selectedFile = state.selectedFile,
+            content = state.editorContent,
+            onContentChanged = { intentHandler(CodeEditorStore.Intent.UpdateEditorContent(it)) },
+            onTestCreateClick = { intentHandler(CodeEditorStore.Intent.OnCreateTestClick) }
+        )
+
+        // draggable граница чата (ставим левее ChatPanel)
+        Box(
+            Modifier
+                .align(Alignment.CenterEnd)
+                .offset { IntOffset(-rightPanelWidth.roundToPx(), 0) }
+                .width(6.dp)
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.outline)
+                .pointerInput(Unit) {
+                    detectDragGestures { _, drag ->
+                        val dx = with(density) { drag.x.toDp() }
+                        rightPanelWidth = (rightPanelWidth - dx).coerceIn(200.dp, 800.dp)
+                        intentHandler(CodeEditorStore.Intent.UpdatePanelWidth(UiPanel.RIGHT, rightPanelWidth.value))
+                    }
+                }
+        )
+
+        // ==== Слой 3: Chat ====
+        ChatPanel(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .fillMaxHeight()
+                .width(rightPanelWidth)
+                .padding(bottom = bottomPanelHeight),
+            messages = state.chatMessages,
+            chatInput = state.chatInput,
+            isLoading = state.isLoading,
+            error = state.error,
+            onInputChanged = { intentHandler(CodeEditorStore.Intent.UpdateChatInput(it)) },
+            onSendMessage = { intentHandler(CodeEditorStore.Intent.SendChatMessage) },
+            onClearError = { intentHandler(CodeEditorStore.Intent.ClearError) }
+        )
+
+        // draggable граница логов (над LogsPanel)
+        Box(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .offset { IntOffset(0, -bottomPanelHeight.roundToPx()) }
+                .fillMaxWidth()
+                .height(6.dp)
+                .background(MaterialTheme.colorScheme.outline)
+                .pointerInput(Unit) {
+                    detectDragGestures { _, drag ->
+                        val dy = with(density) { drag.y.toDp() }
+                        bottomPanelHeight = (bottomPanelHeight - dy).coerceIn(120.dp, 600.dp)
+                        intentHandler(CodeEditorStore.Intent.UpdateBottomPanelHeight(bottomPanelHeight.value / 1000f))
+                    }
+                }
+        )
+
+        // ==== Слой 4: Logs ====
         LogsPanel(
-            modifier = Modifier.fillMaxWidth().weight(bottomPanelHeight),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(bottomPanelHeight),
             logs = state.logs
         )
     }
@@ -169,7 +186,7 @@ private fun ProjectTreePanel(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            
+
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
@@ -207,7 +224,7 @@ private fun FileNodeItem(
                     if (isSelected) MaterialTheme.colorScheme.primaryContainer
                     else Color.Transparent
                 )
-                .clickable { 
+                .clickable {
                     if (node.isDirectory) {
                         onFolderToggle(node.path)
                     } else {
@@ -230,7 +247,7 @@ private fun FileNodeItem(
                 // Spacer for files to align with folder content
                 Spacer(modifier = Modifier.width(20.dp))
             }
-            
+
             // File/folder icon
             Icon(
                 imageVector = when {
@@ -245,9 +262,9 @@ private fun FileNodeItem(
                     else -> MaterialTheme.colorScheme.onSurfaceVariant
                 }
             )
-            
+
             Spacer(modifier = Modifier.width(8.dp))
-            
+
             // File/folder name
             Text(
                 text = node.name,
@@ -256,7 +273,7 @@ private fun FileNodeItem(
                        else MaterialTheme.colorScheme.onSurface
             )
         }
-        
+
         // Render children only if directory is expanded
         if (node.isDirectory && node.expanded && node.children.isNotEmpty()) {
             node.children.forEach { child ->
@@ -305,7 +322,7 @@ private fun EditorPanel(
                     Text(text = "Create tests for this code")
                 }
             }
-            
+
             BasicTextField(
                 value = content,
                 onValueChange = onContentChanged,
@@ -348,9 +365,9 @@ private fun ChatPanel(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            
+
             val listState = rememberLazyListState()
-            
+
             LazyColumn(
                 state = listState,
                 modifier = Modifier.weight(1f),
@@ -364,15 +381,15 @@ private fun ChatPanel(
                     }
                 }
             }
-            
+
             LaunchedEffect(messages.size) {
                 if (messages.isNotEmpty()) {
                     listState.animateScrollToItem(messages.size - 1)
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -385,9 +402,9 @@ private fun ChatPanel(
                     enabled = !isLoading,
                     maxLines = 3
                 )
-                
+
                 Spacer(modifier = Modifier.width(8.dp))
-                
+
                 IconButton(
                     onClick = onSendMessage,
                     enabled = chatInput.isNotBlank() && !isLoading
@@ -396,7 +413,7 @@ private fun ChatPanel(
                 }
             }
         }
-        
+
         // Error handling
         error?.let { errorMessage ->
             Spacer(modifier = Modifier.height(8.dp))
@@ -414,7 +431,7 @@ private fun ChatPanel(
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier.weight(1f)
                     )
-                    
+
                     TextButton(
                         onClick = onClearError
                     ) {
@@ -429,7 +446,7 @@ private fun ChatPanel(
 @Composable
 private fun UserChatMessageItem(message: UiChatMessage.UserMessage) {
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End
@@ -450,9 +467,9 @@ private fun UserChatMessageItem(message: UiChatMessage.UserMessage) {
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
-                
+
                 Text(
                     text = timeFormat.format(Date(message.timestamp)),
                     style = MaterialTheme.typography.labelSmall,
@@ -466,7 +483,7 @@ private fun UserChatMessageItem(message: UiChatMessage.UserMessage) {
 @Composable
 private fun AssistantChatMessageItem(message: UiChatMessage.AssistantMessage) {
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start
@@ -487,9 +504,9 @@ private fun AssistantChatMessageItem(message: UiChatMessage.AssistantMessage) {
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
-                
+
                 Text(
                     text = timeFormat.format(Date(message.timestamp)),
                     style = MaterialTheme.typography.labelSmall,
@@ -540,9 +557,9 @@ private fun LogsPanel(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            
+
             val listState = rememberLazyListState()
-            
+
             LazyColumn(
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -551,7 +568,7 @@ private fun LogsPanel(
                     LogEntryItem(log = log)
                 }
             }
-            
+
             LaunchedEffect(logs.size) {
                 if (logs.isNotEmpty()) {
                     listState.animateScrollToItem(logs.size - 1)
@@ -564,7 +581,7 @@ private fun LogsPanel(
 @Composable
 private fun LogEntryItem(log: LogEntry) {
     val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-    
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top
@@ -577,7 +594,7 @@ private fun LogEntryItem(log: LogEntry) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(60.dp)
         )
-        
+
         Text(
             text = when (log.level) {
                 UiLogLevel.INFO -> "ℹ️"
@@ -587,7 +604,7 @@ private fun LogEntryItem(log: LogEntry) {
             },
             modifier = Modifier.width(24.dp)
         )
-        
+
         SelectionContainer {
             Text(
                 text = log.message,

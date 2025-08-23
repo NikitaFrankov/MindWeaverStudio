@@ -9,15 +9,16 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.example.mindweaverstudio.components.root.RootComponent
 import com.example.mindweaverstudio.components.root.RootComponent.Child
-import com.example.mindweaverstudio.ui.pipeline.PipelineScreen
-import com.example.mindweaverstudio.ui.repositoryManagement.RepositoryManagementScreen
-import com.example.mindweaverstudio.ui.codeeditor.CodeEditorScreen
-import com.example.mindweaverstudio.ui.projectselection.ProjectSelectionScreen
+import com.example.mindweaverstudio.ui.screens.pipeline.PipelineScreen
+import com.example.mindweaverstudio.ui.screens.repositoryManagement.RepositoryManagementScreen
+import com.example.mindweaverstudio.ui.screens.codeeditor.CodeEditorScreen
+import com.example.mindweaverstudio.ui.screens.projectselection.ProjectSelectionScreen
+import com.example.mindweaverstudio.ui.theme.MindWeaverTheme
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @Composable
 fun App(component: RootComponent) {
-    MaterialTheme {
+    MindWeaverTheme {
         RootContent(
             component = component
         )

@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.ui.repositoryManagement.models
+package com.example.mindweaverstudio.ui.screens.repositoryManagement.models
 
 import com.example.mindweaverstudio.data.models.chat.ChatMessage
 

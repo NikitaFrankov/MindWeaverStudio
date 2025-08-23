@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.ui.repositoryManagement
+package com.example.mindweaverstudio.ui.screens.repositoryManagement
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementComponent
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStore
-import com.example.mindweaverstudio.ui.repositoryManagement.models.UiRepositoryMessage
+import com.example.mindweaverstudio.ui.screens.repositoryManagement.models.UiRepositoryMessage
 
 @Composable
 fun RepositoryManagementScreen(component: RepositoryManagementComponent) {
