@@ -176,7 +176,8 @@ class DockerMCPClient() {
                 "docker", "run", "--rm",
                 "-v", "${tempDir.absolutePath}:/project",
                 "-w", "/project",
-                "gradle:8.0-jdk17",
+                // Используем gradle + jdk17 образ с полноценным Debian
+                "gradle:8.5-jdk17",
                 "gradle", "clean", "test", "--no-daemon", "--console=plain", "--info"
             )
 

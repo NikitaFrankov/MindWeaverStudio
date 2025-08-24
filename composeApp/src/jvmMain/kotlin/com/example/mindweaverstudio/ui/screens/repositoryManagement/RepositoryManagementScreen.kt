@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementComponent
 import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementStore
 import com.example.mindweaverstudio.ui.screens.repositoryManagement.models.UiRepositoryMessage
+import com.example.mindweaverstudio.ui.theme.MindWeaverTheme
 
 @Composable
 fun RepositoryManagementScreen(component: RepositoryManagementComponent) {
@@ -93,7 +94,7 @@ private fun RepositoryManagementScreen(
         state.error?.let { error ->
             Spacer(modifier = Modifier.height(8.dp))
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                colors = CardDefaults.cardColors(containerColor = MindWeaverTheme.colors.errorSurface)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -103,7 +104,7 @@ private fun RepositoryManagementScreen(
                     Text(
                         text = error,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        color = MindWeaverTheme.colors.textInvert,
                         modifier = Modifier.weight(1f)
                     )
                     
@@ -144,13 +145,13 @@ private fun UserMessageBubble(message: UiRepositoryMessage.UserMessage) {
                 .padding(start = 64.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MindWeaverTheme.colors.accent500
             )
         ) {
             Text(
                 text = message.content,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = MindWeaverTheme.colors.textInvert,
                 modifier = Modifier.padding(16.dp)
             )
         }
@@ -162,7 +163,7 @@ private fun AssistantPlainTextMessage(message: UiRepositoryMessage.AssistantMess
     Text(
         text = message.content,
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = MindWeaverTheme.colors.textPrimary,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
@@ -185,7 +186,7 @@ private fun ThinkingMessage(message: UiRepositoryMessage.ThinkingMessage) {
         Text(
             text = message.content,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MindWeaverTheme.colors.textSecondary
         )
     }
 }

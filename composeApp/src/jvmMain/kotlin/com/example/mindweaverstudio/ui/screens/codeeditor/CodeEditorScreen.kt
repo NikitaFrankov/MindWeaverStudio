@@ -6,30 +6,25 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorComponent
@@ -38,6 +33,7 @@ import com.example.mindweaverstudio.components.codeeditor.models.LogEntry
 import com.example.mindweaverstudio.components.codeeditor.models.UiLogLevel
 import com.example.mindweaverstudio.components.codeeditor.models.UiPanel
 import com.example.mindweaverstudio.components.codeeditor.models.FileNode
+import com.example.mindweaverstudio.ui.theme.MindWeaverTheme
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -59,11 +55,12 @@ private fun CodeEditorScreen(
 ) {
     val density = LocalDensity.current
 
-    var leftPanelWidth by remember { mutableStateOf(240.dp) }
-    var rightPanelWidth by remember { mutableStateOf(300.dp) }
-    var bottomPanelHeight by remember { mutableStateOf(200.dp) }
+    var leftPanelWidth by remember { mutableStateOf(250.dp) }
+    var rightPanelWidth by remember { mutableStateOf(250.dp) }
+    var bottomPanelHeight by remember { mutableStateOf(100.dp) }
 
-    Box(Modifier.fillMaxSize()) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val maxWidthDp = with(density) { constraints.maxWidth.toDp() }
 
         // ==== Слой 1: Project Tree ====
         ProjectTreePanel(
@@ -82,7 +79,7 @@ private fun CodeEditorScreen(
                 .offset { IntOffset(leftPanelWidth.roundToPx(), 0) }
                 .width(6.dp)
                 .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.outline)
+                .background(MindWeaverTheme.colors.borderNeutral)
                 .pointerInput(Unit) {
                     detectDragGestures { _, drag ->
                         val dx = with(density) { drag.x.toDp() }
@@ -95,8 +92,10 @@ private fun CodeEditorScreen(
         // ==== Слой 2: Editor ====
         EditorPanel(
             modifier = Modifier
-                .matchParentSize()
-                .padding(start = leftPanelWidth + 6.dp, bottom = bottomPanelHeight),
+                .offset { IntOffset((leftPanelWidth + 6.dp).roundToPx(), 0) }  // Сдвиг слева
+                .width(maxWidthDp - leftPanelWidth - rightPanelWidth - 12.dp)  // Рассчитанная ширина (full - left - right - borders)
+                .fillMaxHeight()
+                .padding(bottom = bottomPanelHeight),  // Чтобы не перекрывать logs
             selectedFile = state.selectedFile,
             content = state.editorContent,
             onContentChanged = { intentHandler(CodeEditorStore.Intent.UpdateEditorContent(it)) },
@@ -110,7 +109,7 @@ private fun CodeEditorScreen(
                 .offset { IntOffset(-rightPanelWidth.roundToPx(), 0) }
                 .width(6.dp)
                 .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.outline)
+                .background(MindWeaverTheme.colors.borderNeutral)
                 .pointerInput(Unit) {
                     detectDragGestures { _, drag ->
                         val dx = with(density) { drag.x.toDp() }
@@ -143,7 +142,7 @@ private fun CodeEditorScreen(
                 .offset { IntOffset(0, -bottomPanelHeight.roundToPx()) }
                 .fillMaxWidth()
                 .height(6.dp)
-                .background(MaterialTheme.colorScheme.outline)
+                .background(MindWeaverTheme.colors.borderNeutral)
                 .pointerInput(Unit) {
                     detectDragGestures { _, drag ->
                         val dy = with(density) { drag.y.toDp() }
@@ -175,15 +174,16 @@ private fun ProjectTreePanel(
     Card(
         modifier = modifier.fillMaxHeight(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MindWeaverTheme.colors.surface1
         )
     ) {
         Column(
             modifier = Modifier.padding(8.dp)
         ) {
             Text(
-                text = "Project Tree",
+                text = "Project",
                 style = MaterialTheme.typography.titleMedium,
+                color = MindWeaverTheme.colors.textSecondary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
@@ -221,7 +221,7 @@ private fun FileNodeItem(
                 .padding(start = (level * 16).dp)
                 .clip(MaterialTheme.shapes.small)
                 .background(
-                    if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                    if (isSelected) MindWeaverTheme.colors.selection
                     else Color.Transparent
                 )
                 .clickable {
@@ -240,7 +240,7 @@ private fun FileNodeItem(
                     imageVector = if (node.expanded) Icons.Default.ExpandMore else Icons.Default.ChevronRight,
                     contentDescription = if (node.expanded) "Collapse folder" else "Expand folder",
                     modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MindWeaverTheme.colors.textSecondary
                 )
                 Spacer(modifier = Modifier.width(4.dp))
             } else {
@@ -258,8 +258,8 @@ private fun FileNodeItem(
                 contentDescription = null,
                 modifier = Modifier.size(16.dp),
                 tint = when {
-                    node.isDirectory -> MaterialTheme.colorScheme.primary
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    node.isDirectory -> MindWeaverTheme.colors.accent500
+                    else -> MindWeaverTheme.colors.textSecondary
                 }
             )
 
@@ -269,8 +269,8 @@ private fun FileNodeItem(
             Text(
                 text = node.name,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
-                       else MaterialTheme.colorScheme.onSurface
+                color = if (isSelected) MindWeaverTheme.colors.textPrimary
+                       else MindWeaverTheme.colors.textPrimary
             )
         }
 
@@ -301,40 +301,42 @@ private fun EditorPanel(
     Card(
         modifier = modifier.fillMaxHeight(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MindWeaverTheme.colors.surface1
         )
     ) {
+
         Column(
             modifier = Modifier.padding(8.dp)
         ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Row (modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = selectedFile?.name ?: "No file selected",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp).align(Alignment.CenterStart)
+                    color = MindWeaverTheme.colors.textSecondary,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
 
                 Button(
                     onClick = onTestCreateClick,
                     enabled = selectedFile != null,
-                    modifier = Modifier.align(Alignment.CenterEnd)
+                    colors = ButtonColors(
+                        containerColor = MindWeaverTheme.colors.surface2,
+                        contentColor = MindWeaverTheme.colors.surface3,
+                        disabledContainerColor = MindWeaverTheme.colors.surface2.copy(alpha = 0.5F),
+                        disabledContentColor = MindWeaverTheme.colors.surface3.copy(alpha = 0.5F)
+                    )
                 ) {
                     Text(text = "Create tests for this code")
                 }
             }
 
-            BasicTextField(
-                value = content,
-                onValueChange = onContentChanged,
+            SyntaxHighlightedEditor(
+                initialContent = content,
+                onContentChanged = onContentChanged,
+                isKotlin = true,
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .padding(8.dp),
-                textStyle = TextStyle(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
             )
         }
     }
@@ -354,23 +356,22 @@ private fun ChatPanel(
     Card(
         modifier = modifier.fillMaxHeight(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MindWeaverTheme.colors.surface1
         )
     ) {
-        Column(
-            modifier = Modifier.padding(8.dp)
-        ) {
+        Column {
             Text(
-                text = "Chat",
+                text = "Assistant",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
+                color = MindWeaverTheme.colors.textSecondary,
+                modifier = Modifier.padding(all = 8.dp)
             )
 
             val listState = rememberLazyListState()
 
             LazyColumn(
                 state = listState,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(messages) { message ->
@@ -391,14 +392,33 @@ private fun ChatPanel(
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().background(color = MindWeaverTheme.colors.surface2),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
+                TextField(
                     value = chatInput,
                     onValueChange = onInputChanged,
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("Type a message...") },
+                    colors = TextFieldDefaults.colors()
+                        .copy(
+                            focusedTextColor = MindWeaverTheme.colors.textPrimary,
+                            unfocusedTextColor = MindWeaverTheme.colors.textSecondary,
+                            focusedContainerColor = MindWeaverTheme.colors.surface2,
+                            unfocusedContainerColor = MindWeaverTheme.colors.surface2,
+                            focusedIndicatorColor = MindWeaverTheme.colors.surface2,
+                            errorIndicatorColor = MindWeaverTheme.colors.surface2,
+                            disabledIndicatorColor = MindWeaverTheme.colors.surface2,
+                            unfocusedIndicatorColor = MindWeaverTheme.colors.surface2,
+                            disabledContainerColor = MindWeaverTheme.colors.surface2,
+                            errorContainerColor = MindWeaverTheme.colors.surface2,
+                        ),
+                    placeholder = {
+                        Text(
+                            text = "Type a message...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MindWeaverTheme.colors.textSecondary
+                        )
+                    },
                     enabled = !isLoading,
                     maxLines = 3
                 )
@@ -407,9 +427,14 @@ private fun ChatPanel(
 
                 IconButton(
                     onClick = onSendMessage,
-                    enabled = chatInput.isNotBlank() && !isLoading
+                    enabled = chatInput.isNotBlank() && !isLoading,
+                    colors = IconButtonDefaults.iconButtonColors()
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+                    Icon(
+                        Icons.AutoMirrored.Outlined.Send,
+                        contentDescription = "Send",
+                        tint = MindWeaverTheme.colors.accent400
+                    )
                 }
             }
         }
@@ -418,7 +443,7 @@ private fun ChatPanel(
         error?.let { errorMessage ->
             Spacer(modifier = Modifier.height(8.dp))
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                colors = CardDefaults.cardColors(containerColor = MindWeaverTheme.colors.errorSurface)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -428,7 +453,7 @@ private fun ChatPanel(
                     Text(
                         text = errorMessage,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        color = MindWeaverTheme.colors.textInvert,
                         modifier = Modifier.weight(1f)
                     )
 
@@ -453,7 +478,7 @@ private fun UserChatMessageItem(message: UiChatMessage.UserMessage) {
     ) {
         Card(
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
+                containerColor = MindWeaverTheme.colors.surface2
             ),
             modifier = Modifier.widthIn(max = 280.dp)
         ) {
@@ -464,16 +489,15 @@ private fun UserChatMessageItem(message: UiChatMessage.UserMessage) {
                     Text(
                         text = message.content,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MindWeaverTheme.colors.textPrimary
                     )
                 }
-
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = timeFormat.format(Date(message.timestamp)),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    color = MindWeaverTheme.colors.textSecondary
                 )
             }
         }
@@ -490,7 +514,7 @@ private fun AssistantChatMessageItem(message: UiChatMessage.AssistantMessage) {
     ) {
         Card(
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                containerColor = MindWeaverTheme.colors.surface2
             ),
             modifier = Modifier.widthIn(max = 280.dp)
         ) {
@@ -501,16 +525,15 @@ private fun AssistantChatMessageItem(message: UiChatMessage.AssistantMessage) {
                     Text(
                         text = message.content,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = MindWeaverTheme.colors.textPrimary
                     )
                 }
-
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = timeFormat.format(Date(message.timestamp)),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                    color = MindWeaverTheme.colors.textSecondary
                 )
             }
         }
@@ -533,7 +556,7 @@ private fun ThinkingChatMessageItem(message: UiChatMessage.ThinkingMessage) {
         Text(
             text = message.content,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MindWeaverTheme.colors.textSecondary
         )
     }
 }
@@ -546,7 +569,7 @@ private fun LogsPanel(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MindWeaverTheme.colors.surface1
         )
     ) {
         Column(
@@ -555,6 +578,7 @@ private fun LogsPanel(
             Text(
                 text = "Logs",
                 style = MaterialTheme.typography.titleMedium,
+                color = MindWeaverTheme.colors.textSecondary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
@@ -584,16 +608,17 @@ private fun LogEntryItem(log: LogEntry) {
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = timeFormat.format(Date(log.timestamp)),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontFamily = FontFamily.Monospace
             ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MindWeaverTheme.colors.textSecondary,
             modifier = Modifier.width(60.dp)
         )
+        Spacer(modifier = Modifier.width(4.dp))
 
         Text(
             text = when (log.level) {
@@ -604,6 +629,7 @@ private fun LogEntryItem(log: LogEntry) {
             },
             modifier = Modifier.width(24.dp)
         )
+        Spacer(modifier = Modifier.width(4.dp))
 
         SelectionContainer {
             Text(
@@ -612,45 +638,11 @@ private fun LogEntryItem(log: LogEntry) {
                     fontFamily = FontFamily.Monospace
                 ),
                 color = when (log.level) {
-                    UiLogLevel.ERROR -> MaterialTheme.colorScheme.error
-                    UiLogLevel.WARNING -> Color(0xFFFF9800)
-                    else -> MaterialTheme.colorScheme.onSurface
+                    UiLogLevel.ERROR -> MindWeaverTheme.colors.error
+                    UiLogLevel.WARNING -> MindWeaverTheme.colors.warning
+                    else -> MindWeaverTheme.colors.textPrimary
                 }
             )
         }
     }
-}
-
-@Composable
-private fun VerticalDivider(
-    onDrag: (delta: Offset) -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .width(4.dp)
-            .fillMaxHeight()
-            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-            .pointerInput(Unit) {
-                detectDragGestures { _, dragAmount ->
-                    onDrag(dragAmount)
-                }
-            }
-    )
-}
-
-@Composable
-private fun HorizontalDivider(
-    onDrag: (delta: Offset) -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .height(4.dp)
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-            .pointerInput(Unit) {
-                detectDragGestures { _, dragAmount ->
-                    onDrag(dragAmount)
-                }
-            }
-    )
 }

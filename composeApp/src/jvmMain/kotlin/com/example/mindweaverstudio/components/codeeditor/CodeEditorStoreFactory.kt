@@ -254,6 +254,14 @@ class CodeEditorStoreFactory(
                 }
             )
             println("current tool call is - $currentToolCall")
+            val toolLogEntry = LogEntry(
+                message = "Tests created. Start process to check tests",
+                level = UiLogLevel.INFO,
+            )
+            dispatch(Msg.LogEntryAdded(toolLogEntry))
+            val assistantMessage2 = UiChatMessage.createAssistantMessage("Tests are created!!\nNext stage - create container for checking test")
+            dispatch(Msg.MessagesUpdated(currentMessages + listOf(assistantMessage2)))
+
 
             val result: String = dockerMCPClient.callTool(currentToolCall)?.firstOrNull()?.text.orEmpty()
 

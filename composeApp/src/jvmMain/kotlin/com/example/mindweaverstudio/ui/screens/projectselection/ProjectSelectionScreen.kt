@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mindweaverstudio.components.projectselection.ProjectSelectionComponent
 import com.example.mindweaverstudio.components.projectselection.ProjectSelectionStore
 import com.example.mindweaverstudio.components.projectselection.Project
+import com.example.mindweaverstudio.ui.theme.MindWeaverTheme
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -45,7 +46,7 @@ private fun ProjectSelectionScreen(
         Text(
             text = "Recent projects",
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MindWeaverTheme.colors.textSecondary,
             modifier = Modifier.padding(bottom = 32.dp)
         )
         
@@ -55,30 +56,34 @@ private fun ProjectSelectionScreen(
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
+                containerColor = MindWeaverTheme.colors.surface2
             ),
             onClick = { intentHandler(ProjectSelectionStore.Intent.SelectNewProject) },
         ) {
             ListItem(
                 headlineContent = { 
                     Text(
-                        "Open Project",
+                        text = "Open Project",
+                        color = MindWeaverTheme.colors.textPrimary,
                         style = MaterialTheme.typography.titleMedium
                     )
                 },
                 supportingContent = { 
-                    Text("Browse for a project folder") 
+                    Text(
+                        text = "Browse for a project folder",
+                        color = MindWeaverTheme.colors.textSecondary,
+                    )
                 },
                 leadingContent = {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Open Project",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MindWeaverTheme.colors.accent500
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ListItemDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MindWeaverTheme.colors.surface2
                 )
             )
         }
@@ -122,18 +127,18 @@ private fun ProjectSelectionScreen(
                         Icons.Default.Folder,
                         contentDescription = null,
                         modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MindWeaverTheme.colors.textSecondary
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         "No recent projects",
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MindWeaverTheme.colors.textSecondary
                     )
                     Text(
                         "Open a project to get started",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MindWeaverTheme.colors.textSecondary
                     )
                 }
             }
@@ -146,7 +151,7 @@ private fun ProjectSelectionScreen(
                     .fillMaxWidth()
                     .padding(top = 16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
+                    containerColor = MindWeaverTheme.colors.errorSurface
                 )
             ) {
                 Row(
@@ -159,7 +164,7 @@ private fun ProjectSelectionScreen(
                     Text(
                         text = error,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        color = MindWeaverTheme.colors.textInvert,
                         modifier = Modifier.weight(1f)
                     )
                     
@@ -190,7 +195,7 @@ private fun RecentProjectCard(
         onClick = onProjectClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MindWeaverTheme.colors.surface2
         )
     ) {
         Row(
@@ -202,7 +207,7 @@ private fun RecentProjectCard(
             Icon(
                 Icons.Default.Folder,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = MindWeaverTheme.colors.accent500,
                 modifier = Modifier.size(40.dp)
             )
             
@@ -215,13 +220,14 @@ private fun RecentProjectCard(
                     text = project.name,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
+                    color = MindWeaverTheme.colors.textPrimary,
                     overflow = TextOverflow.Ellipsis
                 )
                 
                 Text(
                     text = project.path,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MindWeaverTheme.colors.textSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -229,7 +235,7 @@ private fun RecentProjectCard(
                 Text(
                     text = "Last opened: $formattedDate",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MindWeaverTheme.colors.textSecondary
                 )
             }
 
@@ -239,7 +245,7 @@ private fun RecentProjectCard(
                 Icon(
                     Icons.Default.Close,
                     contentDescription = "Remove from recent projects",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MindWeaverTheme.colors.textSecondary
                 )
             }
         }

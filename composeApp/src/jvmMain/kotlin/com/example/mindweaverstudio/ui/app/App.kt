@@ -1,5 +1,6 @@
 package com.example.mindweaverstudio.ui.app
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,7 +21,8 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 fun App(component: RootComponent) {
     MindWeaverTheme {
         RootContent(
-            component = component
+            component = component,
+            modifier = Modifier.background(MindWeaverTheme.colors.rootBackground)
         )
     }
 }
@@ -33,7 +35,7 @@ fun RootContent(component: RootComponent, modifier: Modifier = Modifier) {
     ) { innerPadding ->
         Children(
             stack = component.stack,
-            modifier = Modifier.padding(innerPadding),
+            modifier = modifier.padding(innerPadding),
             animation = stackAnimation(animator = fade())
         ) {
             when (val child = it.instance) {

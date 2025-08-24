@@ -28,7 +28,7 @@ fun main() {
             state = windowState,
             title = "mindweaverstudio"
         ) {
-            window.minimumSize = java.awt.Dimension(800, 600)
+            window.minimumSize = java.awt.Dimension(1200, 800)
 
             App(component = root)
         }

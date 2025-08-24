@@ -22,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mindweaverstudio.components.pipeline.PipelineComponent
 import com.example.mindweaverstudio.components.pipeline.PipelineStore
 import com.example.mindweaverstudio.data.models.pipeline.AgentResult
+import com.example.mindweaverstudio.ui.theme.MindWeaverTheme
 
 @Composable
 fun PipelineScreen(component: PipelineComponent) {
@@ -112,7 +113,7 @@ private fun PipelineScreen(
                     item {
                         Card(
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                containerColor = MindWeaverTheme.colors.surface2
                             )
                         ) {
                             Column(
@@ -129,7 +130,7 @@ private fun PipelineScreen(
                                         text = "• $log",
                                         style = MaterialTheme.typography.bodySmall,
                                         fontFamily = FontFamily.Monospace,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MindWeaverTheme.colors.textSecondary
                                     )
                                 }
                             }
@@ -148,7 +149,7 @@ private fun PipelineScreen(
         state.error?.let { error ->
             Spacer(modifier = Modifier.height(8.dp))
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                colors = CardDefaults.cardColors(containerColor = MindWeaverTheme.colors.errorSurface)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -158,7 +159,7 @@ private fun PipelineScreen(
                     Text(
                         text = error,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        color = MindWeaverTheme.colors.textInvert,
                         modifier = Modifier.weight(1f)
                     )
                     
@@ -179,9 +180,9 @@ private fun AgentResultCard(result: AgentResult) {
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (result.success) {
-                MaterialTheme.colorScheme.primaryContainer
+                MindWeaverTheme.colors.surface2
             } else {
-                MaterialTheme.colorScheme.errorContainer
+                MindWeaverTheme.colors.errorSurface
             }
         )
     ) {
@@ -198,9 +199,9 @@ private fun AgentResultCard(result: AgentResult) {
                     text = result.output?.agent?.name ?: result.error.orEmpty(),
                     style = MaterialTheme.typography.titleMedium,
                     color = if (result.success) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
+                        MindWeaverTheme.colors.textPrimary
                     } else {
-                        MaterialTheme.colorScheme.onErrorContainer
+                        MindWeaverTheme.colors.textInvert
                     }
                 )
                 
@@ -208,9 +209,9 @@ private fun AgentResultCard(result: AgentResult) {
                     imageVector = if (result.success) Icons.Default.CheckCircle else Icons.Default.Error,
                     contentDescription = if (result.success) "Success" else "Error",
                     tint = if (result.success) {
-                        MaterialTheme.colorScheme.primary
+                        MindWeaverTheme.colors.accent500
                     } else {
-                        MaterialTheme.colorScheme.error
+                        MindWeaverTheme.colors.error
                     }
                 )
             }
@@ -224,7 +225,7 @@ private fun AgentResultCard(result: AgentResult) {
                         Text(
                             text = result.output.output.data.summary,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = MindWeaverTheme.colors.textPrimary,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(8.dp)
@@ -249,14 +250,14 @@ private fun AgentResultCard(result: AgentResult) {
                 Text(
                     text = "Error:",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    color = MindWeaverTheme.colors.textInvert,
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
                 
                 Text(
                     text = error,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    color = MindWeaverTheme.colors.textInvert,
                     modifier = Modifier.padding(8.dp)
                 )
             }

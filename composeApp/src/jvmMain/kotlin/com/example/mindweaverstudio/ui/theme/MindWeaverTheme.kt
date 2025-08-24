@@ -4,6 +4,13 @@ import androidx.compose.runtime.*
 
 val LocalColors = staticCompositionLocalOf { DarkPalette }
 
+object MindWeaverTheme {
+    val colors: MindWeaverPalette
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalColors.current
+}
+
 @Composable
 fun MindWeaverTheme(
     colors: MindWeaverPalette = DarkPalette,
