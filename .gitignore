@@ -19,3 +19,6 @@ captures
 
 # API Configuration
 **/api-config.properties
+
+# Claude files
+.claude
