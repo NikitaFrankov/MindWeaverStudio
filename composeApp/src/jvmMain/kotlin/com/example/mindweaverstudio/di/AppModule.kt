@@ -68,6 +68,7 @@ val appModule = module {
     factory {
         CodeEditorStoreFactory(
             dockerMCPClient = get(),
+            githubMCPClient = get(),
             storeFactory = get(),
             aiClient = get<AiClient>(named("chatgpt"))
         )

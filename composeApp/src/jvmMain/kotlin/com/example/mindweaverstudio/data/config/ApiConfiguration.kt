@@ -5,7 +5,8 @@ import java.util.Properties
 data class ApiConfiguration(
     val deepSeekApiKey: String,
     val openAiApiKey: String,
-    val geminiApiKey: String
+    val geminiApiKey: String,
+    val githubApiKey: String,
 ) {
     companion object {
         fun load(): ApiConfiguration {
@@ -31,7 +32,10 @@ data class ApiConfiguration(
                     ?: "",
                 geminiApiKey = properties.getProperty("gemini.api.key")
                     ?: System.getenv("GEMINI_API_KEY") 
-                    ?: ""
+                    ?: "",
+                githubApiKey = properties.getProperty("github.api.key")
+                    ?: System.getenv("GITHUB_API_KEY")
+                    ?: "",
             )
         }
     }

@@ -10,10 +10,12 @@ import com.example.mindweaverstudio.components.codeeditor.models.LogEntry
 import com.example.mindweaverstudio.components.codeeditor.models.UiLogLevel
 import com.example.mindweaverstudio.components.codeeditor.models.UiPanel
 import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage
+import com.example.mindweaverstudio.components.codeeditor.models.createInfoLogEntry
 import com.example.mindweaverstudio.components.codeeditor.utils.scanDirectoryToFileNode
 import com.example.mindweaverstudio.components.projectselection.Project
 import com.example.mindweaverstudio.data.aiClients.AiClient
 import com.example.mindweaverstudio.data.mcp.DockerMCPClient
+import com.example.mindweaverstudio.data.mcp.GithubMCPClient
 import com.example.mindweaverstudio.data.models.chat.ChatMessage
 import com.example.mindweaverstudio.data.models.mcp.base.ToolCall
 import io.modelcontextprotocol.kotlin.sdk.Tool
@@ -27,6 +29,7 @@ import kotlin.math.min
 
 class CodeEditorStoreFactory(
     private val dockerMCPClient: DockerMCPClient,
+    private val githubMCPClient: GithubMCPClient,
     private val storeFactory: StoreFactory,
     private val aiClient: AiClient,
 ) {
@@ -71,7 +74,10 @@ class CodeEditorStoreFactory(
         }
 
         private fun initMcpServer() {
-            scope.launch { dockerMCPClient.init() }
+            scope.launch {
+                dockerMCPClient.init()
+                githubMCPClient.init()
+            }
         }
 
         private fun fetchRootNode(filePath: String) {
@@ -228,12 +234,48 @@ class CodeEditorStoreFactory(
 
             val toolCall = json.decodeFromString(ToolCall.serializer(), message)
 
-            val result = dockerMCPClient.callTool(toolCall)?.firstOrNull()?.text.orEmpty()
-            val logEntry = LogEntry(
-                message = result,
-                level = UiLogLevel.INFO,
-            )
-            dispatch(Msg.LogEntryAdded(logEntry))
+            dispatch(Msg.LogEntryAdded("Agent call tool:\n$toolCall".createInfoLogEntry()))
+
+            val result = githubMCPClient.callTool(toolCall)?.firstOrNull()?.text.orEmpty()
+            dispatch(Msg.LogEntryAdded("result from tool ${toolCall.tool} - $result".createInfoLogEntry()))
+
+            if (toolCall.tool == "generate_release_info") {
+                dispatch(Msg.LogEntryAdded("!!Release info generated, nex stage - release creation!!".createInfoLogEntry()))
+                sendAssistantMessage(
+                    message = "Данные для создания релиза, продолжи пайплайн с этими данными - $result",
+                    currentMessages = state().chatMessages
+                )
+            }
+        }
+
+        private fun sendAssistantMessage(
+            message: String,
+            currentMessages: List<UiChatMessage>,
+        ) {
+            scope.launch {
+                try {
+                    val apiMessages = prepareAssistantMessages(message, currentMessages)
+
+                    val result = aiClient.createChatCompletion(
+                        messages = apiMessages,
+                    )
+
+                    result.fold(
+                        onSuccess = { responseContent ->
+                            val responseMessage = responseContent.message
+
+                            if (responseMessage.contains("call_tool")) {
+                                handleMcpToolCall(message = responseMessage,)
+                                return@fold
+                            }
+
+                        },
+                        onFailure = { error -> error(error)}
+                    )
+                } catch (e: Exception) {
+                    dispatch(Msg.LogEntryAdded("Error during sendAssistantMessage, ${e.message}".createInfoLogEntry()))
+                }
+            }
         }
 
         private suspend fun handleRunDockerWithCodeToolCall(
@@ -303,6 +345,11 @@ class CodeEditorStoreFactory(
                         onSuccess = { responseContent ->
                             val responseMessage = responseContent.message
 
+                            if (responseMessage.contains("call_tool")) {
+                                handleMcpToolCall(message = responseMessage,)
+                                return@fold
+                            }
+
                             val finalMessages = (currentMessages + userMessage + UiChatMessage.createAssistantMessage(responseMessage))
 
                             dispatch(Msg.MessagesUpdated(finalMessages))
@@ -330,7 +377,7 @@ class CodeEditorStoreFactory(
             message: String,
             currentMessages: List<UiChatMessage>,
         ): List<ChatMessage> {
-            val tools = dockerMCPClient.getTools()
+            val tools = githubMCPClient.getTools()
             val systemPrompt = generateSystemPrompt(tools)
             val systemMessage = ChatMessage(ChatMessage.ROLE_SYSTEM, systemPrompt)
             val newMessage = ChatMessage(role = ChatMessage.ROLE_USER, content = message)
@@ -338,7 +385,65 @@ class CodeEditorStoreFactory(
             return listOf(systemMessage) + (currentMessages.map { it.toChatMessage() } + newMessage)
         }
 
+        private suspend fun prepareAssistantMessages(
+            message: String,
+            currentMessages: List<UiChatMessage>,
+        ): List<ChatMessage> {
+            val tools = githubMCPClient.getTools()
+            val systemPrompt = generateSystemPrompt(tools)
+            val systemMessage = ChatMessage(ChatMessage.ROLE_SYSTEM, systemPrompt)
+            val newMessage = ChatMessage(role = ChatMessage.ROLE_ASSISTANT, content = message)
+
+            return listOf(systemMessage) + (currentMessages.map { it.toChatMessage() } + newMessage)
+        }
+
         private fun generateSystemPrompt(tools: List<Tool>): String {
+            return """
+                Ты — релиз-менеджер, управляющий выпуском релизов через предоставленные тебе инструменты.
+                
+                Список инструментов:
+                    $tools
+                
+                При запросе пользователя на создание релиза ты обязан действовать строго по пайплайну:
+                (Команду на создание пайплайна нужно обработать только 1 раз, не нужно каждый раз вызывать generate_release_info, это должно произойти только 1 раз)
+                
+                Сначала вызови команду generate_release_info.
+                
+                Она возвращает следующую версию и changelog (список коммитов) сообщением с ролью assistant. Никогда не придумывай данные самостоятельно.
+                
+                На основе списка коммитов из changelog создай человеко-ориентированные release notes:
+                
+                Используй понятный язык для конечных пользователей.
+                
+                Убирай технические детали (например, chore:, refactor:, SHA коммитов).
+                
+                Группируй изменения по категориям («Новые возможности», «Исправления», «Улучшения»), если это уместно.
+                
+                Затем вызови команду create_release. При вызове команды create_release отвечай только обусловленным JSON, больше никакй информации или форматирования MArkdown быть не должно, ПРИДЕРЖИВАЙСЯ ИНСТРУКЦИЯМ
+                
+                В качестве версии используй значение version из результата generate_release_info.
+                
+                В качестве описания используй подготовленные тобой release notes.
+                
+                Правила:
+                
+                Никогда не пропускай шаг преобразования changelog в человеко-ориентированные release notes.
+                
+                Никогда не передавай список коммитов напрямую в релиз.
+                
+                Если любая команда завершилась ошибкой — остановись и сообщи пользователю. 
+                Все вызовы инструментов делай только в формате JSON:
+                
+                    {
+                    "action": "call_tool",
+                    "tool": "<tool_name>",
+                    "params": { <key-value pairs> }
+                    }
+            """.trimIndent()
+        }
+
+
+        private fun generateTestSystemPrompt(tools: List<Tool>): String {
             return """
 You are an AI agent integrated with a mcp server.  
 You must follow these rules strictly:
