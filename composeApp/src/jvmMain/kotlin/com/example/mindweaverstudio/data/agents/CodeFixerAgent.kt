@@ -8,6 +8,8 @@ import com.example.mindweaverstudio.data.models.agents.AgentResult.Companion.cre
 import com.example.mindweaverstudio.data.models.agents.CODE_FIXER_AGENT
 import com.example.mindweaverstudio.data.models.chat.ChatMessage
 import com.example.mindweaverstudio.data.models.chat.ChatMessage.Companion.ROLE_SYSTEM
+import com.example.mindweaverstudio.data.utils.sourcecode.SourceCodeFinder
+import com.example.mindweaverstudio.data.utils.sourcecode.models.getFirstMatch
 
 class CodeFixerAgent(
     private val aiClient: AiClient,
@@ -17,8 +19,11 @@ class CodeFixerAgent(
     override val description: String = "Агент, который фиксит баги."
 
     override suspend fun run(input: ChatMessage): AgentResult {
+        val userMessageString = findSourcesByQuery(input.content)
+        val userMessage = input.copy(content = userMessageString)
+
         val systemPrompt = generateTestSystemPrompt()
-        val messages = listOf(systemPrompt, input)
+        val messages = listOf(systemPrompt, userMessage)
 
         val result = aiClient.createChatCompletion(
             messages = messages,
@@ -36,42 +41,38 @@ class CodeFixerAgent(
         )
     }
 
+    private suspend fun findSourcesByQuery(input: String): String {
+        val className = findClassName(input).orEmpty()
+        val sources = SourceCodeFinder().findSourceCode(
+            projectRoot = "/Users/nikitaradionov/IdeaProjects/MindWeaver Studio",
+            targetName = className,
+        ).getFirstMatch()?.sourceCode.orEmpty()
+
+        return input.replace(className, sources)
+    }
+
+    fun findClassName(query: String): String? {
+        // Ищем слово, которое начинается с большой буквы и состоит из букв, цифр или _
+        val regex = Regex("""\b[A-Z][A-Za-z0-9_]*\b""")
+        return regex.find(query)?.value
+    }
+
     private suspend fun generateTestSystemPrompt(): ChatMessage {
         val prompt =  """
-            Ты — старший разработчик Kotlin с опытом более 10 лет и профессиональный инженер-промд (Prompt Engineer). Твоя задача — исправлять баги в переданном коде на Kotlin так, чтобы:
-
-            1. Код после исправления был **стабильным, безопасным, понятным и тестируемым**.
-            2. Все изменения должны быть **минимальными**, только там, где это необходимо для исправления багов.
-            3. Код должен соответствовать стандартам Kotlin и лучшим практикам:
-               - Используй idiomatic Kotlin, избегай Java-стиля, если это возможно.
-               - Следуй принципам SOLID, KISS и DRY.
-               - Минимизируй побочные эффекты.
-            4. Все изменения должны быть **объяснены** в отдельном разделе комментариев.
-            5. Если баг не очевиден, выдвигай **гипотезу причины и варианты исправления**.
-            6. Не добавляй новые функции без явного запроса.
-            7. Сохраняй **структуру проекта**, включая имена файлов, пакеты, классы, методы.
-
-            **Формат ответа:**
-
-            1. **Исправленный код** — полная версия исправленного файла.
-            2. **Описание изменений** — что именно исправлено и почему.
-            3. **Потенциальные риски/дополнения** — если баг может быть только симптомом более глубокой проблемы.
-            4. **Рекомендации** — как избежать подобных ошибок в будущем (по желанию, но желательно).
-
-            **Правила анализа:**
-            - Проверяй все возможные исключения (null, IndexOutOfBounds, NPE, concurrency issues).
-            - Если код использует сторонние библиотеки, проверяй корректность версий и вызовов API.
-            - Если есть небезопасные преобразования типов, исправляй их безопасно (например, безопасные cast `as?`).
-            - Если в коде используются магические числа или строки, вынеси их в константы с осмысленными именами.
-            - При работе с коллекциями используй идиоматические методы (`map`, `filter`, `firstOrNull`, `getOrElse` и т.п.).
-            - Если код связан с асинхронностью (корутины, Flow, LiveData), убедись, что обработка исключений и отмена корректны.
-
-            **Дополнительные требования:**
-            - Пиши код с максимальной читаемостью, избегай глубокой вложенности (3+ уровней).
-            - Все публичные методы должны иметь KDoc.
-            - Если баг связан с производительностью, предложи оптимизацию, сохраняя читаемость.
-            - Никогда не удаляй тесты без веской причины.
-            - При исправлении багов интеграционно проверяй зависимые функции (хоть гипотетически, если нет тестов).
+          Ты — старший разработчик и автоматический инструмент для исправления багов в коде. Твоя единственная цель — получить код с конкретной проблемой и исправить эту проблему, ни шагу дальше. На вход ты получаешь код и описание конкретного бага или проблемы. Ты возвращаешь только исправленный код, без объяснений, без комментариев, без маркдауна и без других предложений по улучшению или оптимизации. Если входной код уже исправлен, возвращай его без изменений. Не добавляй никакой дополнительной функциональности, импортов, библиотек или комментариев. Формат вывода — чистый исправленный код в исходном стиле и языке, без оберток.
+        
+        Пример работы. Вход:
+        fun sum(a: Int, b: Int): Int {
+        return a + b
+        }
+        Проблема: метод возвращает неверный результат для отрицательных чисел
+        
+        Выход:
+        fun sum(a: Int, b: Int): Int {
+        return a + b
+        }
+        
+        Запомни, твоя задача только исправить конкретную проблему. Больше ничего.
             """.trimIndent()
 
         return ChatMessage(
