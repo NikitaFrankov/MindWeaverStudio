@@ -34,11 +34,27 @@ interface CodeEditorStore : Store<CodeEditorStore.Intent, CodeEditorStore.State,
         data class UpdateBottomPanelHeight(val height: Float) : Intent()
         data class AddLogEntry(val entry: LogEntry) : Intent()
         data object ClearError : Intent()
-        data object OnCreateTestClick : Intent()
     }
 
-    sealed class Label {
-        data class ShowError(val message: String) : Label()
+    sealed class Label
+
+    sealed interface Action {
+        data object Init : Action
     }
 
+    sealed class Msg {
+        class FileSelected(val file: FileNode) : Msg()
+        class EditorContentUpdated(val content: String) : Msg()
+        class ChatInputUpdated(val input: String) : Msg()
+        class ChatMessageAdded(val message: UiChatMessage) : Msg()
+        class MessagesUpdated(val messages: List<UiChatMessage>) : Msg()
+        class LoadingChanged(val isLoading: Boolean) : Msg()
+        class ErrorOccurred(val error: String) : Msg()
+        data object ErrorCleared : Msg()
+        class PanelWidthUpdated(val uiPanel: UiPanel, val width: Float) : Msg()
+        class BottomPanelHeightUpdated(val height: Float) : Msg()
+        class LogEntryAdded(val entry: LogEntry) : Msg()
+        class OnNodesReceived(val node: FileNode) : Msg()
+        class ProjectTreeUpdated(val tree: List<FileNode>) : Msg()
+    }
 }

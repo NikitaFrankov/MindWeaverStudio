@@ -1,9 +1,11 @@
 package com.example.mindweaverstudio.data.mcp
 
+import com.example.mindweaverstudio.components.codeeditor.models.createInfoLogEntry
 import com.example.mindweaverstudio.data.config.ApiConfiguration
 import com.example.mindweaverstudio.data.models.mcp.github.Commit
 import com.example.mindweaverstudio.data.models.mcp.base.ToolCall
 import com.example.mindweaverstudio.data.models.mcp.github.CreateReleaseResult
+import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -48,7 +50,8 @@ import java.io.PipedInputStream
 import java.io.PipedOutputStream
 
 class GithubMCPClient(
-    private val apiConfig: ApiConfiguration
+    private val logReceiver: CodeEditorLogReceiver,
+    private val apiConfig: ApiConfiguration,
 ) {
 
     private val clientOut = PipedOutputStream()
@@ -134,6 +137,8 @@ class GithubMCPClient(
     }
 
     suspend fun callTool(call: ToolCall): List<TextContent>? {
+        logReceiver.emitNewValue("Agent call tool:\n$call".createInfoLogEntry())
+
         val arguments = buildJsonObject {
             call.params.forEach {
                 put(it.key, it.value)
@@ -146,6 +151,8 @@ class GithubMCPClient(
         )
 
         val result = client.callTool(request)
+
+        logReceiver.emitNewValue("result from tool ${call.tool} - ${result?.content}".createInfoLogEntry())
 
         return result?.content as List<TextContent>?
     }

@@ -6,10 +6,6 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.bringToFront
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.value.Value
-import com.example.mindweaverstudio.components.pipeline.PipelineComponent
-import com.example.mindweaverstudio.components.pipeline.DefaultPipelineComponent
-import com.example.mindweaverstudio.components.repositoryManagement.RepositoryManagementComponent
-import com.example.mindweaverstudio.components.repositoryManagement.DefaultRepositoryManagementComponent
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorComponent
 import com.example.mindweaverstudio.components.codeeditor.DefaultCodeEditorComponent
 import com.example.mindweaverstudio.components.projectselection.ProjectSelectionComponent
@@ -20,11 +16,7 @@ import com.example.mindweaverstudio.components.root.RootComponent.Child
 import kotlinx.serialization.Serializable
 import org.koin.core.component.get
 
-class DefaultRootComponent(componentContext: ComponentContext) :
-    RootComponent,
-    KoinComponent,
-    ComponentContext by componentContext
-{
+class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, KoinComponent, ComponentContext by componentContext {
 
     /** Private properties */
 
@@ -45,8 +37,6 @@ class DefaultRootComponent(componentContext: ComponentContext) :
     private fun child(config: Config, componentContext: ComponentContext): Child {
         return when(config) {
             is Config.ProjectSelection -> Child.ProjectSelection(projectSelectionComponent(componentContext))
-            is Config.Pipeline -> Child.Pipeline(pipelineComponent(componentContext))
-            is Config.RepositoryManagement -> Child.RepositoryManagement(repositoryManagementComponent(componentContext))
             is Config.CodeEditor -> Child.CodeEditor(codeEditorComponent(
                 componentContext = componentContext,
                 project = config.project
@@ -61,20 +51,6 @@ class DefaultRootComponent(componentContext: ComponentContext) :
             onProjectSelected = { projectPath ->
                 navigateToCodeEditor(projectPath)
             }
-        )
-    }
-
-    private fun pipelineComponent(componentContext: ComponentContext): PipelineComponent {
-        return DefaultPipelineComponent(
-            pipelineStoreFactory = get(),
-            componentContext = componentContext,
-        )
-    }
-
-    private fun repositoryManagementComponent(componentContext: ComponentContext): RepositoryManagementComponent {
-        return DefaultRepositoryManagementComponent(
-            repositoryManagementStoreFactory = get(),
-            componentContext = componentContext,
         )
     }
 
@@ -98,20 +74,6 @@ class DefaultRootComponent(componentContext: ComponentContext) :
         )
     }
 
-    override fun navigateToPipeline() {
-        navigation.navigate(
-            transformer = { _: List<Config> -> listOf(Config.Pipeline) },
-            onComplete = { _, _ -> }
-        )
-    }
-
-    override fun navigateToRepositoryManagement() {
-        navigation.navigate(
-            transformer = { _: List<Config> -> listOf(Config.RepositoryManagement) },
-            onComplete = { _, _ -> }
-        )
-    }
-
     override fun navigateToCodeEditor(project: Project) {
         navigation.bringToFront(Config.CodeEditor(project))
     }
@@ -121,12 +83,6 @@ class DefaultRootComponent(componentContext: ComponentContext) :
         
         @Serializable
         data object ProjectSelection : Config
-        
-        @Serializable
-        data object Pipeline : Config
-        
-        @Serializable
-        data object RepositoryManagement : Config
         
         @Serializable
         class CodeEditor(val project: Project) : Config

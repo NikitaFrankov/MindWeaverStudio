@@ -1,0 +1,19 @@
+package com.example.mindweaverstudio.data.agents.orchestrator
+
+import com.example.mindweaverstudio.data.models.agents.Agent
+
+class AgentsRegistry {
+    private val agents = mutableMapOf<String, Agent>()
+
+    fun register(name: String, agent: Agent) {
+        agents[name] = agent
+    }
+
+    fun get(name: String): Agent? = agents[name]
+
+    fun getPresentableList(): List<String> {
+        return agents.map { (name, agent) ->
+            "Name: $name, description: ${agent.description}"
+        }
+    }
+}

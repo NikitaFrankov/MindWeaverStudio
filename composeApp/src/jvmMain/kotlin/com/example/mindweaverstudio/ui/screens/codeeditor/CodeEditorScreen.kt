@@ -99,7 +99,6 @@ private fun CodeEditorScreen(
             selectedFile = state.selectedFile,
             content = state.editorContent,
             onContentChanged = { intentHandler(CodeEditorStore.Intent.UpdateEditorContent(it)) },
-            onTestCreateClick = { intentHandler(CodeEditorStore.Intent.OnCreateTestClick) }
         )
 
         // draggable граница чата (ставим левее ChatPanel)
@@ -296,7 +295,6 @@ private fun EditorPanel(
     selectedFile: FileNode?,
     content: String,
     onContentChanged: (String) -> Unit,
-    onTestCreateClick: () -> Unit,
 ) {
     Card(
         modifier = modifier.fillMaxHeight(),
@@ -308,27 +306,12 @@ private fun EditorPanel(
         Column(
             modifier = Modifier.padding(8.dp)
         ) {
-            Row (modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = selectedFile?.name ?: "No file selected",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MindWeaverTheme.colors.textSecondary,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                Button(
-                    onClick = onTestCreateClick,
-                    enabled = selectedFile != null,
-                    colors = ButtonColors(
-                        containerColor = MindWeaverTheme.colors.surface2,
-                        contentColor = MindWeaverTheme.colors.surface3,
-                        disabledContainerColor = MindWeaverTheme.colors.surface2.copy(alpha = 0.5F),
-                        disabledContentColor = MindWeaverTheme.colors.surface3.copy(alpha = 0.5F)
-                    )
-                ) {
-                    Text(text = "Create tests for this code")
-                }
-            }
+            Text(
+                text = selectedFile?.name ?: "No file selected",
+                style = MaterialTheme.typography.titleMedium,
+                color = MindWeaverTheme.colors.textSecondary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
 
             SyntaxHighlightedEditor(
                 initialContent = content,

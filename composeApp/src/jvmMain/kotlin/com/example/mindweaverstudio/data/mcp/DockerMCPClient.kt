@@ -1,6 +1,9 @@
 package com.example.mindweaverstudio.data.mcp
 
+import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg
+import com.example.mindweaverstudio.components.codeeditor.models.createInfoLogEntry
 import com.example.mindweaverstudio.data.models.mcp.base.ToolCall
+import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
 import io.modelcontextprotocol.kotlin.sdk.CallToolRequest
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.Implementation
@@ -27,7 +30,9 @@ import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.nio.file.Files
 
-class DockerMCPClient() {
+class DockerMCPClient(
+    private val logReceiver: CodeEditorLogReceiver,
+) {
     private val clientOut = PipedOutputStream()
     private val serverIn = PipedInputStream(clientOut)
     private val serverOut = PipedOutputStream()
@@ -256,6 +261,8 @@ class DockerMCPClient() {
     }
 
     suspend fun callTool(call: ToolCall): List<TextContent>? {
+        logReceiver.emitNewValue("Agent call tool:\n$call".createInfoLogEntry())
+
         val arguments = buildJsonObject {
             call.params.forEach {
                 put(it.key, it.value)
@@ -269,6 +276,8 @@ class DockerMCPClient() {
         )
 
         val result = client.callTool(request)
+
+        logReceiver.emitNewValue("result from tool ${call.tool} - ${result?.content}".createInfoLogEntry())
 
         return result?.content as List<TextContent>?
     }

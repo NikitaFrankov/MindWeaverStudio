@@ -7,6 +7,6 @@ interface AiClient {
     suspend fun createChatCompletion(
         messages: List<ChatMessage>,
         temperature: Double = 0.7,
-        maxTokens: Int = 3800,
+        maxTokens: Int = 1000,
     ): Result<AiResponse>
 }
