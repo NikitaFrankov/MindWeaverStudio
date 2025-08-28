@@ -25,11 +25,14 @@ import com.example.mindweaverstudio.data.ai.agents.CODE_TESTER_AGENT
 import com.example.mindweaverstudio.data.ai.agents.TEST_CREATOR_AGENT
 import com.example.mindweaverstudio.data.ai.agents.TEST_RUNNER_AGENT
 import com.example.mindweaverstudio.data.ai.agents.workers.CodeTesterAgent
+import com.example.mindweaverstudio.data.ai.pipelines.CHAT_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.CODE_FIX_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.Pipeline
 import com.example.mindweaverstudio.data.ai.pipelines.PipelineFactory
 import com.example.mindweaverstudio.data.ai.pipelines.PipelineRegistry
+import com.example.mindweaverstudio.data.ai.pipelines.flows.ChatPipeline
 import com.example.mindweaverstudio.data.ai.pipelines.flows.CodeFixPipeline
+import com.example.mindweaverstudio.data.mcp.ThinkMcpClient
 import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -71,6 +74,7 @@ val appModule = module {
     factory<Agent>(qualifier = named(CHAT_AGENT)) {
         ChatAgent(
             aiClient = get<AiClient>(named("chatgpt")),
+            thinkMcpClient = get(),
         )
     }
     factory<Agent>(qualifier = named(CODE_FIXER_AGENT)) {
@@ -85,6 +89,16 @@ val appModule = module {
     }
 
     singleOf(::PipelineFactory)
+
+    factory<Pipeline>(named(CHAT_PIPELINE)) {
+        val agentNames = get<PipelineFactory>().chatPipelineAgents
+        val registry = AgentsRegistry().apply {
+            agentNames.forEach { agentName ->
+                register(agentName, get<Agent>(named(agentName)))
+            }
+        }
+        ChatPipeline(agentsRegistry = registry)
+    }
 
     factory<Pipeline>(named(CODE_FIX_PIPELINE)) {
         val agentNames = get<PipelineFactory>().codeFixerPipelineAgents
@@ -114,6 +128,7 @@ val appModule = module {
     // MCP clients
     singleOf(::GithubMCPClient)
     singleOf(::DockerMCPClient)
+    singleOf(::ThinkMcpClient)
 
     // Stores
     singleOf(::DefaultStoreFactory) bind StoreFactory::class

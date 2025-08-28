@@ -7,6 +7,7 @@ data class ApiConfiguration(
     val openAiApiKey: String,
     val geminiApiKey: String,
     val githubApiKey: String,
+    val thinkApiKey: String,
 ) {
     companion object {
         fun load(): ApiConfiguration {
@@ -35,6 +36,9 @@ data class ApiConfiguration(
                     ?: "",
                 githubApiKey = properties.getProperty("github.api.key")
                     ?: System.getenv("GITHUB_API_KEY")
+                    ?: "",
+                thinkApiKey = properties.getProperty("think.api.key")
+                    ?: System.getenv("think.api.key")
                     ?: "",
             )
         }
