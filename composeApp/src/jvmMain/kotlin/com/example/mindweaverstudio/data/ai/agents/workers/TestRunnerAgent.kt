@@ -1,51 +1,67 @@
-package com.example.mindweaverstudio.data.agents
+package com.example.mindweaverstudio.data.ai.agents.workers
 
-import com.example.mindweaverstudio.data.models.agents.Agent
-import com.example.mindweaverstudio.data.aiClients.AiClient
+import com.example.mindweaverstudio.components.codeeditor.models.createInfoLogEntry
+import com.example.mindweaverstudio.data.ai.agents.Agent
+import com.example.mindweaverstudio.data.ai.aiClients.AiClient
 import com.example.mindweaverstudio.data.mcp.DockerMCPClient
-import com.example.mindweaverstudio.data.models.agents.AgentResult
-import com.example.mindweaverstudio.data.models.agents.AgentResult.Companion.createErrorAgentResult
-import com.example.mindweaverstudio.data.models.agents.AgentResult.Companion.createSuccessAgentResult
-import com.example.mindweaverstudio.data.models.agents.CODE_TESTER_AGENT
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createErrorPipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createSuccessPipelineResult
+import com.example.mindweaverstudio.data.ai.agents.TEST_RUNNER_AGENT
 import com.example.mindweaverstudio.data.models.chat.ChatMessage
 import com.example.mindweaverstudio.data.models.chat.ChatMessage.Companion.ROLE_SYSTEM
+import com.example.mindweaverstudio.data.models.chat.ChatMessage.Companion.ROLE_USER
 import com.example.mindweaverstudio.data.models.mcp.base.ToolCall
 import kotlinx.serialization.json.Json
 
-class CodeTesterAgent(
+class TestRunnerAgent(
     private val aiClient: AiClient,
     private val dockerMCPClient: DockerMCPClient,
 ) : Agent {
+    override val name: String = TEST_RUNNER_AGENT
+    override val description: String = "Агент, который запускает созданные JUnit тесты в докер контейнере. На вход подаются тесты и путь к файлу, для которого эти тесты писались"
 
-    override val name = CODE_TESTER_AGENT
-    override val description: String = "Агент, который генерирует JUnit тесты для переданного класса/файла kotlin."
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
-
-    override suspend fun run(input: ChatMessage): AgentResult {
+    override suspend fun run(input: String): PipelineResult {
         val systemPrompt = generateTestSystemPrompt()
-        val messages = listOf(systemPrompt, input)
+        val messages = listOf(systemPrompt, ChatMessage(input, ROLE_USER))
 
         val result = aiClient.createChatCompletion(
             messages = messages,
             temperature = 0.3,
             maxTokens = 1000,
         )
-
         return result.fold(
             onSuccess = { response ->
-                val toolCall = json.decodeFromString(ToolCall.serializer(), response.message)
-                val result = dockerMCPClient.callTool(toolCall)?.firstOrNull()?.text.orEmpty()
-
-                createSuccessAgentResult(message = result)
+                createSuccessPipelineResult(message = response.message)
             },
             onFailure = { error ->
-                createErrorAgentResult(error)
+                createErrorPipelineResult(error)
             }
         )
+    }
+
+    private suspend fun handleRunDockerWithCodeToolCall(
+        message: String,
+        filePath: String,
+    ) {
+        val json = Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+        }
+
+        val toolCall = json.decodeFromString(ToolCall.serializer(), message)
+        val currentToolCall = toolCall.copy(
+            params = buildMap {
+                putAll(toolCall.params)
+                replace("file_path", "state().project.path" + filePath)
+            }
+        )
+
+        val toolLogEntry = "Tests created. Start process to check tests".createInfoLogEntry()
+
+        val result: String = dockerMCPClient.callTool(currentToolCall)?.firstOrNull()?.text.orEmpty()
+
+        // fetchRootNode(filePath = state().project.path)
     }
 
     private suspend fun generateTestSystemPrompt(): ChatMessage {

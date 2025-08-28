@@ -12,7 +12,7 @@ import com.example.mindweaverstudio.components.codeeditor.models.UiPanel
 import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage
 import com.example.mindweaverstudio.components.codeeditor.utils.scanDirectoryToFileNode
 import com.example.mindweaverstudio.components.projectselection.Project
-import com.example.mindweaverstudio.data.agents.orchestrator.AgentsOrchestratorFactory
+import com.example.mindweaverstudio.data.ai.agents.AgentsOrchestratorFactory
 import com.example.mindweaverstudio.data.mcp.DockerMCPClient
 import com.example.mindweaverstudio.data.mcp.GithubMCPClient
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg

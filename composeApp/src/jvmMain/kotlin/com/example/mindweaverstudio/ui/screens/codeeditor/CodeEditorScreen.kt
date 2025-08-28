@@ -499,7 +499,7 @@ private fun AssistantChatMessageItem(message: UiChatMessage.AssistantMessage) {
             colors = CardDefaults.cardColors(
                 containerColor = MindWeaverTheme.colors.surface2
             ),
-            modifier = Modifier.widthIn(max = 280.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Column(
                 modifier = Modifier.padding(12.dp)

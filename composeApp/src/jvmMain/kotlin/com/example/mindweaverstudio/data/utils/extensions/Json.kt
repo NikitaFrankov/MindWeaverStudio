@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.data.extensions
+package com.example.mindweaverstudio.data.utils.extensions
 
 import kotlinx.serialization.json.Json
 import java.lang.Exception

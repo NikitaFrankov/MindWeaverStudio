@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.data.extensions
+package com.example.mindweaverstudio.data.utils.extensions
 
 import com.example.mindweaverstudio.data.models.mcp.base.ToolType
 import io.modelcontextprotocol.kotlin.sdk.Tool

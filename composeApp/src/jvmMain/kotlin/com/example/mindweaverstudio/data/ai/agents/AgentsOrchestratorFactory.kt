@@ -1,0 +1,12 @@
+package com.example.mindweaverstudio.data.ai.agents
+
+import com.example.mindweaverstudio.data.ai.orchestrator.CodeOrchestrator
+import com.example.mindweaverstudio.data.ai.pipelines.CODE_FIX_PIPELINE
+import org.koin.core.parameter.parametersOf
+import org.koin.java.KoinJavaComponent
+
+class AgentsOrchestratorFactory {
+    val editorOrchestrator: CodeOrchestrator by KoinJavaComponent.inject(CodeOrchestrator::class.java) {
+        parametersOf(listOf(CODE_FIX_PIPELINE))
+    }
+}

@@ -1,7 +1,7 @@
 package com.example.mindweaverstudio.data.mcp
 
 import com.example.mindweaverstudio.components.codeeditor.models.createInfoLogEntry
-import com.example.mindweaverstudio.data.config.ApiConfiguration
+import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
 import com.example.mindweaverstudio.data.models.mcp.github.Commit
 import com.example.mindweaverstudio.data.models.mcp.base.ToolCall
 import com.example.mindweaverstudio.data.models.mcp.github.CreateReleaseResult

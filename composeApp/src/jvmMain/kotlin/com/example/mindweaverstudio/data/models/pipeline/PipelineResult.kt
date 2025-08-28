@@ -1,28 +1,28 @@
-package com.example.mindweaverstudio.data.models.agents
+package com.example.mindweaverstudio.data.models.pipeline
 
-class AgentResult(
+class PipelineResult(
     val message: String,
     val isError: Boolean,
 ) {
 
-    companion object {
-        fun createSuccessAgentResult(message: String) =
-            AgentResult(
+    companion object Companion {
+        fun createSuccessPipelineResult(message: String) =
+            PipelineResult(
                 message = message,
                 isError = false,
             )
-        fun createErrorAgentResult(error: Throwable): AgentResult {
+        fun createErrorPipelineResult(error: Throwable): PipelineResult {
             val errorMessage = "Error during agent work, throwable = $error, message = ${error.message.orEmpty().ifEmpty { "Unknown error" }}"
 
-            return AgentResult(
+            return PipelineResult(
                 message = errorMessage,
                 isError = true,
             )
         }
-        fun createErrorAgentResult(message: String): AgentResult {
+        fun createErrorPipelineResult(message: String): PipelineResult {
             val errorMessage = "Error during agent work, message = ${message.ifEmpty { "Unknown error" }}"
 
-            return AgentResult(
+            return PipelineResult(
                 message = errorMessage,
                 isError = true,
             )

@@ -1,6 +1,4 @@
-package com.example.mindweaverstudio.data.agents.orchestrator
-
-import com.example.mindweaverstudio.data.models.agents.Agent
+package com.example.mindweaverstudio.data.ai.agents
 
 class AgentsRegistry {
     private val agents = mutableMapOf<String, Agent>()

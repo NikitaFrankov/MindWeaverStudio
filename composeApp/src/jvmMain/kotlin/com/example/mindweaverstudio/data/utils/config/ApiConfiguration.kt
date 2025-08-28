@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.data.config
+package com.example.mindweaverstudio.data.utils.config
 
 import java.util.Properties
 
