@@ -6,9 +6,9 @@ import com.example.mindweaverstudio.data.utils.extensions.decodeFromStringOrNull
 import com.example.mindweaverstudio.data.models.pipeline.CodeOrchestratorCommand
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createErrorPipelineResult
-import com.example.mindweaverstudio.data.models.chat.ChatMessage
-import com.example.mindweaverstudio.data.models.chat.ChatMessage.Companion.ROLE_SYSTEM
-import com.example.mindweaverstudio.data.models.chat.ChatMessage.Companion.ROLE_USER
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
 import kotlinx.serialization.json.Json
 
 class CodeOrchestrator(
@@ -50,21 +50,22 @@ class CodeOrchestrator(
 
     private fun generateSystemPrompt(): ChatMessage {
         val prompt = """
-            Ты — оркестратор пайплайнов.
-            Твоя задача — анализировать сообщение пользователя и решать, какой из доступных пайплайнов должен обработать этот запрос.  
-            Ни один запрос ты сам не выполняешь.  
-            Ты всегда отвечаешь строго в JSON-формате.
-
-            Вот список доступных пайплайнов и их назначения:
+           You are a pipeline orchestrator.
+            Your task is to analyze the user message and decide which of the available pipelines should handle this request.
+            You never execute any request yourself.
+            You always respond strictly in JSON format.
+            
+            Here is the list of available pipelines and their purposes:
             ${registry.getPresentableList()}
-
-            JSON-формат ответа:
-            {"pipeline": "<имя_пайплайна_из_списка>"}
-
-            Правила:
-            - Если сообщение пользователя подходит под функционал одного из пайплайнов → укажи этот пайплайн.  
-            - Если не подходит ни под один пайплайн → используй "chat_pipeline".  
-            - Никаких комментариев или текста или markdown форматирования вне JSON. 
+            
+            JSON response format:
+            {"pipeline": "<pipeline_name_from_the_list>"}
+            
+            Rules:
+              - If the user message matches the functionality of one of the pipelines → specify that pipeline.
+              - If it does not match any pipeline → use "chat_pipeline".
+              - No comments, no text, no markdown formatting outside of JSON.
+ 
         """.trimIndent()
 
         return ChatMessage(

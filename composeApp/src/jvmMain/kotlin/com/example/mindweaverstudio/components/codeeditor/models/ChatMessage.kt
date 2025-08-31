@@ -1,6 +1,6 @@
 package com.example.mindweaverstudio.components.codeeditor.models
 
-import com.example.mindweaverstudio.data.models.chat.ChatMessage
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 
 sealed class UiChatMessage {
     abstract val content: String

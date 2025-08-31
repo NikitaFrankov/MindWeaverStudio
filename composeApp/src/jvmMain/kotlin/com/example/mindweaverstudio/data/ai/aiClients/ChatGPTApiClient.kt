@@ -3,9 +3,9 @@ package com.example.mindweaverstudio.data.ai.aiClients
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
 import com.example.mindweaverstudio.data.models.ai.AiResponse
 import com.example.mindweaverstudio.data.models.ai.AiResponse.Companion.createTextResponse
-import com.example.mindweaverstudio.data.models.chat.ChatMessage
-import com.example.mindweaverstudio.data.models.chat.ChatRequest
-import com.example.mindweaverstudio.data.models.chat.ChatResponse
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
+import com.example.mindweaverstudio.data.models.chat.remote.ChatRequest
+import com.example.mindweaverstudio.data.models.chat.remote.ChatResponse
 import io.ktor.client.*
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.*
@@ -24,7 +24,7 @@ class ChatGPTApiClient(
         ignoreUnknownKeys = true
         isLenient = true
     }
-    
+
     private val client = HttpClient {
         install(ContentNegotiation) {
             json(this@ChatGPTApiClient.json)
@@ -61,7 +61,7 @@ class ChatGPTApiClient(
                 }
                 setBody(request)
             }
-            
+
             val rawResponse = response.bodyAsText()
             val jsonResponse = json.decodeFromString<ChatResponse>(rawResponse)
             val error = jsonResponse.error
@@ -79,9 +79,5 @@ class ChatGPTApiClient(
             e.printStackTrace()
             Result.failure(e)
         }
-    }
-
-    fun close() {
-        client.close()
     }
 }

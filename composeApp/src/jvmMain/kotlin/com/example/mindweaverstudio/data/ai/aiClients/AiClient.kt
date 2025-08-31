@@ -1,7 +1,7 @@
 package com.example.mindweaverstudio.data.ai.aiClients
 
 import com.example.mindweaverstudio.data.models.ai.AiResponse
-import com.example.mindweaverstudio.data.models.chat.ChatMessage
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 
 interface AiClient {
     suspend fun createChatCompletion(

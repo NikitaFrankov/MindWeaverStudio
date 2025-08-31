@@ -10,8 +10,12 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.serialization.kotlinx.json.json
 import io.modelcontextprotocol.kotlin.sdk.CallToolRequest
+import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.Implementation
+import io.modelcontextprotocol.kotlin.sdk.InitializeResult
+import io.modelcontextprotocol.kotlin.sdk.JSONRPCResponse
 import io.modelcontextprotocol.kotlin.sdk.ListToolsRequest
+import io.modelcontextprotocol.kotlin.sdk.ListToolsResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.Tool
 import io.modelcontextprotocol.kotlin.sdk.client.Client
@@ -46,6 +50,32 @@ class ThinkMcpClient(
             headers.append("KEY", apiConfiguration.thinkApiKey)
         }
     )
+
+    init {
+        transport.onMessage {
+            when (it) {
+                is JSONRPCResponse -> {
+                    println("New response from server: ${it.jsonrpc}")
+                    when (val r = it.result) {
+                        is InitializeResult -> {
+                            println("Protocol version: ${r.protocolVersion}")
+                            println("Server: ${r.serverInfo.name} v${r.serverInfo.version}")
+                        }
+                        is ListToolsResult -> {
+                            println("Tools available: ${r.tools}")
+                        }
+                        is CallToolResult -> {
+                            println("Tool call result: ${r.content}")
+                        }
+                        else -> {
+                            println("Unknown result type: $r")
+                        }
+                    }
+                }
+                else -> println("Other message: $it")
+            }
+        }
+    }
 
     suspend fun init() {
         if (isInit) return

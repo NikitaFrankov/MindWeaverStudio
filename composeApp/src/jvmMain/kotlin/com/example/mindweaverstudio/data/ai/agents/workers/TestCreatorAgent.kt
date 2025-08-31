@@ -7,9 +7,9 @@ import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createErrorPipelineResult
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createSuccessPipelineResult
 import com.example.mindweaverstudio.data.ai.agents.TEST_CREATOR_AGENT
-import com.example.mindweaverstudio.data.models.chat.ChatMessage
-import com.example.mindweaverstudio.data.models.chat.ChatMessage.Companion.ROLE_SYSTEM
-import com.example.mindweaverstudio.data.models.chat.ChatMessage.Companion.ROLE_USER
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
 import com.example.mindweaverstudio.data.models.mcp.base.ToolCall
 import kotlinx.serialization.json.Json
 

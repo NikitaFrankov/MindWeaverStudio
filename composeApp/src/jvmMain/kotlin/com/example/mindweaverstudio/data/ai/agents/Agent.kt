@@ -5,6 +5,7 @@ import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
 const val TEST_CREATOR_AGENT = "Test Creator"
 const val CODE_TESTER_AGENT = "Code Tester"
 const val CODE_FIXER_AGENT = "Code Fixer"
+const val CODE_CREATOR_AGENT = "Code Creator"
 const val TEST_RUNNER_AGENT = "Test Runner"
 const val CHAT_AGENT = "Chat"
 

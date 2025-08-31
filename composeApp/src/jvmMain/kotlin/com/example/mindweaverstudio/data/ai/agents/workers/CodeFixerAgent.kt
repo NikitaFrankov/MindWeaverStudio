@@ -6,9 +6,9 @@ import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createErrorPipelineResult
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createSuccessPipelineResult
 import com.example.mindweaverstudio.data.ai.agents.CODE_FIXER_AGENT
-import com.example.mindweaverstudio.data.models.chat.ChatMessage
-import com.example.mindweaverstudio.data.models.chat.ChatMessage.Companion.ROLE_SYSTEM
-import com.example.mindweaverstudio.data.models.chat.ChatMessage.Companion.ROLE_USER
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
 import com.example.mindweaverstudio.data.utils.sourcecode.SourceCodeFinder
 import com.example.mindweaverstudio.data.utils.sourcecode.models.SearchResult
 import com.example.mindweaverstudio.data.utils.sourcecode.models.getFirstMatch

@@ -8,10 +8,4 @@ class AgentsRegistry {
     }
 
     fun get(name: String): Agent? = agents[name]
-
-    fun getPresentableList(): List<String> {
-        return agents.map { (name, agent) ->
-            "Name: $name, description: ${agent.description}"
-        }
-    }
 }

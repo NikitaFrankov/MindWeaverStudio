@@ -164,7 +164,7 @@ class CodeEditorStoreFactory(
                     if (result.isError) {
                         dispatch(Msg.ErrorOccurred(result.message))
                     }
-                    val finalMessages = currentMessages + listOf(UiChatMessage.createAssistantMessage(result.message))
+                    val finalMessages = currentMessages + userMessage + listOf(UiChatMessage.createAssistantMessage(result.message))
 
                     dispatch(Msg.MessagesUpdated(finalMessages))
                     dispatch(Msg.LoadingChanged(false))

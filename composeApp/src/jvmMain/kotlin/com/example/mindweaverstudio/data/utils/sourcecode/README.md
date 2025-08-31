@@ -159,7 +159,7 @@ data class SourceCodeMatch(
 
 package com.example.mindweaverstudio.data.models.agents
 
-import com.example.mindweaverstudio.data.models.chat.ChatMessage
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 
 interface Agent {
     val name: String

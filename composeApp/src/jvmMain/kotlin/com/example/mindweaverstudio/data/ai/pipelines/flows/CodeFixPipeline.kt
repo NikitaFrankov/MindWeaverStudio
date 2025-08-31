@@ -3,10 +3,9 @@ package com.example.mindweaverstudio.data.ai.pipelines.flows
 import com.example.mindweaverstudio.data.ai.agents.AgentsRegistry
 import com.example.mindweaverstudio.data.ai.agents.CODE_FIXER_AGENT
 import com.example.mindweaverstudio.data.ai.agents.CODE_TESTER_AGENT
-import com.example.mindweaverstudio.data.models.chat.ChatMessage
+import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createErrorPipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createSuccessPipelineResult
 import com.example.mindweaverstudio.data.ai.pipelines.CODE_FIX_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.Pipeline
 

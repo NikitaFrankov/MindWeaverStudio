@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.data.models.chat
+package com.example.mindweaverstudio.data.models.chat.remote
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
