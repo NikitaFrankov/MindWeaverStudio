@@ -117,10 +117,19 @@ class GithubMCPClient(
             put("changelog", changelog)
         }
 
-        // Вызов tool
         val request = CallToolRequest(
-            name = "create_release", // Или uri, если используется
+            name = "create_release",
             arguments = arguments
+        )
+
+        val result = client.callTool(request)
+
+        return result?.content as List<TextContent>?
+    }
+
+    suspend fun generateReleaseInfo(): List<TextContent>? {
+        val request = CallToolRequest(
+            name = "generate_release_info",
         )
 
         val result = client.callTool(request)

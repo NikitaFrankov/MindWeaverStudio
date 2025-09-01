@@ -4,38 +4,14 @@ import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStoreFactory
 import com.example.mindweaverstudio.components.projectselection.ProjectSelectionStoreFactory
-import com.example.mindweaverstudio.data.ai.agents.workers.ChatAgent
-import com.example.mindweaverstudio.data.ai.agents.workers.CodeFixerAgent
-import com.example.mindweaverstudio.data.ai.agents.workers.TestCreatorAgent
-import com.example.mindweaverstudio.data.ai.agents.workers.TestRunnerAgent
 import com.example.mindweaverstudio.data.ai.orchestrator.CodeOrchestrator
 import com.example.mindweaverstudio.data.ai.agents.AgentsOrchestratorFactory
-import com.example.mindweaverstudio.data.ai.agents.AgentsRegistry
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
 import com.example.mindweaverstudio.data.ai.aiClients.AiClient
-import com.example.mindweaverstudio.data.ai.aiClients.ChatGPTApiClient
-import com.example.mindweaverstudio.data.ai.aiClients.LocalDeepSeekApiClient
-import com.example.mindweaverstudio.data.ai.aiClients.GeminiApiClient
 import com.example.mindweaverstudio.data.mcp.DockerMCPClient
-import com.example.mindweaverstudio.data.ai.agents.Agent
 import com.example.mindweaverstudio.data.mcp.GithubMCPClient
-import com.example.mindweaverstudio.data.ai.agents.CHAT_AGENT
-import com.example.mindweaverstudio.data.ai.agents.CODE_CREATOR_AGENT
-import com.example.mindweaverstudio.data.ai.agents.CODE_FIXER_AGENT
-import com.example.mindweaverstudio.data.ai.agents.CODE_TESTER_AGENT
-import com.example.mindweaverstudio.data.ai.agents.TEST_CREATOR_AGENT
-import com.example.mindweaverstudio.data.ai.agents.TEST_RUNNER_AGENT
-import com.example.mindweaverstudio.data.ai.agents.workers.CodeCreatorAgent
-import com.example.mindweaverstudio.data.ai.agents.workers.CodeTesterAgent
-import com.example.mindweaverstudio.data.ai.pipelines.CHAT_PIPELINE
-import com.example.mindweaverstudio.data.ai.pipelines.CODE_CREATOR_PIPELINE
-import com.example.mindweaverstudio.data.ai.pipelines.CODE_FIX_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.Pipeline
-import com.example.mindweaverstudio.data.ai.pipelines.PipelineFactory
 import com.example.mindweaverstudio.data.ai.pipelines.PipelineRegistry
-import com.example.mindweaverstudio.data.ai.pipelines.flows.ChatPipeline
-import com.example.mindweaverstudio.data.ai.pipelines.flows.CodeCreatorPipeline
-import com.example.mindweaverstudio.data.ai.pipelines.flows.CodeFixPipeline
 import com.example.mindweaverstudio.data.mcp.ThinkMcpClient
 import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
 import org.koin.core.module.dsl.factoryOf
@@ -52,81 +28,13 @@ val appModule = module {
     singleOf(::CodeEditorLogReceiver)
 
     // Ai Clients
-    single<AiClient>(named("deepseek")) {
-        LocalDeepSeekApiClient()
-    }
-    single<AiClient>(named("gemini")) {
-        GeminiApiClient(get())
-    }
-    single<AiClient>(named("chatgpt")) {
-        ChatGPTApiClient(get())
-    }
+    includes(aiClientsModule)
 
     // Agents
-    factory<Agent>(qualifier = named(TEST_CREATOR_AGENT)) {
-        TestCreatorAgent(
-            aiClient = get<AiClient>(named("chatgpt")),
-            dockerMCPClient = get(),
-        )
-    }
-    factory<Agent>(qualifier = named(TEST_RUNNER_AGENT)) {
-        TestRunnerAgent(
-            aiClient = get<AiClient>(named("chatgpt")),
-            dockerMCPClient = get(),
-        )
-    }
-    factory<Agent>(qualifier = named(CHAT_AGENT)) {
-        ChatAgent(
-            aiClient = get<AiClient>(named("chatgpt")),
-        )
-    }
-    factory<Agent>(qualifier = named(CODE_FIXER_AGENT)) {
-        CodeFixerAgent(
-            aiClient = get<AiClient>(named("chatgpt")),
-        )
-    }
-    factory<Agent>(qualifier = named(CODE_TESTER_AGENT)) {
-        CodeTesterAgent(
-            aiClient = get<AiClient>(named("chatgpt")),
-        )
-    }
-    factory<Agent>(qualifier = named(CODE_CREATOR_AGENT)) {
-        CodeCreatorAgent(
-            aiClient = get<AiClient>(named("deepseek")),
-        )
-    }
+    includes(agentsModule)
 
-    singleOf(::PipelineFactory)
-
-    factory<Pipeline>(named(CHAT_PIPELINE)) {
-        val agentNames = get<PipelineFactory>().chatPipelineAgents
-        val registry = AgentsRegistry().apply {
-            agentNames.forEach { agentName ->
-                register(agentName, get<Agent>(named(agentName)))
-            }
-        }
-        ChatPipeline(agentsRegistry = registry)
-    }
-
-    factory<Pipeline>(named(CODE_FIX_PIPELINE)) {
-        val agentNames = get<PipelineFactory>().codeFixerPipelineAgents
-        val registry = AgentsRegistry().apply {
-            agentNames.forEach { agentName ->
-                register(agentName, get<Agent>(named(agentName)))
-            }
-        }
-        CodeFixPipeline(agentsRegistry = registry)
-    }
-
-    factory<Pipeline>(named(CODE_CREATOR_PIPELINE)) {
-        val agentNames = get<PipelineFactory>().codeCreatorPipelineAgents
-        val registry = AgentsRegistry().apply {
-            agentNames.forEach { agentName ->
-                register(agentName, get<Agent>(named(agentName)))
-            }
-        }
-        CodeCreatorPipeline(agentsRegistry = registry)
-    }
+    // Pipelines
+    includes(pipelinesModule)
 
     singleOf(::AgentsOrchestratorFactory)
 

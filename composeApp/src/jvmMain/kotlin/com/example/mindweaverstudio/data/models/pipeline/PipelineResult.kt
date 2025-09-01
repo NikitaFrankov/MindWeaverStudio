@@ -6,12 +6,12 @@ class PipelineResult(
 ) {
 
     companion object Companion {
-        fun createSuccessPipelineResult(message: String) =
+        fun successPipelineResult(message: String) =
             PipelineResult(
                 message = message,
                 isError = false,
             )
-        fun createErrorPipelineResult(error: Throwable): PipelineResult {
+        fun errorPipelineResult(error: Throwable): PipelineResult {
             val errorMessage = "Error during agent work, throwable = $error, message = ${error.message.orEmpty().ifEmpty { "Unknown error" }}"
 
             return PipelineResult(
@@ -19,7 +19,7 @@ class PipelineResult(
                 isError = true,
             )
         }
-        fun createErrorPipelineResult(message: String): PipelineResult {
+        fun errorPipelineResult(message: String): PipelineResult {
             val errorMessage = "Error during agent work, message = ${message.ifEmpty { "Unknown error" }}"
 
             return PipelineResult(

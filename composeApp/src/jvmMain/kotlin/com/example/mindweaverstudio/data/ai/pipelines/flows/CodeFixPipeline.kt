@@ -5,7 +5,7 @@ import com.example.mindweaverstudio.data.ai.agents.CODE_FIXER_AGENT
 import com.example.mindweaverstudio.data.ai.agents.CODE_TESTER_AGENT
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createErrorPipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.errorPipelineResult
 import com.example.mindweaverstudio.data.ai.pipelines.CODE_FIX_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.Pipeline
 
@@ -23,13 +23,13 @@ class CodeFixPipeline(
      * */
     override suspend fun run(input: ChatMessage): PipelineResult {
         val firstStep = agentsRegistry.get(CODE_FIXER_AGENT)?.run(input.content)
-            ?: return createErrorPipelineResult(message = "Error during $name pipeline. First step is null")
+            ?: return errorPipelineResult(message = "Error during $name pipeline. First step is null")
         if (firstStep.isError) {
             return firstStep
         }
 
         val secondStep = agentsRegistry.get(CODE_TESTER_AGENT)?.run(firstStep.message)
-            ?: return createErrorPipelineResult(message = "Error during $name pipeline. Second step is null")
+            ?: return errorPipelineResult(message = "Error during $name pipeline. Second step is null")
         if (secondStep.isError) {
             return secondStep
         }

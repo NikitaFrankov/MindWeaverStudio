@@ -5,7 +5,7 @@ import com.example.mindweaverstudio.data.ai.pipelines.PipelineRegistry
 import com.example.mindweaverstudio.data.utils.extensions.decodeFromStringOrNull
 import com.example.mindweaverstudio.data.models.pipeline.CodeOrchestratorCommand
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createErrorPipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.errorPipelineResult
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
@@ -36,14 +36,14 @@ class CodeOrchestrator(
         return aiResult.fold(
             onSuccess = { result ->
                 val decision = json.decodeFromStringOrNull<CodeOrchestratorCommand>(result.message)
-                    ?: return@fold createErrorPipelineResult(message = "Не получилось распарсить ответ от оркестратора")
+                    ?: return@fold errorPipelineResult(message = "Не получилось распарсить ответ от оркестратора")
                 val pipeline = registry.get(decision.pipeline)
-                    ?: return@fold createErrorPipelineResult(message = "Неизвестный агент")
+                    ?: return@fold errorPipelineResult(message = "Неизвестный агент")
 
                 return pipeline.run(input = userMessage)
             },
             onFailure = {
-                return createErrorPipelineResult(error = it)
+                return errorPipelineResult(error = it)
             }
         )
     }

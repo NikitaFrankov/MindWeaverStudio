@@ -46,13 +46,14 @@ class ChatGPTApiClient(
         maxTokens: Int,
     ): Result<AiResponse> {
         val request = ChatRequest(
-            model = "qwen/qwen2.5-vl-32b-instruct:free",
+            model = "qwen/qwen2.5-vl-72b-instruct:free",
             messages = messages,
             temperature = temperature,
             maxTokens = 3000,
         )
 
         return try {
+            println("Request for ai - ${request.messages}")
             val response = client.post("$baseUrl/chat/completions") {
                 contentType(ContentType.Application.Json)
                 headers {

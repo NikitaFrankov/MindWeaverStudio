@@ -3,8 +3,8 @@ package com.example.mindweaverstudio.data.ai.agents.workers
 import com.example.mindweaverstudio.data.ai.agents.Agent
 import com.example.mindweaverstudio.data.ai.aiClients.AiClient
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createErrorPipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createSuccessPipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.errorPipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.successPipelineResult
 import com.example.mindweaverstudio.data.ai.agents.CODE_FIXER_AGENT
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
@@ -60,10 +60,10 @@ class CodeFixerAgent(
                 )
                 val resultString = json.encodeToString(CodeFixerResult.serializer(), result)
 
-                createSuccessPipelineResult(message = resultString)
+                successPipelineResult(message = resultString)
             },
             onFailure = { error ->
-                createErrorPipelineResult(error)
+                errorPipelineResult(error)
             }
         )
     }

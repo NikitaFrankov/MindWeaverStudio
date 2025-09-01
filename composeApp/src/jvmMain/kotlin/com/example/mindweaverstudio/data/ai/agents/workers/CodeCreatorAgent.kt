@@ -4,8 +4,8 @@ import com.example.mindweaverstudio.data.ai.agents.Agent
 import com.example.mindweaverstudio.data.ai.agents.CODE_CREATOR_AGENT
 import com.example.mindweaverstudio.data.ai.aiClients.AiClient
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createErrorPipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createSuccessPipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.errorPipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.successPipelineResult
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
@@ -27,10 +27,10 @@ class CodeCreatorAgent(
         )
         return result.fold(
             onSuccess = { response ->
-                createSuccessPipelineResult(message = response.message)
+                successPipelineResult(message = response.message)
             },
             onFailure = { error ->
-                createErrorPipelineResult(error)
+                errorPipelineResult(error)
             }
         )
     }

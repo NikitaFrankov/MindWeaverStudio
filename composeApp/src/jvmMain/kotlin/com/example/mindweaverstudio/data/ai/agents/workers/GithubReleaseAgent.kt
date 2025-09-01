@@ -1,47 +1,40 @@
 package com.example.mindweaverstudio.data.ai.agents.workers
 
+import com.example.mindweaverstudio.components.codeeditor.models.createInfoLogEntry
 import com.example.mindweaverstudio.data.ai.agents.Agent
+import com.example.mindweaverstudio.data.ai.agents.GITHUB_RELEASE_AGENT
 import com.example.mindweaverstudio.data.ai.aiClients.AiClient
-import com.example.mindweaverstudio.data.mcp.DockerMCPClient
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.errorPipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.successPipelineResult
-import com.example.mindweaverstudio.data.ai.agents.TEST_CREATOR_AGENT
+import com.example.mindweaverstudio.data.mcp.GithubMCPClient
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
 import com.example.mindweaverstudio.data.models.mcp.base.ToolCall
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.errorPipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.successPipelineResult
+import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
 import kotlinx.serialization.json.Json
 
-class TestCreatorAgent(
+class GithubReleaseAgent(
     private val aiClient: AiClient,
-    private val dockerMCPClient: DockerMCPClient,
+    private val mcpClient: GithubMCPClient,
+    private val receiver: CodeEditorLogReceiver
 ) : Agent {
-
-    override val name = TEST_CREATOR_AGENT
-    override val description: String = "Агент, который генерирует JUnit тесты для переданного класса/файла kotlin."
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
+    override val name: String = GITHUB_RELEASE_AGENT
+    override val description: String = "Agent responsible for create release on github.com"
 
     override suspend fun run(input: String): PipelineResult {
-        val systemPrompt = generateTestSystemPrompt()
+        val systemPrompt = generateSystemPrompt()
         val messages = listOf(systemPrompt, ChatMessage(content = input, role = ROLE_USER))
 
         val result = aiClient.createChatCompletion(
             messages = messages,
-            temperature = 0.3,
-            maxTokens = 1000,
+            temperature = 0.2,
+            maxTokens = 1500,
         )
-
         return result.fold(
             onSuccess = { response ->
-                val toolCall = json.decodeFromString(ToolCall.serializer(), response.message)
-                val result = dockerMCPClient.callTool(toolCall)?.firstOrNull()?.text.orEmpty()
-
-                successPipelineResult(message = result)
+                handleToolCall(message = response.message)
             },
             onFailure = { error ->
                 errorPipelineResult(error)
@@ -49,17 +42,37 @@ class TestCreatorAgent(
         )
     }
 
-    private suspend fun generateTestSystemPrompt(): ChatMessage {
-        val tools = dockerMCPClient.getTools()
+    private suspend fun handleToolCall(message: String): PipelineResult {
+        val json = Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+        }
+
+        try {
+            val toolCall = json.decodeFromString(ToolCall.serializer(), message)
+            val result = mcpClient.callTool(toolCall)?.firstOrNull()?.text.orEmpty()
+            val toolLogEntry = "Tool for creating github release has completed his work. result:\n$result".createInfoLogEntry()
+
+            receiver.emitNewValue(toolLogEntry)
+
+            return successPipelineResult(result)
+        } catch (e: Exception) {
+            return errorPipelineResult(e)
+        }
+    }
+
+    private suspend fun generateSystemPrompt(): ChatMessage {
+        val tools = mcpClient.getTools()
         val prompt =  """
-            You are an AI agent integrated with a mcp server.  
+            You are an AI agent integrated with a mcp server
+            You use only **ONE** tool - for create github release.  
             You must follow these rules strictly:
             
-            1. You are given a list of tools:
+            1. You are given a list of tools, but You use only **ONE** tool - for create github release. :
                 $tools
             
-            2. When the user makes a request that can be satisfied by one of the tools,  
-               you must respond **only** with a JSON object of the following form:
+            2. When the user makes a request related to generating information about the next release,
+                you must respond only with a JSON object of the following form:
             
                {
                  "action": "call_tool",

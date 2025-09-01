@@ -5,7 +5,7 @@ import com.example.mindweaverstudio.data.ai.agents.CHAT_AGENT
 import com.example.mindweaverstudio.data.ai.pipelines.CHAT_PIPELINE
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createErrorPipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.errorPipelineResult
 import com.example.mindweaverstudio.data.ai.pipelines.Pipeline
 
 class ChatPipeline(
@@ -16,7 +16,7 @@ class ChatPipeline(
 
     override suspend fun run(input: ChatMessage): PipelineResult {
         val firstStep = agentsRegistry.get(CHAT_AGENT)?.run(input.content)
-            ?: return createErrorPipelineResult(message = "Error during $name pipeline. First step is null")
+            ?: return errorPipelineResult(message = "Error during $name pipeline. First step is null")
 
         return firstStep
     }

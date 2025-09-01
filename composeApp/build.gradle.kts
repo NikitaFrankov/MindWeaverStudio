@@ -60,9 +60,29 @@ compose.desktop {
         mainClass = "com.example.mindweaverstudio.MainKt"
 
         nativeDistributions {
+
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.example.mindweaverstudio"
-            packageVersion = "1.0.0"
+
+            // Если передали -Pversion → берём его, иначе дефолт
+            val appVersion: String = (project.findProperty("version") as String?)
+                ?.takeIf { it.matches(Regex("""\d+(\.\d+){0,2}""")) } // валидация формата
+                ?: "1.0.0"
+
+            packageVersion = appVersion
+
+            macOS {
+                packageVersion = appVersion // для DMG
+                dmgPackageVersion = appVersion
+            }
+            windows {
+                packageVersion = appVersion // для MSI
+                msiPackageVersion = appVersion
+            }
+            linux {
+                packageVersion = appVersion // для DEB
+                debPackageVersion = appVersion
+            }
         }
     }
 }

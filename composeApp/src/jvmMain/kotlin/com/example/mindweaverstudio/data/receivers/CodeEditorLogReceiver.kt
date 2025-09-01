@@ -9,7 +9,7 @@ class CodeEditorLogReceiver {
     private var _logFlow: MutableSharedFlow<LogEntry> = MutableSharedFlow()
     val logFlow: SharedFlow<LogEntry> = _logFlow.asSharedFlow()
 
-    fun emitNewValue(value: LogEntry) {
-        _logFlow.tryEmit(value)
+    suspend fun emitNewValue(value: LogEntry) {
+        _logFlow.emit(value)
     }
 }

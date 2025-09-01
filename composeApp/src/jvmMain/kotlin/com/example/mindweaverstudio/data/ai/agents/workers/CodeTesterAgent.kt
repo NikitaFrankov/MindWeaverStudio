@@ -4,7 +4,7 @@ import com.example.mindweaverstudio.data.ai.agents.Agent
 import com.example.mindweaverstudio.data.ai.agents.CODE_TESTER_AGENT
 import com.example.mindweaverstudio.data.ai.aiClients.AiClient
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.createSuccessPipelineResult
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.successPipelineResult
 import com.example.mindweaverstudio.data.utils.codereplacer.CodeReplacerUtils
 import kotlinx.serialization.json.Json
 
@@ -28,6 +28,6 @@ class CodeTesterAgent(
             newCode = inputObject.newCode
         )
 
-        return createSuccessPipelineResult(result)
+        return successPipelineResult(result)
     }
 }
