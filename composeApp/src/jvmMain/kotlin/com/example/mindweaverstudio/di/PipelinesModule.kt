@@ -6,7 +6,7 @@ import com.example.mindweaverstudio.data.ai.pipelines.CHAT_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.CODE_CREATOR_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.CODE_FIX_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.GITHUB_RELEASE_PIPELINE
-import com.example.mindweaverstudio.data.ai.pipelines.Pipeline
+import com.example.mindweaverstudio.data.ai.pipelines.common.Pipeline
 import com.example.mindweaverstudio.data.ai.pipelines.PipelineFactory
 import com.example.mindweaverstudio.data.ai.pipelines.flows.ChatPipeline
 import com.example.mindweaverstudio.data.ai.pipelines.flows.CodeCreatorPipeline

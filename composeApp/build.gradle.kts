@@ -31,7 +31,8 @@ kotlin {
             implementation(libs.mvikotlin)
             implementation(libs.mvikotlin.main)
             implementation(libs.mvikotlin.extensions.coroutines)
-            
+            implementation(libs.redis.jedis)
+
             // Network
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.contentNegotiation)

@@ -1,7 +1,9 @@
 package com.example.mindweaverstudio.data.ai.orchestrator
 
 import com.example.mindweaverstudio.data.ai.aiClients.AiClient
+import com.example.mindweaverstudio.data.ai.memory.MemoryStore
 import com.example.mindweaverstudio.data.ai.pipelines.PipelineRegistry
+import com.example.mindweaverstudio.data.ai.pipelines.PipelineRunner
 import com.example.mindweaverstudio.data.utils.extensions.decodeFromStringOrNull
 import com.example.mindweaverstudio.data.models.pipeline.CodeOrchestratorCommand
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
@@ -9,11 +11,13 @@ import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companio
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
+import com.example.mindweaverstudio.data.models.pipeline.PipelineOptions
 import kotlinx.serialization.json.Json
 
 class CodeOrchestrator(
     private val registry: PipelineRegistry,
     private val aiClient: AiClient,
+    private val memoryStore: MemoryStore
 ) {
     private val systemPrompt: ChatMessage = generateSystemPrompt()
     private var messagesHistory: List<ChatMessage> = listOf(systemPrompt)
@@ -22,6 +26,7 @@ class CodeOrchestrator(
         explicitNulls = false
         isLenient = true
     }
+    private val pipelineRunner = PipelineRunner(memoryStore)
 
     suspend fun handleMessage(userInput: String): PipelineResult {
         val userMessage = ChatMessage(ROLE_USER, userInput)
@@ -40,7 +45,13 @@ class CodeOrchestrator(
                 val pipeline = registry.get(decision.pipeline)
                     ?: return@fold errorPipelineResult(message = "Неизвестный агент")
 
-                return pipeline.run(input = userMessage)
+                val result = pipelineRunner.execute(
+                    pipeline = pipeline,
+                    input = userMessage,
+                    options = PipelineOptions(resumeFromLast = true),
+                )
+
+                return result
             },
             onFailure = {
                 return errorPipelineResult(error = it)

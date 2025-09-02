@@ -1,5 +1,7 @@
 package com.example.mindweaverstudio.data.ai.pipelines
 
+import com.example.mindweaverstudio.data.ai.pipelines.common.Pipeline
+
 class PipelineRegistry {
     private val agents = mutableMapOf<String, Pipeline>()
 

@@ -13,6 +13,7 @@ ktor = "3.0.3"
 mvikotlin = "4.2.0"
 compose-tosts = "0.2.0"
 syntax-area = "3.6.0"
+redis-jedis="5.1.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -51,6 +52,9 @@ syntax-area = { module = "com.fifesoft:rsyntaxtextarea", version.ref = "syntax-a
 
 # Serialization
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+
+#Redis
+redis-jedis = { module = "redis.clients:jedis", version.ref = "redis-jedis" }
 
 [plugins]
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }

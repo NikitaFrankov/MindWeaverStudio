@@ -8,9 +8,11 @@ import com.example.mindweaverstudio.data.ai.orchestrator.CodeOrchestrator
 import com.example.mindweaverstudio.data.ai.agents.AgentsOrchestratorFactory
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
 import com.example.mindweaverstudio.data.ai.aiClients.AiClient
+import com.example.mindweaverstudio.data.ai.memory.MemoryStore
+import com.example.mindweaverstudio.data.ai.memory.RedisMemoryStore
 import com.example.mindweaverstudio.data.mcp.DockerMCPClient
 import com.example.mindweaverstudio.data.mcp.GithubMCPClient
-import com.example.mindweaverstudio.data.ai.pipelines.Pipeline
+import com.example.mindweaverstudio.data.ai.pipelines.common.Pipeline
 import com.example.mindweaverstudio.data.ai.pipelines.PipelineRegistry
 import com.example.mindweaverstudio.data.mcp.ThinkMcpClient
 import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
@@ -19,8 +21,13 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import redis.clients.jedis.Jedis
 
 val appModule = module {
+
+    single { Jedis("localhost", 6379) }
+    singleOf(::RedisMemoryStore) bind MemoryStore::class
+
     // Configuration
     singleOf(ApiConfiguration::load) bind ApiConfiguration::class
 
@@ -47,7 +54,8 @@ val appModule = module {
         }
         CodeOrchestrator(
             registry = registry,
-            aiClient = get<AiClient>(named("chatgpt"))
+            aiClient = get<AiClient>(named("chatgpt")),
+            memoryStore = get(),
         )
     }
 
