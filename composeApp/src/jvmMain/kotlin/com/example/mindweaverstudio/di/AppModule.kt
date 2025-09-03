@@ -16,6 +16,7 @@ import com.example.mindweaverstudio.data.ai.pipelines.common.Pipeline
 import com.example.mindweaverstudio.data.ai.pipelines.PipelineRegistry
 import com.example.mindweaverstudio.data.mcp.ThinkMcpClient
 import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
+import com.example.mindweaverstudio.data.voiceModels.SpeechRecognizer
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
@@ -42,6 +43,9 @@ val appModule = module {
 
     // Pipelines
     includes(pipelinesModule)
+
+    // STT
+    factoryOf(::SpeechRecognizer)
 
     singleOf(::AgentsOrchestratorFactory)
 

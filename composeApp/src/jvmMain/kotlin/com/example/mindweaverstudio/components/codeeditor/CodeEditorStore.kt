@@ -21,19 +21,22 @@ interface CodeEditorStore : Store<CodeEditorStore.Intent, CodeEditorStore.State,
         val rightPanelWidth: Float = 0.3f,
         val bottomPanelHeight: Float = 0.3f,
         val isLoading: Boolean = false,
-        val error: String? = null
+        val error: String? = null,
+        val isVoiceRecording: Boolean = false,
     )
 
     sealed class Intent {
-        data class SelectFile(val file: FileNode) : Intent()
-        data class ToggleFolderExpanded(val folderPath: String) : Intent()
-        data class UpdateEditorContent(val content: String) : Intent()
-        data class UpdateChatInput(val input: String) : Intent()
+        class SelectFile(val file: FileNode) : Intent()
+        class ToggleFolderExpanded(val folderPath: String) : Intent()
+        class UpdateEditorContent(val content: String) : Intent()
+        class UpdateChatInput(val input: String) : Intent()
+        class PlayMessage(val message: String) : Intent()
         data object SendChatMessage : Intent()
         data class UpdatePanelWidth(val uiPanel: UiPanel, val width: Float) : Intent()
         data class UpdateBottomPanelHeight(val height: Float) : Intent()
         data class AddLogEntry(val entry: LogEntry) : Intent()
         data object ClearError : Intent()
+        data object RecordVoiceClick : Intent()
     }
 
     sealed class Label
@@ -56,5 +59,6 @@ interface CodeEditorStore : Store<CodeEditorStore.Intent, CodeEditorStore.State,
         class LogEntryAdded(val entry: LogEntry) : Msg()
         class OnNodesReceived(val node: FileNode) : Msg()
         class ProjectTreeUpdated(val tree: List<FileNode>) : Msg()
+        data object VoiceRecordingStateChange : Msg()
     }
 }

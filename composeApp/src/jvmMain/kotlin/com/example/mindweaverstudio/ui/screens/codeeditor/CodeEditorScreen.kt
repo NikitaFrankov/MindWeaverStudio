@@ -13,6 +13,8 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.automirrored.filled.SpeakerNotes
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -128,10 +130,9 @@ private fun CodeEditorScreen(
             messages = state.chatMessages,
             chatInput = state.chatInput,
             isLoading = state.isLoading,
+            isVoiceRecording = state.isVoiceRecording,
             error = state.error,
-            onInputChanged = { intentHandler(CodeEditorStore.Intent.UpdateChatInput(it)) },
-            onSendMessage = { intentHandler(CodeEditorStore.Intent.SendChatMessage) },
-            onClearError = { intentHandler(CodeEditorStore.Intent.ClearError) }
+            intentHandler = intentHandler,
         )
 
         // draggable граница логов (над LogsPanel)
@@ -332,9 +333,8 @@ private fun ChatPanel(
     chatInput: String,
     isLoading: Boolean,
     error: String?,
-    onInputChanged: (String) -> Unit,
-    onSendMessage: () -> Unit,
-    onClearError: () -> Unit
+    isVoiceRecording: Boolean,
+    intentHandler: (CodeEditorStore.Intent) -> Unit,
 ) {
     Card(
         modifier = modifier.fillMaxHeight(),
@@ -360,7 +360,10 @@ private fun ChatPanel(
                 items(messages) { message ->
                     when (message) {
                         is UiChatMessage.UserMessage -> UserChatMessageItem(message = message)
-                        is UiChatMessage.AssistantMessage -> AssistantChatMessageItem(message = message)
+                        is UiChatMessage.AssistantMessage -> AssistantChatMessageItem(
+                            message = message,
+                            intentHandler = intentHandler
+                        )
                         is UiChatMessage.ThinkingMessage -> ThinkingChatMessageItem(message = message)
                     }
                 }
@@ -380,7 +383,7 @@ private fun ChatPanel(
             ) {
                 TextField(
                     value = chatInput,
-                    onValueChange = onInputChanged,
+                    onValueChange = { intentHandler(CodeEditorStore.Intent.UpdateChatInput(it)) },
                     modifier = Modifier.weight(1f),
                     colors = TextFieldDefaults.colors()
                         .copy(
@@ -402,14 +405,26 @@ private fun ChatPanel(
                             color = MindWeaverTheme.colors.textSecondary
                         )
                     },
-                    enabled = !isLoading,
+                    enabled = !isLoading && !isVoiceRecording,
                     maxLines = 3
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
 
                 IconButton(
-                    onClick = onSendMessage,
+                    onClick = { intentHandler(CodeEditorStore.Intent.RecordVoiceClick) }
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.SpeakerNotes,
+                        contentDescription = "Recording Voice",
+                        tint = MindWeaverTheme.colors.accent400
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                IconButton(
+                    onClick = { intentHandler(CodeEditorStore.Intent.SendChatMessage) },
                     enabled = chatInput.isNotBlank() && !isLoading,
                     colors = IconButtonDefaults.iconButtonColors()
                 ) {
@@ -441,7 +456,7 @@ private fun ChatPanel(
                     )
 
                     TextButton(
-                        onClick = onClearError
+                        onClick = { intentHandler(CodeEditorStore.Intent.ClearError) }
                     ) {
                         Text("Dismiss")
                     }
@@ -488,7 +503,10 @@ private fun UserChatMessageItem(message: UiChatMessage.UserMessage) {
 }
 
 @Composable
-private fun AssistantChatMessageItem(message: UiChatMessage.AssistantMessage) {
+private fun AssistantChatMessageItem(
+    message: UiChatMessage.AssistantMessage,
+    intentHandler: (CodeEditorStore.Intent) -> Unit
+) {
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     Row(
@@ -512,6 +530,16 @@ private fun AssistantChatMessageItem(message: UiChatMessage.AssistantMessage) {
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
+
+                IconButton(
+                    onClick = { intentHandler(CodeEditorStore.Intent.PlayMessage(message.content)) },
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.VolumeUp,
+                        contentDescription = "Recording Voice",
+                        tint = MindWeaverTheme.colors.accent400
+                    )
+                }
 
                 Text(
                     text = timeFormat.format(Date(message.timestamp)),

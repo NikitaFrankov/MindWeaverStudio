@@ -16,8 +16,12 @@ import com.example.mindweaverstudio.data.ai.agents.AgentsOrchestratorFactory
 import com.example.mindweaverstudio.data.mcp.DockerMCPClient
 import com.example.mindweaverstudio.data.mcp.GithubMCPClient
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg
+import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg.*
 import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
+import com.example.mindweaverstudio.data.voiceModels.SpeechRecognizer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import kotlin.collections.plus
@@ -26,6 +30,7 @@ import kotlin.math.min
 
 class CodeEditorStoreFactory(
     orchestratorFactory: AgentsOrchestratorFactory,
+    private val speechRecognizer: SpeechRecognizer,
     private val logReceiver: CodeEditorLogReceiver,
     private val dockerMCPClient: DockerMCPClient,
     private val githubMCPClient: GithubMCPClient,
@@ -51,6 +56,7 @@ class CodeEditorStoreFactory(
                 initMcpServer()
                 fetchRootNode(state().project.path)
                 setupLogListener()
+                setupVoiceListener()
             }
         }
 
@@ -58,6 +64,14 @@ class CodeEditorStoreFactory(
             scope.launch {
                 dockerMCPClient.init()
                 githubMCPClient.init()
+            }
+        }
+
+        private fun setupVoiceListener() {
+            scope.launch {
+                speechRecognizer.textChannel.receiveAsFlow().collectLatest {
+                    dispatch(ChatInputUpdated(it))
+                }
             }
         }
 
@@ -92,10 +106,10 @@ class CodeEditorStoreFactory(
             when (intent) {
                 is CodeEditorStore.Intent.SelectFile -> {
                     if (!intent.file.isDirectory) {
-                        dispatch(Msg.FileSelected(intent.file))
-                        dispatch(Msg.EditorContentUpdated(intent.file.content.orEmpty()))
+                        dispatch(FileSelected(intent.file))
+                        dispatch(EditorContentUpdated(intent.file.content.orEmpty()))
                         dispatch(
-                            Msg.LogEntryAdded(
+                            LogEntryAdded(
                                 LogEntry(
                                     "Opened file: ${intent.file.name}",
                                     UiLogLevel.INFO
@@ -108,15 +122,15 @@ class CodeEditorStoreFactory(
                 is CodeEditorStore.Intent.ToggleFolderExpanded -> {
                     val currentTree = state().projectTree
                     val updatedTree = toggleFolderExpansion(currentTree, intent.folderPath)
-                    dispatch(Msg.ProjectTreeUpdated(updatedTree))
+                    dispatch(ProjectTreeUpdated(updatedTree))
                 }
                 
                 is CodeEditorStore.Intent.UpdateEditorContent -> {
-                    dispatch(Msg.EditorContentUpdated(intent.content))
+                    dispatch(EditorContentUpdated(intent.content))
                 }
                 
                 is CodeEditorStore.Intent.UpdateChatInput -> {
-                    dispatch(Msg.ChatInputUpdated(intent.input))
+                    dispatch(ChatInputUpdated(intent.input))
                 }
                 
                 is CodeEditorStore.Intent.SendChatMessage -> {
@@ -126,22 +140,36 @@ class CodeEditorStoreFactory(
                     }
                 }
                 
-                is CodeEditorStore.Intent.ClearError -> dispatch(Msg.ErrorCleared)
+                is CodeEditorStore.Intent.ClearError -> dispatch(ErrorCleared)
 
                 is CodeEditorStore.Intent.UpdatePanelWidth -> {
                     val clampedWidth = min(0.8f, max(0.1f, intent.width))
-                    dispatch(Msg.PanelWidthUpdated(intent.uiPanel, clampedWidth))
+                    dispatch(PanelWidthUpdated(intent.uiPanel, clampedWidth))
                 }
                 
                 is CodeEditorStore.Intent.UpdateBottomPanelHeight -> {
                     val clampedHeight = min(0.7f, max(0.1f, intent.height))
-                    dispatch(Msg.BottomPanelHeightUpdated(clampedHeight))
+                    dispatch(BottomPanelHeightUpdated(clampedHeight))
                 }
                 
                 is CodeEditorStore.Intent.AddLogEntry -> {
-                    dispatch(Msg.LogEntryAdded(intent.entry))
+                    dispatch(LogEntryAdded(intent.entry))
                 }
+
+                CodeEditorStore.Intent.RecordVoiceClick -> {
+                    when(state().isVoiceRecording) {
+                        true -> speechRecognizer.stopRecognition()
+                        false -> speechRecognizer.startRecognition(scope)
+                    }
+                    dispatch(VoiceRecordingStateChange)
+                }
+
+                is CodeEditorStore.Intent.PlayMessage -> playMessage(intent.message)
             }
+        }
+
+        private fun playMessage(message: String) {
+            ProcessBuilder("say", message).start()
         }
 
         private fun sendMessage(
@@ -153,9 +181,9 @@ class CodeEditorStoreFactory(
 
             // Add user message and thinking placeholder
             val updatedMessages = currentMessages + userMessage + thinkingMessage
-            dispatch(Msg.MessagesUpdated(updatedMessages))
-            dispatch(Msg.ChatInputUpdated(""))
-            dispatch(Msg.LoadingChanged(true))
+            dispatch(MessagesUpdated(updatedMessages))
+            dispatch(ChatInputUpdated(""))
+            dispatch(LoadingChanged(true))
 
             scope.launch {
                 try {
@@ -182,22 +210,23 @@ class CodeEditorStoreFactory(
     private object ReducerImpl : Reducer<CodeEditorStore.State, Msg> {
         override fun CodeEditorStore.State.reduce(msg: Msg): CodeEditorStore.State =
             when (msg) {
-                is Msg.FileSelected -> copy(selectedFile = msg.file)
-                is Msg.EditorContentUpdated -> copy(editorContent = msg.content)
-                is Msg.ChatInputUpdated -> copy(chatInput = msg.input)
-                is Msg.ChatMessageAdded -> copy(chatMessages = chatMessages + msg.message)
-                is Msg.PanelWidthUpdated -> when (msg.uiPanel) {
+                is FileSelected -> copy(selectedFile = msg.file)
+                is EditorContentUpdated -> copy(editorContent = msg.content)
+                is ChatInputUpdated -> copy(chatInput = msg.input)
+                is ChatMessageAdded -> copy(chatMessages = chatMessages + msg.message)
+                is PanelWidthUpdated -> when (msg.uiPanel) {
                     UiPanel.LEFT -> copy(leftPanelWidth = msg.width)
                     UiPanel.RIGHT -> copy(rightPanelWidth = msg.width)
                 }
-                is Msg.BottomPanelHeightUpdated -> copy(bottomPanelHeight = msg.height)
-                is Msg.LogEntryAdded -> copy(logs = logs + msg.entry)
-                is Msg.OnNodesReceived -> copy(projectTree = msg.node.children)
-                is Msg.ProjectTreeUpdated -> copy(projectTree = msg.tree)
-                is Msg.MessagesUpdated -> copy(chatMessages = msg.messages)
-                is Msg.LoadingChanged -> copy(isLoading = msg.isLoading)
-                is Msg.ErrorOccurred -> copy(error = msg.error, isLoading = false)
-                is Msg.ErrorCleared -> copy(error = null)
+                is BottomPanelHeightUpdated -> copy(bottomPanelHeight = msg.height)
+                is LogEntryAdded -> copy(logs = logs + msg.entry)
+                is OnNodesReceived -> copy(projectTree = msg.node.children)
+                is ProjectTreeUpdated -> copy(projectTree = msg.tree)
+                is MessagesUpdated -> copy(chatMessages = msg.messages)
+                is LoadingChanged -> copy(isLoading = msg.isLoading)
+                is ErrorOccurred -> copy(error = msg.error, isLoading = false)
+                is ErrorCleared -> copy(error = null)
+                is VoiceRecordingStateChange -> copy(isVoiceRecording = !isVoiceRecording)
             }
     }
 }

@@ -48,7 +48,7 @@ class CodeOrchestrator(
                 val result = pipelineRunner.execute(
                     pipeline = pipeline,
                     input = userMessage,
-                    options = PipelineOptions(resumeFromLast = true),
+                    options = PipelineOptions(resumeFromLast = false),
                 )
 
                 return result
