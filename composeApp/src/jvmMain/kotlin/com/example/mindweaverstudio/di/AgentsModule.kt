@@ -6,6 +6,7 @@ import com.example.mindweaverstudio.data.ai.agents.CODE_CREATOR_AGENT
 import com.example.mindweaverstudio.data.ai.agents.CODE_FIXER_AGENT
 import com.example.mindweaverstudio.data.ai.agents.CODE_TESTER_AGENT
 import com.example.mindweaverstudio.data.ai.agents.GITHUB_RELEASE_AGENT
+import com.example.mindweaverstudio.data.ai.agents.REASONING_AGENT
 import com.example.mindweaverstudio.data.ai.agents.RELEASE_NOTES_GENERATION_AGENT
 import com.example.mindweaverstudio.data.ai.agents.TEST_CREATOR_AGENT
 import com.example.mindweaverstudio.data.ai.agents.TEST_RUNNER_AGENT
@@ -14,6 +15,7 @@ import com.example.mindweaverstudio.data.ai.agents.workers.CodeCreatorAgent
 import com.example.mindweaverstudio.data.ai.agents.workers.CodeFixerAgent
 import com.example.mindweaverstudio.data.ai.agents.workers.CodeTesterAgent
 import com.example.mindweaverstudio.data.ai.agents.workers.GithubReleaseAgent
+import com.example.mindweaverstudio.data.ai.agents.workers.ReasoningAgent
 import com.example.mindweaverstudio.data.ai.agents.workers.ReleaseNotesGeneratorAgent
 import com.example.mindweaverstudio.data.ai.agents.workers.TestCreatorAgent
 import com.example.mindweaverstudio.data.ai.agents.workers.TestRunnerAgent
@@ -66,6 +68,11 @@ val agentsModule = module {
             aiClient = get<AiClient>(named("chatgpt")),
             mcpClient = get(),
             receiver = get(),
+        )
+    }
+    factory<Agent>(qualifier = named(REASONING_AGENT)) {
+        ReasoningAgent(
+            aiClient = get<AiClient>(named("chatgpt")),
         )
     }
 }

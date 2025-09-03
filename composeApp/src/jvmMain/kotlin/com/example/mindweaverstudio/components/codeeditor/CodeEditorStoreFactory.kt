@@ -179,7 +179,6 @@ class CodeEditorStoreFactory(
             val userMessage = UiChatMessage.createUserMessage(message)
             val thinkingMessage = UiChatMessage.createThinkingMessage()
 
-            // Add user message and thinking placeholder
             val updatedMessages = currentMessages + userMessage + thinkingMessage
             dispatch(MessagesUpdated(updatedMessages))
             dispatch(ChatInputUpdated(""))
@@ -190,18 +189,17 @@ class CodeEditorStoreFactory(
                     val result = orchestrator.handleMessage(message)
 
                     if (result.isError) {
-                        dispatch(Msg.ErrorOccurred(result.message))
+                        dispatch(ErrorOccurred(result.message))
                     }
                     val finalMessages = currentMessages + userMessage + listOf(UiChatMessage.createAssistantMessage(result.message))
 
-                    dispatch(Msg.MessagesUpdated(finalMessages))
-                    dispatch(Msg.LoadingChanged(false))
+                    dispatch(MessagesUpdated(finalMessages))
+                    dispatch(LoadingChanged(false))
                 } catch (e: Exception) {
-                    // Remove thinking message and show error
                     val errorMessages = currentMessages + userMessage
-                    dispatch(Msg.MessagesUpdated(errorMessages))
-                    dispatch(Msg.ErrorOccurred(e.message ?: "Unknown error occurred"))
-                    dispatch(Msg.LoadingChanged(false))
+                    dispatch(MessagesUpdated(errorMessages))
+                    dispatch(ErrorOccurred(e.message ?: "Unknown error occurred"))
+                    dispatch(LoadingChanged(false))
                 }
             }
         }
