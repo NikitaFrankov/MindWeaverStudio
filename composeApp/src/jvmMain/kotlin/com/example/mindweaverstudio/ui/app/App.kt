@@ -10,6 +10,7 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.example.mindweaverstudio.components.root.RootComponent
 import com.example.mindweaverstudio.components.root.RootComponent.Child
+import com.example.mindweaverstudio.ui.screens.authentication.AuthenticationScreen
 import com.example.mindweaverstudio.ui.screens.codeeditor.CodeEditorScreen
 import com.example.mindweaverstudio.ui.screens.projectselection.ProjectSelectionScreen
 import com.example.mindweaverstudio.ui.theme.MindWeaverTheme
@@ -37,6 +38,7 @@ fun RootContent(component: RootComponent, modifier: Modifier = Modifier) {
             animation = stackAnimation(animator = fade())
         ) {
             when (val child = it.instance) {
+                is Child.Authentication -> AuthenticationScreen(child.component)
                 is Child.ProjectSelection -> ProjectSelectionScreen(child.component)
                 is Child.CodeEditor -> CodeEditorScreen(child.component)
             }

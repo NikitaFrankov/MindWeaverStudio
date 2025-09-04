@@ -6,6 +6,8 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.bringToFront
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.value.Value
+import com.example.mindweaverstudio.components.authentication.AuthenticationComponent
+import com.example.mindweaverstudio.components.authentication.DefaultAuthenticationComponent
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorComponent
 import com.example.mindweaverstudio.components.codeeditor.DefaultCodeEditorComponent
 import com.example.mindweaverstudio.components.projectselection.ProjectSelectionComponent
@@ -27,7 +29,7 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
     override val stack: Value<ChildStack<*, Child>> = childStack(
         source = navigation,
         serializer = Config.serializer(),
-        initialConfiguration = Config.ProjectSelection,
+        initialConfiguration = Config.Authentication,
         handleBackButton = true,
         childFactory = ::child
     )
@@ -36,12 +38,23 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
 
     private fun child(config: Config, componentContext: ComponentContext): Child {
         return when(config) {
+            is Config.Authentication -> Child.Authentication(authenticationComponent(componentContext))
             is Config.ProjectSelection -> Child.ProjectSelection(projectSelectionComponent(componentContext))
             is Config.CodeEditor -> Child.CodeEditor(codeEditorComponent(
                 componentContext = componentContext,
                 project = config.project
             ))
         }
+    }
+
+    private fun authenticationComponent(componentContext: ComponentContext): AuthenticationComponent {
+        return DefaultAuthenticationComponent(
+            authenticationStoreFactory = get(),
+            componentContext = componentContext,
+            onAuthenticationSuccessful = {
+                navigateToProjectSelection()
+            }
+        )
     }
 
     private fun projectSelectionComponent(componentContext: ComponentContext): ProjectSelectionComponent {
@@ -67,6 +80,13 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
 
     /** Child components callbacks */
 
+    override fun navigateToAuthentication() {
+        navigation.navigate(
+            transformer = { _: List<Config> -> listOf(Config.Authentication) },
+            onComplete = { _, _ -> }
+        )
+    }
+
     override fun navigateToProjectSelection() {
         navigation.navigate(
             transformer = { _: List<Config> -> listOf(Config.ProjectSelection) },
@@ -80,6 +100,9 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
 
     @Serializable
     private sealed interface Config {
+        
+        @Serializable
+        data object Authentication : Config
         
         @Serializable
         data object ProjectSelection : Config

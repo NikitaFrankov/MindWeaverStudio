@@ -2,6 +2,7 @@ package com.example.mindweaverstudio.di
 
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
+import com.example.mindweaverstudio.components.authentication.AuthenticationStoreFactory
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStoreFactory
 import com.example.mindweaverstudio.components.projectselection.ProjectSelectionStoreFactory
 import com.example.mindweaverstudio.data.ai.orchestrator.CodeOrchestrator
@@ -70,6 +71,7 @@ val appModule = module {
 
     // Stores
     singleOf(::DefaultStoreFactory) bind StoreFactory::class
+    factoryOf(::AuthenticationStoreFactory)
     factoryOf(::ProjectSelectionStoreFactory)
     factoryOf(::CodeEditorStoreFactory)
 }

@@ -54,6 +54,7 @@ kotlin {
             implementation("org.slf4j:slf4j-simple:2.0.9")
             implementation("net.java.dev.jna:jna:5.14.0")
             implementation("com.alphacephei:vosk:0.3.38")
+            implementation("com.auth0:java-jwt:4.5.0")
         }
     }
 }
