@@ -47,7 +47,8 @@ fun CodeEditorScreen(component: CodeEditorComponent) {
 
     CodeEditorScreen(
         state = state,
-        intentHandler = component::onIntent
+        intentHandler = component::onIntent,
+        onNavigateToUserConfiguration = component::onNavigateToUserConfiguration
     )
 }
 
@@ -55,13 +56,17 @@ fun CodeEditorScreen(component: CodeEditorComponent) {
 @Composable
 private fun CodeEditorScreen(
     state: CodeEditorStore.State,
-    intentHandler: (CodeEditorStore.Intent) -> Unit
+    intentHandler: (CodeEditorStore.Intent) -> Unit,
+    onNavigateToUserConfiguration: () -> Unit = {}
 ) {
     val density = LocalDensity.current
     
     // Create menu action handler
     val menuActionHandler = remember {
-        MenuActionHandler(onEditorIntent = intentHandler)
+        MenuActionHandler(
+            onEditorIntent = intentHandler,
+            onNavigateToUserConfiguration = onNavigateToUserConfiguration
+        )
     }
 
     var leftPanelWidth by remember { mutableStateOf(250.dp) }

@@ -6,7 +6,8 @@ import com.example.mindweaverstudio.components.codeeditor.models.UiLogLevel
 import com.example.mindweaverstudio.ui.components.toolbar.models.ToolbarAction
 
 class MenuActionHandler(
-    private val onEditorIntent: (CodeEditorStore.Intent) -> Unit
+    private val onEditorIntent: (CodeEditorStore.Intent) -> Unit,
+    private val onNavigateToUserConfiguration: () -> Unit = {}
 ) {
     
     private fun logAction(message: String) {
@@ -174,9 +175,9 @@ class MenuActionHandler(
     
     private fun handleConfigurationMenuAction(itemId: String) {
         when (itemId) {
-            "preferences" -> {
-                // TODO: Implement preferences
-                println("Preferences action")
+            "user_configuration" -> {
+                logAction("Opening User Configuration...")
+                onNavigateToUserConfiguration()
             }
             "plugins" -> {
                 // TODO: Implement plugins

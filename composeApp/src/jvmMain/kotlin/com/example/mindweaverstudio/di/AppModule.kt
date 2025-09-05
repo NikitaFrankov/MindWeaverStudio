@@ -5,6 +5,7 @@ import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.example.mindweaverstudio.components.authentication.AuthenticationStoreFactory
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStoreFactory
 import com.example.mindweaverstudio.components.projectselection.ProjectSelectionStoreFactory
+import com.example.mindweaverstudio.components.userconfiguration.UserConfigurationStoreFactory
 import com.example.mindweaverstudio.data.ai.orchestrator.CodeOrchestrator
 import com.example.mindweaverstudio.data.ai.agents.AgentsOrchestratorFactory
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
@@ -82,4 +83,5 @@ val appModule = module {
     factoryOf(::AuthenticationStoreFactory)
     factoryOf(::ProjectSelectionStoreFactory)
     factoryOf(::CodeEditorStoreFactory)
+    factoryOf(::UserConfigurationStoreFactory)
 }

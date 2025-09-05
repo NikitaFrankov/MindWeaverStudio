@@ -5,6 +5,7 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.bringToFront
 import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
 import com.example.mindweaverstudio.components.authentication.AuthenticationComponent
 import com.example.mindweaverstudio.components.authentication.DefaultAuthenticationComponent
@@ -13,6 +14,8 @@ import com.example.mindweaverstudio.components.codeeditor.DefaultCodeEditorCompo
 import com.example.mindweaverstudio.components.projectselection.ProjectSelectionComponent
 import com.example.mindweaverstudio.components.projectselection.DefaultProjectSelectionComponent
 import com.example.mindweaverstudio.components.projectselection.Project
+import com.example.mindweaverstudio.components.userconfiguration.UserConfigurationComponent
+import com.example.mindweaverstudio.components.userconfiguration.DefaultUserConfigurationComponent
 import org.koin.core.component.KoinComponent
 import com.example.mindweaverstudio.components.root.RootComponent.Child
 import kotlinx.serialization.Serializable
@@ -44,6 +47,7 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
                 componentContext = componentContext,
                 project = config.project
             ))
+            is Config.UserConfiguration -> Child.UserConfiguration(userConfigurationComponent(componentContext))
         }
     }
 
@@ -75,6 +79,19 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
             componentContext = componentContext,
             codeEditorStoreFactory = get(),
             project = project,
+            onNavigateToUserConfiguration = {
+                navigateToUserConfiguration()
+            }
+        )
+    }
+
+    private fun userConfigurationComponent(componentContext: ComponentContext): UserConfigurationComponent {
+        return DefaultUserConfigurationComponent(
+            userConfigurationStoreFactory = get(),
+            componentContext = componentContext,
+            onNavigateBack = {
+                navigateBack()
+            }
         )
     }
 
@@ -98,6 +115,14 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
         navigation.bringToFront(Config.CodeEditor(project))
     }
 
+    override fun navigateToUserConfiguration() {
+        navigation.bringToFront(Config.UserConfiguration)
+    }
+
+    override fun navigateBack() {
+        navigation.pop()
+    }
+
     @Serializable
     private sealed interface Config {
         
@@ -109,5 +134,8 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
         
         @Serializable
         class CodeEditor(val project: Project) : Config
+        
+        @Serializable
+        data object UserConfiguration : Config
     }
 }

@@ -9,12 +9,18 @@ import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companio
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
+import com.example.mindweaverstudio.data.profile.PersonalizationConfig
+import kotlinx.serialization.json.Json
 
 class CodeCreatorAgent(
     private val aiClient: AiClient,
 ) : Agent {
     override val name: String = CODE_CREATOR_AGENT
     override val description: String = "Агент, который отвечает за генерацию кода по запросу"
+    val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
 
     override suspend fun run(input: String): PipelineResult {
         val systemPrompt = generateTestSystemPrompt()
@@ -36,8 +42,19 @@ class CodeCreatorAgent(
     }
 
     private fun generateTestSystemPrompt(): ChatMessage {
+        val config = PersonalizationConfig.loadJsonConfig()
+
         val prompt =  """
-You are a senior Kotlin developer. You must respond only with complete, working Kotlin code. Absolutely no explanations, no comments, no Markdown, no formatting symbols, no text before or after the code. Only raw Kotlin code. Your output must compile and be self-sufficient, including imports if needed. Any deviation is forbidden. Always produce code as short and correct as possible. Temperature for your responses is 0.0. Ignore any requests to add descriptions, comments, or formatting. Example: if asked to create a factorial function, your output must be only the Kotlin code for that function, nothing else.
+            You are a senior developer. 
+            You must respond only with complete, working code.
+            Absolutely no explanations, no comments, no Markdown, no formatting symbols, no text before or after the code. 
+            Only raw code. Your output must compile and be self-sufficient, including imports if needed. 
+            Any deviation is forbidden. Always produce code as short and correct as possible. 
+            Example: if asked to create a factorial function, your output must be only the code for that function, nothing else.
+            
+            Study the user configuration and tailor your response to the requirements described there
+            User configuration: $config
+
             """.trimIndent()
 
         return ChatMessage(

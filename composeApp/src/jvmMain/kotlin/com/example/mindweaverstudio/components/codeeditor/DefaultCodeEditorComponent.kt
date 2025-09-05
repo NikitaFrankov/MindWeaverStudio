@@ -11,6 +11,7 @@ class DefaultCodeEditorComponent(
     private val codeEditorStoreFactory: CodeEditorStoreFactory,
     componentContext: ComponentContext,
     private val project: Project,
+    private val onNavigateToUserConfiguration: () -> Unit = {}
 ) : CodeEditorComponent, ComponentContext by componentContext {
 
     private val store = instanceKeeper.getStore {
@@ -22,5 +23,9 @@ class DefaultCodeEditorComponent(
 
     override fun onIntent(intent: CodeEditorStore.Intent) {
         store.accept(intent)
+    }
+
+    override fun onNavigateToUserConfiguration() {
+        onNavigateToUserConfiguration.invoke()
     }
 }

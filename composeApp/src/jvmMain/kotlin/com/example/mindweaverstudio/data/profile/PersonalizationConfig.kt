@@ -5,8 +5,12 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 object PersonalizationConfig {
-    private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
-    private val configFile = File(System.getProperty("user.home") + "/.jvmMain/user_config.json").apply {
+    private val json = Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
+    private val configFile = File(System.getProperty("user.home") + "/MindWeaverStudio/user_config.json").apply {
         parentFile.mkdirs()  // Создаём директорию, если нет
         if (!exists()) createNewFile()  // Создаём пустой файл
     }
@@ -19,6 +23,8 @@ object PersonalizationConfig {
             UserPersonalization()  // Дефолтные значения
         }
     }
+
+    fun loadJsonConfig(): String = json.encodeToString(UserPersonalization.serializer(), load())
 
     fun save(config: UserPersonalization) {
         configFile.writeText(json.encodeToString(UserPersonalization.serializer(), config))
