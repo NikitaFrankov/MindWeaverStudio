@@ -36,6 +36,8 @@ import com.example.mindweaverstudio.components.codeeditor.models.UiLogLevel
 import com.example.mindweaverstudio.components.codeeditor.models.UiPanel
 import com.example.mindweaverstudio.components.codeeditor.models.FileNode
 import com.example.mindweaverstudio.ui.theme.MindWeaverTheme
+import com.example.mindweaverstudio.ui.components.toolbar.EditorMenuBar
+import com.example.mindweaverstudio.ui.components.toolbar.MenuActionHandler
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -56,12 +58,24 @@ private fun CodeEditorScreen(
     intentHandler: (CodeEditorStore.Intent) -> Unit
 ) {
     val density = LocalDensity.current
+    
+    // Create menu action handler
+    val menuActionHandler = remember {
+        MenuActionHandler(onEditorIntent = intentHandler)
+    }
 
     var leftPanelWidth by remember { mutableStateOf(250.dp) }
     var rightPanelWidth by remember { mutableStateOf(250.dp) }
     var bottomPanelHeight by remember { mutableStateOf(100.dp) }
 
-    BoxWithConstraints(Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Toolbar at the top
+        EditorMenuBar(
+            onAction = menuActionHandler::handleAction
+        )
+        
+        // Main editor content below
+        BoxWithConstraints(Modifier.fillMaxSize()) {
         val maxWidthDp = with(density) { constraints.maxWidth.toDp() }
 
         // ==== Слой 1: Project Tree ====
@@ -160,6 +174,7 @@ private fun CodeEditorScreen(
                 .height(bottomPanelHeight),
             logs = state.logs
         )
+        }
     }
 }
 
@@ -314,14 +329,14 @@ private fun EditorPanel(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            SyntaxHighlightedEditor(
-                initialContent = content,
-                onContentChanged = onContentChanged,
-                isKotlin = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-            )
+//            SyntaxHighlightedEditor(
+//                initialContent = content,
+//                onContentChanged = onContentChanged,
+//                isKotlin = true,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(8.dp),
+//            )
         }
     }
 }

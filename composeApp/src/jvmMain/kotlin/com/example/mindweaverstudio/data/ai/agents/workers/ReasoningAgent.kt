@@ -33,7 +33,6 @@ class ReasoningAgent(
         if (role !in allowedRoles) return errorPipelineResult("Insufficient permissions to perform the task. Your role is \"${role.name}\", minimum role required to perform the task - \"${allowedRoles.first().name}\"")
         if (!limitManager.checkAndConsume(username, "daily_queries", role)) return errorPipelineResult("Limit exceeded")
 
-
         val thoughtSystemPrompt = generateThoughtSystemPrompt()
         val thoughtMessages = listOf(thoughtSystemPrompt, ChatMessage(content = input, role = ROLE_USER))
         val thoughtResult = aiClient.createChatCompletion(
