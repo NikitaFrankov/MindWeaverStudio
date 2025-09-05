@@ -73,6 +73,8 @@ val agentsModule = module {
     factory<Agent>(qualifier = named(REASONING_AGENT)) {
         ReasoningAgent(
             aiClient = get<AiClient>(named("chatgpt")),
+            authManager = get(),
+            limitManager = get(),
         )
     }
 }

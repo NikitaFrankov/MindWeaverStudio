@@ -15,8 +15,11 @@ import com.example.mindweaverstudio.data.mcp.DockerMCPClient
 import com.example.mindweaverstudio.data.mcp.GithubMCPClient
 import com.example.mindweaverstudio.data.ai.pipelines.common.Pipeline
 import com.example.mindweaverstudio.data.ai.pipelines.PipelineRegistry
+import com.example.mindweaverstudio.data.auth.AuthManager
+import com.example.mindweaverstudio.data.limits.LimitManager
 import com.example.mindweaverstudio.data.mcp.ThinkMcpClient
 import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
+import com.example.mindweaverstudio.data.settings.Settings
 import com.example.mindweaverstudio.data.voiceModels.SpeechRecognizer
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -26,6 +29,11 @@ import org.koin.dsl.module
 import redis.clients.jedis.Jedis
 
 val appModule = module {
+
+    single { Settings.createDefault("com.example.mindweaverstudio") }
+    singleOf(::AuthManager)
+    singleOf(::LimitManager)
+
 
     single { Jedis("localhost", 6379) }
     singleOf(::RedisMemoryStore) bind MemoryStore::class

@@ -106,6 +106,12 @@ private fun AuthenticationScreen(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors().copy(
+                        disabledTextColor = MindWeaverTheme.colors.textPrimary,
+                        focusedTextColor = MindWeaverTheme.colors.textPrimary,
+                        unfocusedTextColor = MindWeaverTheme.colors.textPrimary,
+                        errorTextColor = MindWeaverTheme.colors.textPrimary,
+                    ),
                     singleLine = true
                 )
 
@@ -141,6 +147,12 @@ private fun AuthenticationScreen(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors().copy(
+                        disabledTextColor = MindWeaverTheme.colors.textPrimary,
+                        focusedTextColor = MindWeaverTheme.colors.textPrimary,
+                        unfocusedTextColor = MindWeaverTheme.colors.textPrimary,
+                        errorTextColor = MindWeaverTheme.colors.textPrimary,
+                    ),
                     singleLine = true
                 )
 

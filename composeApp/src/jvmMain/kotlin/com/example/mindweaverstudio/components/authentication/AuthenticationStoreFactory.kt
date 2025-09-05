@@ -5,6 +5,7 @@ import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
+import com.example.mindweaverstudio.data.auth.AuthManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -13,6 +14,7 @@ import java.util.prefs.Preferences
 
 class AuthenticationStoreFactory(
     private val storeFactory: StoreFactory,
+    private val authManager: AuthManager,
 ) {
 
     fun create(): AuthenticationStore =
@@ -112,15 +114,9 @@ class AuthenticationStoreFactory(
             
             scope.launch {
                 try {
-                    // Simulate authentication delay
-                    delay(1500)
-                    
-                    // Mock authentication logic - accept any valid email/password
-                    if (state.isEmailValid && state.isPasswordValid) {
-                        // Store authentication status
-                        preferences.putBoolean("is_authenticated", true)
-                        preferences.put("user_email", state.email)
-                        
+                    val token = authManager.generateToken(state.email, state.password)
+
+                    if (token != null) {
                         dispatch(Msg.AuthenticationSucceeded)
                         publish(AuthenticationStore.Label.AuthenticationSuccessful)
                     } else {
@@ -135,16 +131,11 @@ class AuthenticationStoreFactory(
         }
 
         private fun isValidEmail(email: String): Boolean {
-            return email.isNotBlank() && 
-                   email.contains("@") && 
-                   email.contains(".") &&
-                   email.length >= 5 &&
-                   email.indexOf("@") > 0 &&
-                   email.lastIndexOf(".") > email.indexOf("@")
+            return email.isNotBlank()
         }
 
         private fun isValidPassword(password: String): Boolean {
-            return password.length >= 6
+            return password.length >= 2
         }
     }
 

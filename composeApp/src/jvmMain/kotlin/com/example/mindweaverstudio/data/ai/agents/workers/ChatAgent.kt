@@ -6,8 +6,11 @@ import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.errorPipelineResult
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.successPipelineResult
 import com.example.mindweaverstudio.data.ai.agents.CHAT_AGENT
+import com.example.mindweaverstudio.data.auth.AuthManager
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
+import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
+import java.nio.file.AccessDeniedException
 
 class ChatAgent(
     private val aiClient: AiClient,

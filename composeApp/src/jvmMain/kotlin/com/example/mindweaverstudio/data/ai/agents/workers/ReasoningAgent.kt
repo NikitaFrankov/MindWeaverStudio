@@ -3,6 +3,9 @@ package com.example.mindweaverstudio.data.ai.agents.workers
 import com.example.mindweaverstudio.data.ai.agents.Agent
 import com.example.mindweaverstudio.data.ai.agents.REASONING_AGENT
 import com.example.mindweaverstudio.data.ai.aiClients.AiClient
+import com.example.mindweaverstudio.data.auth.AuthManager
+import com.example.mindweaverstudio.data.limits.LimitManager
+import com.example.mindweaverstudio.data.models.ai.Role
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.errorPipelineResult
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.successPipelineResult
@@ -10,14 +13,27 @@ import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_ASSISTANT
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
+import com.example.mindweaverstudio.data.settings.Settings
 
 class ReasoningAgent(
     private val aiClient: AiClient,
+    private val authManager: AuthManager,
+    private val limitManager: LimitManager,
 ) : Agent {
     override val name: String = REASONING_AGENT
     override val description: String = "Агент, который реализует цепочку размышлений: мысль → проверка → ответ"
+    private val allowedRoles = setOf(Role.ADMIN)
 
     override suspend fun run(input: String): PipelineResult {
+        val token = authManager.getToken() ?: return errorPipelineResult("No token")
+        val claims = authManager.validateToken(token) ?: return errorPipelineResult("Invalid token")
+        val role = Role.valueOf(claims["role"] as String)
+        val username = claims["username"] as String
+
+        if (role !in allowedRoles) return errorPipelineResult("Insufficient permissions to perform the task. Your role is \"${role.name}\", minimum role required to perform the task - \"${allowedRoles.first().name}\"")
+        if (!limitManager.checkAndConsume(username, "daily_queries", role)) return errorPipelineResult("Limit exceeded")
+
+
         val thoughtSystemPrompt = generateThoughtSystemPrompt()
         val thoughtMessages = listOf(thoughtSystemPrompt, ChatMessage(content = input, role = ROLE_USER))
         val thoughtResult = aiClient.createChatCompletion(
