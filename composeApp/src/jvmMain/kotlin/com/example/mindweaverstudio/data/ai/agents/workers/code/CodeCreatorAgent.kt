@@ -1,14 +1,10 @@
-package com.example.mindweaverstudio.data.ai.agents.workers
+package com.example.mindweaverstudio.data.ai.agents.workers.code
 
 import com.example.mindweaverstudio.data.ai.agents.Agent
 import com.example.mindweaverstudio.data.ai.agents.CODE_CREATOR_AGENT
 import com.example.mindweaverstudio.data.ai.aiClients.AiClient
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.errorPipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.successPipelineResult
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
-import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
-import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
+import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
 import com.example.mindweaverstudio.data.profile.PersonalizationConfig
 import kotlinx.serialization.json.Json
 
@@ -24,7 +20,7 @@ class CodeCreatorAgent(
 
     override suspend fun run(input: String): PipelineResult {
         val systemPrompt = generateTestSystemPrompt()
-        val messages = listOf(systemPrompt, ChatMessage(content = input, role = ROLE_USER))
+        val messages = listOf(systemPrompt, ChatMessage(content = input, role = ChatMessage.Companion.ROLE_USER))
 
         val result = aiClient.createChatCompletion(
             messages = messages,
@@ -33,10 +29,10 @@ class CodeCreatorAgent(
         )
         return result.fold(
             onSuccess = { response ->
-                successPipelineResult(message = response.message)
+                PipelineResult.Companion.successPipelineResult(message = response.message)
             },
             onFailure = { error ->
-                errorPipelineResult(error)
+                PipelineResult.Companion.errorPipelineResult(error)
             }
         )
     }
@@ -58,7 +54,7 @@ class CodeCreatorAgent(
             """.trimIndent()
 
         return ChatMessage(
-            role = ROLE_SYSTEM,
+            role = ChatMessage.Companion.ROLE_SYSTEM,
             content = prompt
         )
     }

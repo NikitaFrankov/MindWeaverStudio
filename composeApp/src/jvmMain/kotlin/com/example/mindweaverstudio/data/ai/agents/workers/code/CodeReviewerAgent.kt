@@ -1,18 +1,10 @@
-package com.example.mindweaverstudio.data.ai.agents.workers
+package com.example.mindweaverstudio.data.ai.agents.workers.code
 
 import com.example.mindweaverstudio.data.ai.agents.Agent
-import com.example.mindweaverstudio.data.ai.agents.CHAT_AGENT
 import com.example.mindweaverstudio.data.ai.agents.CODE_REVIEWER_AGENT
-import com.example.mindweaverstudio.data.ai.agents.CODE_TESTER_AGENT
 import com.example.mindweaverstudio.data.ai.aiClients.AiClient
 import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
-import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_SYSTEM
-import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage.Companion.ROLE_USER
 import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.errorPipelineResult
-import com.example.mindweaverstudio.data.models.pipeline.PipelineResult.Companion.successPipelineResult
-import com.example.mindweaverstudio.data.utils.codereplacer.CodeReplacerUtils
-import kotlinx.serialization.json.Json
 import java.io.File
 
 class CodeReviewerAgent(
@@ -31,7 +23,9 @@ class CodeReviewerAgent(
         }
 
         val userMessage = ragChunksText
-        val messages = listOf(generateTestSystemPrompt(), ChatMessage(role = ROLE_USER, content = userMessage))
+        val messages = listOf(generateTestSystemPrompt(),
+            ChatMessage(role = ChatMessage.Companion.ROLE_USER, content = userMessage)
+        )
 
         val result = aiClient.createChatCompletion(
             messages = messages,
@@ -40,10 +34,10 @@ class CodeReviewerAgent(
         )
         return result.fold(
             onSuccess = { response ->
-                successPipelineResult(message = response.message)
+                PipelineResult.Companion.successPipelineResult(message = response.message)
             },
             onFailure = { error ->
-                errorPipelineResult(error)
+                PipelineResult.Companion.errorPipelineResult(error)
             }
         )
     }
@@ -107,7 +101,7 @@ class CodeReviewerAgent(
            """.trimIndent()
 
         return ChatMessage(
-            role = ROLE_SYSTEM,
+            role = ChatMessage.Companion.ROLE_SYSTEM,
             content = prompt
         )
     }

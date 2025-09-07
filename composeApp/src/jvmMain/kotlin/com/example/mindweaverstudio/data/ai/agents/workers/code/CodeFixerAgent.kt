@@ -1,4 +1,4 @@
-package com.example.mindweaverstudio.data.ai.agents.workers
+package com.example.mindweaverstudio.data.ai.agents.workers.code
 
 import com.example.mindweaverstudio.data.ai.agents.Agent
 import com.example.mindweaverstudio.data.ai.aiClients.AiClient

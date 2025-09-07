@@ -2,6 +2,7 @@ package com.example.mindweaverstudio.di
 
 import com.example.mindweaverstudio.data.ai.agents.Agent
 import com.example.mindweaverstudio.data.ai.agents.AgentsRegistry
+import com.example.mindweaverstudio.data.ai.pipelines.ARCHITECTURE_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.CHAT_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.CODE_CREATOR_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.CODE_FIX_PIPELINE
@@ -9,6 +10,7 @@ import com.example.mindweaverstudio.data.ai.pipelines.CODE_REVIEW_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.GITHUB_RELEASE_PIPELINE
 import com.example.mindweaverstudio.data.ai.pipelines.common.Pipeline
 import com.example.mindweaverstudio.data.ai.pipelines.PipelineFactory
+import com.example.mindweaverstudio.data.ai.pipelines.flows.ArchitecturePipeline
 import com.example.mindweaverstudio.data.ai.pipelines.flows.ChatPipeline
 import com.example.mindweaverstudio.data.ai.pipelines.flows.CodeCreatorPipeline
 import com.example.mindweaverstudio.data.ai.pipelines.flows.CodeFixPipeline
@@ -69,5 +71,15 @@ val pipelinesModule = module {
             }
         }
         GithubReleasePipeline(agentsRegistry = registry)
+    }
+
+    factory<Pipeline>(named(ARCHITECTURE_PIPELINE)) {
+        val agentNames = get<PipelineFactory>().architecturePipelineAgents
+        val registry = AgentsRegistry().apply {
+            agentNames.forEach { agentName ->
+                register(agentName, get<Agent>(named(agentName)))
+            }
+        }
+        ArchitecturePipeline(agentsRegistry = registry)
     }
 }
