@@ -46,7 +46,7 @@ class LocalDeepSeekApiClient() : AiClient {
         maxTokens: Int,
     ): Result<AiResponse> {
         val request = LocalChatRequest(
-            model = "deepseek-coder:6.7b",
+            model = "qwen2.5-coder:7b",
             messages = messages,
             stream = false,
             options = Options {

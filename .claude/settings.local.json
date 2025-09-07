@@ -5,7 +5,9 @@
       "Bash(./gradlew:*)",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(tree:*)",
+      "Bash(kotlinc:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

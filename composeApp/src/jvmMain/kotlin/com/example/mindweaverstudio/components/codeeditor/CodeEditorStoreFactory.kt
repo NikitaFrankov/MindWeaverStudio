@@ -78,14 +78,14 @@ class CodeEditorStoreFactory(
         private fun fetchRootNode(filePath: String) {
             scope.launch {
                 val node = scanDirectoryToFileNode(rootPathStr = filePath)
-                dispatch(Msg.OnNodesReceived(node))
+                dispatch(OnNodesReceived(node))
             }
         }
 
         private fun setupLogListener() {
             scope.launch {
                 logReceiver.logFlow.collect { logEntry ->
-                    dispatch(Msg.LogEntryAdded(logEntry))
+                    dispatch(LogEntryAdded(logEntry))
                 }
             }
         }

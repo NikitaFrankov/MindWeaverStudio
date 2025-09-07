@@ -4,6 +4,7 @@ import com.example.mindweaverstudio.data.models.pipeline.PipelineResult
 
 const val RELEASE_NOTES_GENERATION_AGENT = "release_notes_generation_agent"
 const val GITHUB_RELEASE_AGENT = "github_release_agent"
+const val CODE_REVIEWER_AGENT = "code_reviewer_agent"
 const val TEST_CREATOR_AGENT = "test_creator_agent"
 const val CODE_CREATOR_AGENT = "code_creator_agent"
 const val TEST_RUNNER_AGENT = "test_runner_agent"

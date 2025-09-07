@@ -4,6 +4,7 @@ import com.example.mindweaverstudio.data.ai.agents.Agent
 import com.example.mindweaverstudio.data.ai.agents.CHAT_AGENT
 import com.example.mindweaverstudio.data.ai.agents.CODE_CREATOR_AGENT
 import com.example.mindweaverstudio.data.ai.agents.CODE_FIXER_AGENT
+import com.example.mindweaverstudio.data.ai.agents.CODE_REVIEWER_AGENT
 import com.example.mindweaverstudio.data.ai.agents.CODE_TESTER_AGENT
 import com.example.mindweaverstudio.data.ai.agents.GITHUB_RELEASE_AGENT
 import com.example.mindweaverstudio.data.ai.agents.REASONING_AGENT
@@ -13,6 +14,7 @@ import com.example.mindweaverstudio.data.ai.agents.TEST_RUNNER_AGENT
 import com.example.mindweaverstudio.data.ai.agents.workers.ChatAgent
 import com.example.mindweaverstudio.data.ai.agents.workers.CodeCreatorAgent
 import com.example.mindweaverstudio.data.ai.agents.workers.CodeFixerAgent
+import com.example.mindweaverstudio.data.ai.agents.workers.CodeReviewerAgent
 import com.example.mindweaverstudio.data.ai.agents.workers.CodeTesterAgent
 import com.example.mindweaverstudio.data.ai.agents.workers.GithubReleaseAgent
 import com.example.mindweaverstudio.data.ai.agents.workers.ReasoningAgent
@@ -43,6 +45,11 @@ val agentsModule = module {
     }
     factory<Agent>(qualifier = named(CODE_FIXER_AGENT)) {
         CodeFixerAgent(
+            aiClient = get<AiClient>(named("chatgpt")),
+        )
+    }
+    factory<Agent>(qualifier = named(CODE_REVIEWER_AGENT)) {
+        CodeReviewerAgent(
             aiClient = get<AiClient>(named("chatgpt")),
         )
     }

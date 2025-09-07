@@ -5,6 +5,7 @@ import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
+import com.example.mindweaverstudio.data.utils.ragchunking.RAGChunkingUtility
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
@@ -53,23 +54,11 @@ class ProjectSelectionStoreFactory(
 
         override fun executeIntent(intent: ProjectSelectionStore.Intent) {
             when (intent) {
+                is ProjectSelectionStore.Intent.AddRecentProject -> addRecentProject(intent.path)
+                is ProjectSelectionStore.Intent.OpenProject -> selectProject(intent.project)
+                is ProjectSelectionStore.Intent.RemoveProject -> removeProject(intent.path)
                 is ProjectSelectionStore.Intent.LoadRecentProjects -> loadRecentProjects()
-                
-                is ProjectSelectionStore.Intent.SelectNewProject -> {
-                    showFilePicker()
-                }
-                
-                is ProjectSelectionStore.Intent.OpenProject -> {
-                    publish(ProjectSelectionStore.Label.ProjectSelected(intent.project))
-                }
-                
-                is ProjectSelectionStore.Intent.RemoveProject -> {
-                    removeProject(intent.path)
-                }
-                
-                is ProjectSelectionStore.Intent.AddRecentProject -> {
-                    addRecentProject(intent.path)
-                }
+                is ProjectSelectionStore.Intent.SelectNewProject -> showFilePicker()
             }
         }
 
@@ -134,8 +123,7 @@ class ProjectSelectionStoreFactory(
                     saveRecentProjects(limitedProjects)
                     dispatch(Msg.RecentProjectsLoaded(limitedProjects))
                     
-                    // Navigate to the project
-                    publish(ProjectSelectionStore.Label.ProjectSelected(newProject))
+                    selectProject(newProject)
                 } catch (e: Exception) {
                     dispatch(Msg.ErrorOccurred("Failed to add recent project: ${e.message}"))
                 }
@@ -197,6 +185,21 @@ class ProjectSelectionStoreFactory(
                 }
             }
         }
+
+        // Select file and create RAG chunk file
+        private fun selectProject(project: Project) {
+            scope.launch(Dispatchers.IO) {
+                RAGChunkingUtility().processRepositoryStreaming(
+                    repositoryPath = project.path,
+                    outputBasePath = "/Users/nikitaradionov/IdeaProjects/MindWeaver Studio/truly_streaming_output",
+                    includeTests = false,
+                    createRAGOutput = true,
+                    ragBatchSize = 500,
+                )
+            }
+            publish(ProjectSelectionStore.Label.ProjectSelected(project))
+        }
+
     }
 
     private object ReducerImpl : Reducer<ProjectSelectionStore.State, Msg> {
