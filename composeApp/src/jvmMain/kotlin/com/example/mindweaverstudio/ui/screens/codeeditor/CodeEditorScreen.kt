@@ -334,14 +334,13 @@ private fun EditorPanel(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-//            SyntaxHighlightedEditor(
-//                initialContent = content,
-//                onContentChanged = onContentChanged,
-//                isKotlin = true,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(8.dp),
-//            )
+            CodeEditor(
+                initialText = content,
+                onTextChange = onContentChanged,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+            )
         }
     }
 }
