@@ -16,7 +16,7 @@ class ChatAgent(
     private val aiClient: AiClient,
 ) : Agent {
     override val name = CHAT_AGENT
-    override val description: String = "Агент для обычного общения"
+    override val description: String = "Agent responsible for default chat"
 
     override suspend fun run(input: String): PipelineResult {
         val messages = listOf(ChatMessage(role = ROLE_USER, content = input))

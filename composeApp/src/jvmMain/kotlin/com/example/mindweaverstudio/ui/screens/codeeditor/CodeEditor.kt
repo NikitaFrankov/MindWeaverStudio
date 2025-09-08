@@ -41,7 +41,7 @@ fun CodeEditor(
     var wrapLines by remember { mutableStateOf(false) }
     var fontSize by remember { mutableStateOf(14f) }
 
-    Box(modifier.fillMaxSize().padding(8.dp)) {
+    Box(modifier.fillMaxSize()) {
         CodeEditor(
             text = initialText,
             onTextChange = {
@@ -85,14 +85,14 @@ private fun CodeEditor(
     val horizontalScroll = rememberScrollState(0)
     val focusRequester = remember { FocusRequester() }
 
-    Row(modifier = Modifier.fillMaxSize().border(1.dp, Color.LightGray)) {
+    Row(modifier = Modifier.fillMaxSize()) {
         // Gutter with line numbers
         val lines = text.split('\n')
         Column(
             modifier = Modifier
                 .width(gutterWidth)
                 .fillMaxHeight()
-                .background(Color(0xFFFAFAFA))
+                .background(MindWeaverTheme.colors.surface2)
                 .verticalScroll(verticalScroll)
                 .padding(6.dp)
         ) {
@@ -104,7 +104,7 @@ private fun CodeEditor(
                         fontSize = fontSize * 0.9f,
                         color = MindWeaverTheme.colors.textPrimary
                     ),
-                    color = Color.Gray
+                    color = MindWeaverTheme.colors.textSecondary
                 )
             }
         }
