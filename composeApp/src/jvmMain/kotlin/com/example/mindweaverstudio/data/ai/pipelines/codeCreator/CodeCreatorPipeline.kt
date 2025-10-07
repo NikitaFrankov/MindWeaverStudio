@@ -1,0 +1,48 @@
+package com.example.mindweaverstudio.data.ai.pipelines.codeCreator
+
+import ai.koog.agents.core.agent.AIAgent
+import ai.koog.agents.core.dsl.builder.forwardTo
+import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.features.tracing.feature.Tracing
+import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+import com.example.mindweaverstudio.data.ai.pipelines.architecture.nodeDetailedSystemPrompt
+import com.example.mindweaverstudio.data.ai.pipelines.architecture.nodeHighLevelSystemPrompt
+import com.example.mindweaverstudio.data.ai.pipelines.architecture.nodeRequirementsSystemPrompt
+import com.example.mindweaverstudio.data.ai.pipelines.architecture.nodeValidationSystemPrompt
+import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
+
+const val CODE_CREATOR_STRATEGY = "CODE_CREATOR_STRATEGY"
+
+class CodeCreatorPipeline(config: ApiConfiguration) {
+
+    private val chatPipelineStrategy = strategy<String, String>(CODE_CREATOR_STRATEGY) {
+        val nodeRequirements by node<String, String> { input: String ->
+            llm.writeSession {
+                model = OpenAIModels.CostOptimized.O3Mini
+                updatePrompt {
+                    system(codeCreatorSystemPrompt())
+                    user(input)
+                }
+                val response = requestLLMWithoutTools()
+                response.content
+            }
+        }
+
+        edge(nodeStart forwardTo nodeRequirements)
+        edge(nodeRequirements forwardTo nodeFinish)
+    }
+
+    private val promptExecutor = simpleOpenAIExecutor(config.openAiApiKey)
+    val agent = AIAgent(
+        promptExecutor = promptExecutor,
+        strategy = chatPipelineStrategy,
+        llmModel = OpenAIModels.CostOptimized.O3Mini
+    ) {
+        install(Tracing)
+    }
+
+    suspend fun run(input: String): String {
+        return agent.run(input)
+    }
+}

@@ -93,12 +93,12 @@ class Settings(
         }
     }
 
-    suspend fun remove(key: String) {
+    suspend fun remove(key: SettingsKey) {
         mutex.withLock {
-            val removed = backing.remove(key)
+            val removed = backing.remove(key.value)
             if (removed != null) {
                 persistSync()
-                _changes.tryEmit(key)
+                _changes.tryEmit(key.value)
             }
         }
     }
@@ -106,8 +106,8 @@ class Settings(
     suspend fun hasKey(key: String): Boolean = mutex.withLock { backing.containsKey(key) }
 
     // String
-    suspend fun putString(key: String, value: String) = putTyped(key, "string", value)
-    suspend fun getString(key: String, default: String): String = getTyped(key, "string")?.value ?: default
+    suspend fun putString(key: SettingsKey, value: String) = putTyped(key.value, "string", value)
+    suspend fun getString(key: SettingsKey, default: String = ""): String = getTyped(key.value, "string")?.value ?: default
     suspend fun getStringOrNull(key: String): String? = getTyped(key, "string")?.value
 
     // Int
