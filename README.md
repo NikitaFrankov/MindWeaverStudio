@@ -8,7 +8,7 @@
 
 MindWeaverStudio is an experimental multi-platform application designed as a research project in multi-agent AI systems (MAS). It aims to create an intelligent, IDE-like environment where specialized AI agents collaborate to automate software development tasks, such as code generation, reviewing, and documentation creation. The project is built using Kotlin Multiplatform for cross-platform compatibility, supporting both Android and Desktop (JVM) targets. 
 
-At its core, it utilizes JetBrains' Koog framework for agent orchestration, integrated with local large language models (LLMs) via Ollama for privacy-preserving, offline operations. This setup enables autonomous AI-driven workflows, making it ideal for developers exploring AI-assisted coding without relying on cloud services.
+At its core, it utilizes JetBrains' Koog framework for agent orchestration (koog-impl branch), integrated with local large language models (LLMs) via Ollama for privacy-preserving, offline operations. This setup enables autonomous AI-driven workflows, making it ideal for developers exploring AI-assisted coding without relying on cloud services.
 
 Key objectives:
 - Automate repetitive dev tasks through collaborative AI agents.
