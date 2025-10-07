@@ -1,50 +1,47 @@
-MindWeaverStudio
+# MindWeaverStudio
 
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-blueviolet.svg?style=flat&logo=kotlin)](https://kotlinlang.org/)
+[![JetBrains Koog](https://img.shields.io/badge/Koog-JetBrains-orange.svg?style=flat)](https://github.com/JetBrains/koog)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/NikitaFrankov/MindWeaverStudio/ci.yml?label=CI)](https://github.com/NikitaFrankov/MindWeaverStudio/actions) <!-- Add if CI is set up -->
 
+## Overview
 
-Overview
-MindWeaverStudio is a multi-platform research project aimed at building an intelligent development environment powered by multi-agent AI systems. It leverages specialized AI agents to automate software development tasks, such as code generation, review, and documentation. Built with Kotlin Multiplatform, the project supports Android and Desktop platforms, ensuring cross-platform compatibility while maintaining a native feel through Jetpack Compose and Compose Multiplatform.
-The core architecture revolves around orchestrating AI agents using JetBrains' Koog framework, integrated with local LLMs for privacy-focused, autonomous operations. This tool is designed for developers interested in AI-driven workflows, offering an IDE-like interface with AI-assisted coding features.
-Key goals:
+MindWeaverStudio is an experimental multi-platform application designed as a research project in multi-agent AI systems (MAS). It aims to create an intelligent, IDE-like environment where specialized AI agents collaborate to automate software development tasks, such as code generation, reviewing, and documentation creation. The project is built using Kotlin Multiplatform for cross-platform compatibility, supporting both Android and Desktop (JVM) targets. 
 
-Automate routine development tasks via AI agents.
-Provide a privacy-centric environment with offline LLM inference.
-Explore multi-agent systems (MAS) for collaborative AI behaviors.
+At its core, it utilizes JetBrains' Koog framework for agent orchestration, integrated with local large language models (LLMs) via Ollama for privacy-preserving, offline operations. This setup enables autonomous AI-driven workflows, making it ideal for developers exploring AI-assisted coding without relying on cloud services.
 
-This is an ongoing research project, open for contributions and experimentation.
-Features
+Key objectives:
+- Automate repetitive dev tasks through collaborative AI agents.
+- Ensure data privacy with local inference and offline capabilities.
+- Experiment with MAS architectures for scalable, intelligent systems.
 
-Multi-Agent System Architecture: Orchestrates specialized AI agents (e.g., CodeCreator, CodeReviewer, ReleaseNotesGenerator) to handle tasks like code generation, peer review, and release note creation.
-Local LLM Integration: Supports offline inference with models like Qwen2.5-VL-72B and DeepSeek via Ollama, ensuring data privacy and autonomy.
-Offline Speech-to-Text: Integrated with Vosk for voice-based inputs, enabling hands-free interaction.
-IDE-Like Interface: Built with Jetpack Compose (Android) and Compose Multiplatform (Desktop), featuring:
+The project is currently in active development and welcomes contributions from the community.
 
-Syntax highlighting for Kotlin, Java, and JSON.
-Code editor with real-time AI suggestions.
-Tree-based navigation for project structure.
-Embedded AI chat for contextual queries and assistance.
+## Features
 
+- **Multi-Agent Orchestration**: Implements a system of specialized agents (e.g., `CodeCreatorAgent`, `CodeReviewerAgent`, `ReleaseNotesGeneratorAgent`) using Koog to handle tasks like generating code snippets, performing code reviews, and creating release notes based on context.
+- **Local LLM Support**: Integrates Ollama for running models such as Qwen2.5-VL-72B and DeepSeek offline, enabling RAG (Retrieval-Augmented Generation) for context-aware responses.
+- **Offline Speech-to-Text**: Uses Vosk for voice input, allowing hands-free commands and queries within the app.
+- **Cross-Platform UI**: 
+  - Android: Jetpack Compose for modern, declarative interfaces.
+  - Desktop: Compose Multiplatform for consistent UI across platforms.
+  - Features include syntax highlighting (Kotlin, Java, JSON), a built-in code editor, tree-view navigation for files/projects, and an integrated AI chat panel for real-time assistance.
+- **Integrations and Tools**:
+  - GitHub API for version control and automation (e.g., pulling repos, committing changes).
+  - Redis for efficient caching and state management in agent interactions.
+  - RAG pipelines to augment AI outputs with retrieved data.
+- **Architecture Benefits from Koog**: Reduces boilerplate, enhances agent reliability and security, accelerates iteration, and improves transparency in AI logic.
+- **Additional Capabilities**: Docker support for containerized services (e.g., Ollama, Redis); Material3 theming for a polished look.
 
-Retrieval-Augmented Generation (RAG): Enhances AI responses with context from local data sources.
-External Integrations: GitHub API for version control and automation; Redis for caching and state management.
-Koog Framework Utilization: Leverages JetBrains' Koog for efficient agent design, reducing boilerplate code, improving reliability, and ensuring secure inter-agent communication.
-Cross-Platform Support: Shared logic via Kotlin Multiplatform, with platform-specific UI adaptations.
+## Tech Stack
 
-Tech Stack
-
-Core Language: Kotlin (Multiplatform)
-UI Framework: Jetpack Compose (Android), Compose Multiplatform (Desktop)
-Architecture: MVI / MVIKotlin, Clean Architecture
-AI & Agents: JetBrains Koog, Ollama (Local LLM), RAG, LLM Orchestration
-Other Libraries:
-
-Coroutines (for reactive programming)
-Ktor (API calls)
-Redis (caching)
-Vosk (speech-to-text)
-Docker (for containerization)
-Material3 (UI theming)
-
-
-Build Tools: Gradle, Git
-Testing & Tools: Unit tests with Kotlin Test, integration with GitHub Actions for CI/CD
+- **Language & Multiplatform**: Kotlin Multiplatform (KMP) for shared logic.
+- **UI**: Jetpack Compose (Android), Compose Multiplatform (Desktop), Material3.
+- **Architecture Patterns**: MVI/MVIKotlin, Clean Architecture.
+- **Reactive Programming**: Coroutines, RxJava.
+- **Networking & APIs**: Retrofit/Websocket (for external services), Ktor (if applicable for server-side).
+- **AI Components**: JetBrains Koog (MAS framework), Ollama (local LLM inference), RAG, Vosk (STT).
+- **Storage & Caching**: Redis, Docker for orchestration.
+- **Build & Versioning**: Gradle (with KMP plugins), Git.
+- **Testing**: Kotlin Test for units; potential GitHub Actions for CI/CD.
