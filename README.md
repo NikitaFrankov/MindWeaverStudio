@@ -23,24 +23,16 @@ The project is currently in active development and welcomes contributions from t
 - **Local LLM Support**: Integrates Ollama for running models such as Qwen2.5-VL-72B and DeepSeek offline, enabling RAG (Retrieval-Augmented Generation) for context-aware responses.
 - **Offline Speech-to-Text**: Uses Vosk for voice input, allowing hands-free commands and queries within the app.
 - **Cross-Platform UI**: 
-  - Android: Jetpack Compose for modern, declarative interfaces.
   - Desktop: Compose Multiplatform for consistent UI across platforms.
   - Features include syntax highlighting (Kotlin, Java, JSON), a built-in code editor, tree-view navigation for files/projects, and an integrated AI chat panel for real-time assistance.
-- **Integrations and Tools**:
-  - GitHub API for version control and automation (e.g., pulling repos, committing changes).
-  - Redis for efficient caching and state management in agent interactions.
-  - RAG pipelines to augment AI outputs with retrieved data.
-- **Architecture Benefits from Koog**: Reduces boilerplate, enhances agent reliability and security, accelerates iteration, and improves transparency in AI logic.
-- **Additional Capabilities**: Docker support for containerized services (e.g., Ollama, Redis); Material3 theming for a polished look.
 
 ## Tech Stack
 
 - **Language & Multiplatform**: Kotlin Multiplatform (KMP) for shared logic.
-- **UI**: Jetpack Compose (Android), Compose Multiplatform (Desktop), Material3.
-- **Architecture Patterns**: MVI/MVIKotlin, Clean Architecture.
-- **Reactive Programming**: Coroutines, RxJava.
-- **Networking & APIs**: Retrofit/Websocket (for external services), Ktor (if applicable for server-side).
+- **UI**: Compose Multiplatform (Desktop)
+- **Architecture Patterns**: MVI/MVIKotlin, Decompose.
+- **Reactive Programming**: Coroutines.
+- **Networking & APIs**: Ktor.
 - **AI Components**: JetBrains Koog (MAS framework), Ollama (local LLM inference), RAG, Vosk (STT).
-- **Storage & Caching**: Redis, Docker for orchestration.
-- **Build & Versioning**: Gradle (with KMP plugins), Git.
-- **Testing**: Kotlin Test for units; potential GitHub Actions for CI/CD.
+- **Storage & Caching**: Redis, Docker.
+- **Build & Versioning**: Gradle, Git.
