@@ -2,7 +2,6 @@
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2+-blueviolet.svg?style=flat&logo=kotlin)](https://kotlinlang.org/)
 [![JetBrains Koog](https://img.shields.io/badge/Koog-JetBrains-orange.svg?style=flat)](https://github.com/JetBrains/koog)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
 
