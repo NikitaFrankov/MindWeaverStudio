@@ -7,4 +7,9 @@ interface CodeEditorComponent {
 
     fun onIntent(intent: CodeEditorStore.Intent)
     fun onNavigateToUserConfiguration()
+
+    sealed interface Callback {
+        data object ShowUserConfiguration : Callback
+        data object ShowRepoInfoInput: Callback
+    }
 }

@@ -5,9 +5,8 @@ import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.example.mindweaverstudio.data.settings.Settings
+import com.example.mindweaverstudio.data.settings.SettingsKey.*
 import java.util.Date
-
-private const val TOKEN_KEY = "auth_token"
 
 class AuthManager(
     private val settings: Settings

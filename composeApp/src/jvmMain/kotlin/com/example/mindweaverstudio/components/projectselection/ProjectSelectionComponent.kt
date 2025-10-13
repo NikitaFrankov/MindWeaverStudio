@@ -6,4 +6,8 @@ interface ProjectSelectionComponent {
     val state: StateFlow<ProjectSelectionStore.State>
 
     fun onIntent(intent: ProjectSelectionStore.Intent)
+
+    sealed interface Callback {
+        class ProjectSelected(val project: Project) : Callback
+    }
 }

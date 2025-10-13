@@ -6,6 +6,7 @@ import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import com.arkivanov.mvikotlin.extensions.coroutines.labels
+import com.example.mindweaverstudio.components.projectselection.ProjectSelectionComponent.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.CoroutineScope
@@ -14,8 +15,8 @@ import kotlinx.coroutines.SupervisorJob
 
 class DefaultProjectSelectionComponent(
     private val projectSelectionStoreFactory: ProjectSelectionStoreFactory,
+    private val callbackHandler: (Callback) -> Unit,
     componentContext: ComponentContext,
-    private val onProjectSelected: (Project) -> Unit,
 ) : ProjectSelectionComponent, ComponentContext by componentContext {
 
     private val store = instanceKeeper.getStore {
@@ -29,7 +30,7 @@ class DefaultProjectSelectionComponent(
             .onEach { label ->
                 when (label) {
                     is ProjectSelectionStore.Label.ProjectSelected -> {
-                        onProjectSelected(label.project)
+                        callbackHandler.invoke(Callback.ProjectSelected(project = label.project))
                     }
                     is ProjectSelectionStore.Label.ShowError -> {
                         // Error handling could be implemented here if needed

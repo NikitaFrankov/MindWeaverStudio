@@ -41,6 +41,7 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.kotlinx.serialization.json)
             implementation("com.russhwolf:multiplatform-settings:1.1.1")
+            implementation("ai.koog:koog-agents:0.5.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

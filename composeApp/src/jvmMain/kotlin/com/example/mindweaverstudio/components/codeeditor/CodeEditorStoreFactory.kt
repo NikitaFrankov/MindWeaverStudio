@@ -12,16 +12,12 @@ import com.example.mindweaverstudio.components.codeeditor.models.UiPanel
 import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage
 import com.example.mindweaverstudio.components.codeeditor.utils.scanDirectoryToFileNode
 import com.example.mindweaverstudio.components.projectselection.Project
-import com.example.mindweaverstudio.data.ai.agents.AgentsOrchestratorFactory
-import com.example.mindweaverstudio.data.mcp.DockerMCPClient
-import com.example.mindweaverstudio.data.mcp.GithubMCPClient
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg.*
+import com.example.mindweaverstudio.data.ai.orchestrator.code.CodeOrchestrator
 import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
-import com.example.mindweaverstudio.data.voiceModels.SpeechRecognizer
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import kotlin.collections.plus
@@ -29,15 +25,10 @@ import kotlin.math.max
 import kotlin.math.min
 
 class CodeEditorStoreFactory(
-    orchestratorFactory: AgentsOrchestratorFactory,
-    private val speechRecognizer: SpeechRecognizer,
+    private val orchestrator: CodeOrchestrator,
     private val logReceiver: CodeEditorLogReceiver,
-    private val dockerMCPClient: DockerMCPClient,
-    private val githubMCPClient: GithubMCPClient,
     private val storeFactory: StoreFactory,
 ) {
-
-    private val orchestrator = orchestratorFactory.editorOrchestrator
 
     fun create(project: Project): CodeEditorStore =
         object : CodeEditorStore, Store<CodeEditorStore.Intent, CodeEditorStore.State, CodeEditorStore.Label> by storeFactory.create(
@@ -53,25 +44,9 @@ class CodeEditorStoreFactory(
     ) {
         override fun executeAction(action: CodeEditorStore.Action) = when(action) {
             CodeEditorStore.Action.Init -> {
-                initMcpServer()
                 fetchRootNode(state().project.path)
                 setupLogListener()
-                setupVoiceListener()
-            }
-        }
-
-        private fun initMcpServer() {
-            scope.launch {
-                dockerMCPClient.init()
-                githubMCPClient.init()
-            }
-        }
-
-        private fun setupVoiceListener() {
-            scope.launch {
-                speechRecognizer.textChannel.receiveAsFlow().collectLatest {
-                    dispatch(ChatInputUpdated(it))
-                }
+                checkRepositoryInfo()
             }
         }
 
@@ -87,6 +62,13 @@ class CodeEditorStoreFactory(
                 logReceiver.logFlow.collect { logEntry ->
                     dispatch(LogEntryAdded(logEntry))
                 }
+            }
+        }
+
+        private fun checkRepositoryInfo() {
+            scope.launch {
+                delay(1000L)
+                publish(CodeEditorStore.Label.ShowGithubInfoInputDialog)
             }
         }
 
@@ -157,11 +139,7 @@ class CodeEditorStoreFactory(
                 }
 
                 CodeEditorStore.Intent.RecordVoiceClick -> {
-                    when(state().isVoiceRecording) {
-                        true -> speechRecognizer.stopRecognition()
-                        false -> speechRecognizer.startRecognition(scope)
-                    }
-                    dispatch(VoiceRecordingStateChange)
+
                 }
 
                 is CodeEditorStore.Intent.PlayMessage -> playMessage(intent.message)
@@ -186,12 +164,12 @@ class CodeEditorStoreFactory(
 
             scope.launch {
                 try {
-                    val result = orchestrator.handleMessage(message)
+                    val result = orchestrator.run(message)
 
-                    if (result.isError) {
-                        dispatch(ErrorOccurred(result.message))
-                    }
-                    val finalMessages = currentMessages + userMessage + listOf(UiChatMessage.createAssistantMessage(result.message))
+//                    if (result.isError) {
+//                        dispatch(ErrorOccurred(result.message))
+//                    }
+                    val finalMessages = currentMessages + userMessage + listOf(UiChatMessage.createAssistantMessage(result))
 
                     dispatch(MessagesUpdated(finalMessages))
                     dispatch(LoadingChanged(false))

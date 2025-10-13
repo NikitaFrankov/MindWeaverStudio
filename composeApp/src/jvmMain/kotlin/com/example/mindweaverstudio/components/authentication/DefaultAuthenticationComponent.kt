@@ -6,6 +6,7 @@ import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import com.arkivanov.mvikotlin.extensions.coroutines.labels
+import com.example.mindweaverstudio.components.authentication.AuthenticationComponent.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +16,7 @@ import kotlinx.coroutines.SupervisorJob
 class DefaultAuthenticationComponent(
     private val authenticationStoreFactory: AuthenticationStoreFactory,
     componentContext: ComponentContext,
-    private val onAuthenticationSuccessful: () -> Unit,
+    private val callbackHandler: (Callback) -> Unit,
 ) : AuthenticationComponent, ComponentContext by componentContext {
 
     private val store = instanceKeeper.getStore {
@@ -28,9 +29,9 @@ class DefaultAuthenticationComponent(
         store.labels
             .onEach { label ->
                 when (label) {
-                    is AuthenticationStore.Label.AuthenticationSuccessful -> {
-                        onAuthenticationSuccessful()
-                    }
+                    is AuthenticationStore.Label.AuthenticationSuccessful ->
+                        callbackHandler.invoke(Callback.SuccessAuthentification)
+
                     is AuthenticationStore.Label.ShowError -> {
                         // Error handling could be implemented here if needed
                         // For now, errors are handled through state
