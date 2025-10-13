@@ -39,7 +39,9 @@ interface CodeEditorStore : Store<CodeEditorStore.Intent, CodeEditorStore.State,
         data object RecordVoiceClick : Intent()
     }
 
-    sealed class Label
+    sealed interface Label {
+        data object ShowGithubInfoInputDialog : Label
+    }
 
     sealed interface Action {
         data object Init : Action

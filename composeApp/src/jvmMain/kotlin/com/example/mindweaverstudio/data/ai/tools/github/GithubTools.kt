@@ -3,7 +3,7 @@ package com.example.mindweaverstudio.data.ai.tools.github
 import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.core.tools.annotations.Tool
 import ai.koog.agents.core.tools.reflect.ToolSet
-import com.example.mindweaverstudio.data.ai.tools.clients.GithubClient
+import com.example.mindweaverstudio.data.clients.GithubClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

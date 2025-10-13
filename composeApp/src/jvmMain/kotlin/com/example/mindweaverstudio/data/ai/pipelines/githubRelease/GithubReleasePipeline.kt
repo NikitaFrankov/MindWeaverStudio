@@ -1,55 +1,50 @@
 package com.example.mindweaverstudio.data.ai.pipelines.githubRelease
 
 import ai.koog.agents.core.agent.AIAgent
-import ai.koog.agents.core.agent.entity.AIAgentSubgraph
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.reflect.tools
 import ai.koog.agents.ext.agent.subgraphWithTask
-import ai.koog.agents.memory.config.MemoryScopeType
-import ai.koog.agents.memory.feature.nodes.nodeSaveToMemory
+import ai.koog.agents.memory.feature.AgentMemory
 import ai.koog.agents.memory.model.Concept
+import ai.koog.agents.memory.model.DefaultTimeProvider
 import ai.koog.agents.memory.model.FactType
-import ai.koog.agents.memory.model.MemorySubject
+import ai.koog.agents.memory.model.MemoryScope
+import ai.koog.agents.memory.model.SingleFact
+import ai.koog.agents.memory.providers.LocalFileMemoryProvider
+import ai.koog.agents.memory.providers.LocalMemoryConfig
+import ai.koog.agents.memory.storage.Aes256GCMEncryptor
+import ai.koog.agents.memory.storage.EncryptedStorage
+import ai.koog.agents.memory.storage.SimpleStorage
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
 import ai.koog.prompt.params.LLMParams
-import com.example.mindweaverstudio.data.ai.pipelines.architecture.nodeHighLevelSystemPrompt
+import ai.koog.rag.base.files.JVMFileSystemProvider
 import com.example.mindweaverstudio.data.ai.tools.github.GithubTools
-import com.example.mindweaverstudio.data.settings.Settings
-import com.example.mindweaverstudio.data.settings.SettingsKey.*
+import com.example.mindweaverstudio.data.models.ai.memory.ProjectContext
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
-import kotlinx.serialization.Serializable
+import kotlin.io.path.Path
 
 const val GITHUB_RELEASE_STRATEGY = "GITHUB_RELEASE_STRATEGY"
-
-@Serializable
-data object GithubInfo : MemorySubject() {
-    override val name: String = "github information"
-    override val promptDescription: String = "All important information of user github.com"
-    override val priorityLevel: Int = 1
-}
 
 class GithubReleasePipeline(
     config: ApiConfiguration,
     private val tools: GithubTools,
 ) {
-
-    private val repoName: String = ""
-    private val repoOwner: String = ""
+    private val memoryScope: MemoryScope = MemoryScope.Agent("GithubReleasePipeline")
+//    private val secureStorage = EncryptedStorage(
+//        fs = JVMFileSystemProvider.ReadWrite,
+//        encryption = Aes256GCMEncryptor("my-secret-key")
+//    )
+    private val memoryProvider = LocalFileMemoryProvider(
+        config = LocalMemoryConfig("mind-weaver-studio"),
+        storage = SimpleStorage(JVMFileSystemProvider.ReadWrite),
+        fs = JVMFileSystemProvider.ReadWrite,
+        root = Path("")
+    )
 
     private val githubReleaseStrategy = strategy<String, String>(GITHUB_RELEASE_STRATEGY) {
-        val githubInfo by nodeSaveToMemory<String>(
-            name = "githubInfo",
-            concepts = listOf(
-                Concept(repoName, "Github repository name", FactType.MULTIPLE),
-                Concept(repoOwner, "Github repository owner name", FactType.MULTIPLE)
-            ),
-            subject = GithubInfo,
-            scope = MemoryScopeType.AGENT,
-        )
-
         val releaseNotes by subgraphWithTask<String, String>(
             tools = ToolRegistry { tools(tools) }.tools,
             llmModel = OpenAIModels.CostOptimized.O3Mini,
@@ -59,49 +54,52 @@ class GithubReleasePipeline(
         ) { releaseNotesAgentSystemPrompt }
 
 
-        // 2. Этап: Высокоуровневая архитектура
-        val nodeRelease by node<String, String> { input: String ->
-            llm.writeSession {
-                model = OpenAIModels.CostOptimized.O3Mini
-                updatePrompt {
-                    system(nodeHighLevelSystemPrompt)
-                    user(input)
-                }
-                val response = requestLLMWithoutTools()
-                response.content
+        val nodeRelease by subgraphWithTask<String, String>(
+            tools = ToolRegistry { tools(tools) }.tools,
+            llmModel = OpenAIModels.CostOptimized.O3Mini,
+            llmParams = LLMParams().copy(
+                temperature = 0.3
+            ),
+        ) { input -> "Create github release with: $input" }
 
-
-
-                // try {
-                //            val toolCall = json.decodeFromString(ToolCall.serializer(), message)
-                //            val result = mcpClient.callTool(toolCall)?.firstOrNull()?.text.orEmpty()
-                //            val toolLogEntry = "Tool for creating github release has completed his work. result:\n$result".createInfoLogEntry()
-                //
-                //            receiver.emitNewValue(toolLogEntry)
-                //
-                //            return successPipelineResult(result)
-                //        } catch (e: Exception) {
-                //            return errorPipelineResult(e)
-                //        }
-            }
-        }
-
-        edge(nodeStart forwardTo nodeFinish)
+        edge(nodeStart forwardTo releaseNotes)
+        edge(releaseNotes forwardTo nodeRelease)
+        edge(nodeRelease forwardTo nodeFinish)
     }
 
-    private val promptExecutor = simpleOpenAIExecutor(config.openAiApiKey)
     val agent = AIAgent(
-        promptExecutor = promptExecutor,
+        promptExecutor = simpleOpenAIExecutor(config.openAiApiKey),
         strategy = githubReleaseStrategy,
         llmModel = OpenAIModels.CostOptimized.O3Mini,
         temperature = 0.1
-    )
+    ) {
+        install(AgentMemory) {
+            memoryProvider = this@GithubReleasePipeline.memoryProvider
+            agentName = "github-pipeline-agent"
+            featureName = "github-pipeline-feature"
+            organizationName = "radionov"
+            productName = "mind-weaver-studio"
+        }
+    }
 
     suspend fun run(
         input: String,
         repoName: String,
         repoOwner: String,
     ): String {
+        saveGithubInfo(repoOwner, repoName)
         return agent.run(input)
+    }
+
+    private suspend fun saveGithubInfo(repoOwner: String, repoName: String) {
+        memoryProvider.save(
+            fact = SingleFact(
+                value = "$repoOwner/$repoName",
+                concept = Concept("github-repo", "Current GitHub repository in format 'owner/name'", FactType.SINGLE),
+                timestamp = DefaultTimeProvider.getCurrentTimestamp()
+            ),
+            subject = ProjectContext,
+            scope = memoryScope,
+        )
     }
 }

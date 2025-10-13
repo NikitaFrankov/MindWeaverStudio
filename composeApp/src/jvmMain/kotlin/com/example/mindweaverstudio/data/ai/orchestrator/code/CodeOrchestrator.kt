@@ -15,6 +15,7 @@ class CodeOrchestrator(
     private val tools: CodePipelineTools,
     configuration: ApiConfiguration,
 ) {
+
     private val orchestratorAgent = AIAgent(
         promptExecutor = simpleOpenAIExecutor(configuration.openAiApiKey),
         systemPrompt = codeOrchestratorPrompt,

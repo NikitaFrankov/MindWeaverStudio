@@ -7,12 +7,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
+import com.arkivanov.decompose.extensions.compose.stack.animation.plus
+import com.arkivanov.decompose.extensions.compose.stack.animation.scale
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.example.mindweaverstudio.components.root.RootComponent
 import com.example.mindweaverstudio.components.root.RootComponent.Child
 import com.example.mindweaverstudio.ui.screens.authentication.AuthenticationScreen
 import com.example.mindweaverstudio.ui.screens.codeeditor.CodeEditorScreen
 import com.example.mindweaverstudio.ui.screens.projectselection.ProjectSelectionScreen
+import com.example.mindweaverstudio.ui.screens.repoInfoInput.RepoInfoInputDialog
 import com.example.mindweaverstudio.ui.screens.userconfiguration.UserConfigurationScreen
 import com.example.mindweaverstudio.ui.theme.MindWeaverTheme
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -36,13 +39,14 @@ fun RootContent(component: RootComponent, modifier: Modifier = Modifier) {
         Children(
             stack = component.stack,
             modifier = modifier.padding(innerPadding),
-            animation = stackAnimation(animator = fade())
+            animation = stackAnimation(animator = fade() + scale()),
         ) {
             when (val child = it.instance) {
                 is Child.Authentication -> AuthenticationScreen(child.component)
                 is Child.ProjectSelection -> ProjectSelectionScreen(child.component)
                 is Child.CodeEditor -> CodeEditorScreen(child.component)
                 is Child.UserConfiguration -> UserConfigurationScreen(child.component)
+                is Child.RepoInfoInput -> RepoInfoInputDialog(child.component)
             }
         }
     }

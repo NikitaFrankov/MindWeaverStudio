@@ -6,6 +6,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.bringToFront
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
+import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
 import com.example.mindweaverstudio.components.authentication.AuthenticationComponent
 import com.example.mindweaverstudio.components.authentication.DefaultAuthenticationComponent
@@ -14,6 +15,8 @@ import com.example.mindweaverstudio.components.codeeditor.DefaultCodeEditorCompo
 import com.example.mindweaverstudio.components.projectselection.ProjectSelectionComponent
 import com.example.mindweaverstudio.components.projectselection.DefaultProjectSelectionComponent
 import com.example.mindweaverstudio.components.projectselection.Project
+import com.example.mindweaverstudio.components.repoInfoInput.DefaultRepoInfoInputComponent
+import com.example.mindweaverstudio.components.repoInfoInput.RepoInfoInputComponent
 import com.example.mindweaverstudio.components.userconfiguration.UserConfigurationComponent
 import com.example.mindweaverstudio.components.userconfiguration.DefaultUserConfigurationComponent
 import org.koin.core.component.KoinComponent
@@ -48,26 +51,23 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
                 project = config.project
             ))
             is Config.UserConfiguration -> Child.UserConfiguration(userConfigurationComponent(componentContext))
+            is Config.RepoInfoInput -> Child.RepoInfoInput(repoInfoInputComponent(componentContext))
         }
     }
 
     private fun authenticationComponent(componentContext: ComponentContext): AuthenticationComponent {
         return DefaultAuthenticationComponent(
-            authenticationStoreFactory = get(),
+            callbackHandler = ::handleAuthentificationCallbacks,
             componentContext = componentContext,
-            onAuthenticationSuccessful = {
-                navigateToProjectSelection()
-            }
+            authenticationStoreFactory = get(),
         )
     }
 
     private fun projectSelectionComponent(componentContext: ComponentContext): ProjectSelectionComponent {
         return DefaultProjectSelectionComponent(
+            callbackHandler = ::handleProjectSelectionCallbacks,
             projectSelectionStoreFactory = get(),
             componentContext = componentContext,
-            onProjectSelected = { projectPath ->
-                navigateToCodeEditor(projectPath)
-            }
         )
     }
 
@@ -76,12 +76,10 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
         project: Project,
     ): CodeEditorComponent {
         return DefaultCodeEditorComponent(
+            callbackHandler = ::handleCodeEditorCallbacks,
             componentContext = componentContext,
             codeEditorStoreFactory = get(),
             project = project,
-            onNavigateToUserConfiguration = {
-                navigateToUserConfiguration()
-            }
         )
     }
 
@@ -95,31 +93,39 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
         )
     }
 
+    private fun repoInfoInputComponent(componentContext: ComponentContext): RepoInfoInputComponent {
+        return DefaultRepoInfoInputComponent(
+            componentContext = componentContext,
+            storeFactory = get(),
+            callbackHandler = ::handleRepoInfoInputCallbacks,
+        )
+    }
+
     /** Child components callbacks */
 
-    override fun navigateToAuthentication() {
-        navigation.navigate(
-            transformer = { _: List<Config> -> listOf(Config.Authentication) },
-            onComplete = { _, _ -> }
-        )
+    private fun handleAuthentificationCallbacks(callback: AuthenticationComponent.Callback) = when(callback) {
+        AuthenticationComponent.Callback.SuccessAuthentification ->
+            navigation.bringToFront(Config.ProjectSelection)
     }
 
-    override fun navigateToProjectSelection() {
-        navigation.navigate(
-            transformer = { _: List<Config> -> listOf(Config.ProjectSelection) },
-            onComplete = { _, _ -> }
-        )
+    private fun handleCodeEditorCallbacks(callback: CodeEditorComponent.Callback) = when(callback) {
+        CodeEditorComponent.Callback.ShowUserConfiguration ->
+            navigation.bringToFront(Config.UserConfiguration)
+
+        CodeEditorComponent.Callback.ShowRepoInfoInput ->
+            navigation.pushNew(Config.RepoInfoInput)
     }
 
-    override fun navigateToCodeEditor(project: Project) {
-        navigation.bringToFront(Config.CodeEditor(project))
+    private fun handleProjectSelectionCallbacks(callback: ProjectSelectionComponent.Callback) = when(callback) {
+        is ProjectSelectionComponent.Callback.ProjectSelected ->
+            navigation.bringToFront(Config.CodeEditor(project = callback.project))
     }
 
-    override fun navigateToUserConfiguration() {
-        navigation.bringToFront(Config.UserConfiguration)
+    private fun handleRepoInfoInputCallbacks(callback: RepoInfoInputComponent.Callback) = when(callback) {
+        is RepoInfoInputComponent.Callback.CloseDialog -> navigateBack()
     }
 
-    override fun navigateBack() {
+    private fun navigateBack() {
         navigation.pop()
     }
 
@@ -137,5 +143,8 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
         
         @Serializable
         data object UserConfiguration : Config
+
+        @Serializable
+        data object RepoInfoInput : Config
     }
 }

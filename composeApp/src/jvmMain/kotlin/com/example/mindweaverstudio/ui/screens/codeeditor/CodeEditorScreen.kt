@@ -28,6 +28,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import com.arkivanov.decompose.router.slot.child
 import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorComponent
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore
@@ -38,6 +40,7 @@ import com.example.mindweaverstudio.components.codeeditor.models.FileNode
 import com.example.mindweaverstudio.ui.theme.MindWeaverTheme
 import com.example.mindweaverstudio.ui.components.toolbar.EditorMenuBar
 import com.example.mindweaverstudio.ui.components.toolbar.MenuActionHandler
+import com.example.mindweaverstudio.ui.screens.repoInfoInput.RepoInfoInputDialog
 import java.text.SimpleDateFormat
 import java.util.*
 

@@ -5,10 +5,9 @@ import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.example.mindweaverstudio.components.authentication.AuthenticationStoreFactory
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStoreFactory
 import com.example.mindweaverstudio.components.projectselection.ProjectSelectionStoreFactory
+import com.example.mindweaverstudio.components.repoInfoInput.RepoInfoInputStoreFactory
 import com.example.mindweaverstudio.components.userconfiguration.UserConfigurationStoreFactory
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
-import com.example.mindweaverstudio.data.ai.memory.MemoryStore
-import com.example.mindweaverstudio.data.ai.memory.RedisMemoryStore
 import com.example.mindweaverstudio.data.ai.orchestrator.code.CodeOrchestrator
 import com.example.mindweaverstudio.data.auth.AuthManager
 import com.example.mindweaverstudio.data.limits.LimitManager
@@ -24,8 +23,6 @@ val appModule = module {
     single<Settings> { Settings.createDefault("com.example.mindweaverstudio") }
     singleOf(::AuthManager)
     singleOf(::LimitManager)
-
-    singleOf(::RedisMemoryStore) bind MemoryStore::class
 
     // Configuration
     singleOf(ApiConfiguration::load) bind ApiConfiguration::class
@@ -56,4 +53,5 @@ val appModule = module {
     factoryOf(::ProjectSelectionStoreFactory)
     factoryOf(::CodeEditorStoreFactory)
     factoryOf(::UserConfigurationStoreFactory)
+    factoryOf(::RepoInfoInputStoreFactory)
 }

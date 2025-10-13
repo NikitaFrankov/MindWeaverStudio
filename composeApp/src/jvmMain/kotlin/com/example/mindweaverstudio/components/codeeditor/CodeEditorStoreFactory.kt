@@ -12,18 +12,12 @@ import com.example.mindweaverstudio.components.codeeditor.models.UiPanel
 import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage
 import com.example.mindweaverstudio.components.codeeditor.utils.scanDirectoryToFileNode
 import com.example.mindweaverstudio.components.projectselection.Project
-import com.example.mindweaverstudio.data.mcp.DockerMCPClient
-import com.example.mindweaverstudio.data.mcp.GithubMCPClient
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg.*
 import com.example.mindweaverstudio.data.ai.orchestrator.code.CodeOrchestrator
-import com.example.mindweaverstudio.data.ai.pipelines.architecture.ArchitecturePipeline
 import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
-import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
-import com.example.mindweaverstudio.data.voiceModels.SpeechRecognizer
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import kotlin.collections.plus
@@ -52,6 +46,7 @@ class CodeEditorStoreFactory(
             CodeEditorStore.Action.Init -> {
                 fetchRootNode(state().project.path)
                 setupLogListener()
+                checkRepositoryInfo()
             }
         }
 
@@ -67,6 +62,13 @@ class CodeEditorStoreFactory(
                 logReceiver.logFlow.collect { logEntry ->
                     dispatch(LogEntryAdded(logEntry))
                 }
+            }
+        }
+
+        private fun checkRepositoryInfo() {
+            scope.launch {
+                delay(1000L)
+                publish(CodeEditorStore.Label.ShowGithubInfoInputDialog)
             }
         }
 

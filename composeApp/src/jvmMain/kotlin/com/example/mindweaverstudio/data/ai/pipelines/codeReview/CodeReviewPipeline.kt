@@ -6,9 +6,6 @@ import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.features.tracing.feature.Tracing
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
-import com.example.mindweaverstudio.data.ai.pipelines.codeFix.CodeFixerResult
-import com.example.mindweaverstudio.data.ai.pipelines.codeFix.codeFixSystemPrompt
-import com.example.mindweaverstudio.data.models.chat.remote.ChatMessage
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
 import java.io.File
 
