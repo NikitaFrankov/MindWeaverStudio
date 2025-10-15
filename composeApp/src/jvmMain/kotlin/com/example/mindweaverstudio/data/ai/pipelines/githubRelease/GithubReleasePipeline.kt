@@ -14,11 +14,9 @@ import ai.koog.agents.memory.model.MemoryScope
 import ai.koog.agents.memory.model.SingleFact
 import ai.koog.agents.memory.providers.LocalFileMemoryProvider
 import ai.koog.agents.memory.providers.LocalMemoryConfig
-import ai.koog.agents.memory.storage.Aes256GCMEncryptor
-import ai.koog.agents.memory.storage.EncryptedStorage
 import ai.koog.agents.memory.storage.SimpleStorage
-import ai.koog.prompt.executor.clients.openai.OpenAIModels
-import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+import ai.koog.prompt.executor.clients.openrouter.OpenRouterModels
+import ai.koog.prompt.executor.llms.all.simpleOpenRouterExecutor
 import ai.koog.prompt.params.LLMParams
 import ai.koog.rag.base.files.JVMFileSystemProvider
 import com.example.mindweaverstudio.data.ai.tools.github.GithubTools
@@ -37,6 +35,8 @@ class GithubReleasePipeline(
 //        fs = JVMFileSystemProvider.ReadWrite,
 //        encryption = Aes256GCMEncryptor("my-secret-key")
 //    )
+    private val model = OpenRouterModels.Gemini2_5Flash
+
     private val memoryProvider = LocalFileMemoryProvider(
         config = LocalMemoryConfig("mind-weaver-studio"),
         storage = SimpleStorage(JVMFileSystemProvider.ReadWrite),
@@ -47,7 +47,7 @@ class GithubReleasePipeline(
     private val githubReleaseStrategy = strategy<String, String>(GITHUB_RELEASE_STRATEGY) {
         val releaseNotes by subgraphWithTask<String, String>(
             tools = ToolRegistry { tools(tools) }.tools,
-            llmModel = OpenAIModels.CostOptimized.O3Mini,
+            llmModel = model,
             llmParams = LLMParams().copy(
                 temperature = 0.3
             ),
@@ -56,7 +56,7 @@ class GithubReleasePipeline(
 
         val nodeRelease by subgraphWithTask<String, String>(
             tools = ToolRegistry { tools(tools) }.tools,
-            llmModel = OpenAIModels.CostOptimized.O3Mini,
+            llmModel = model,
             llmParams = LLMParams().copy(
                 temperature = 0.3
             ),
@@ -68,9 +68,9 @@ class GithubReleasePipeline(
     }
 
     val agent = AIAgent(
-        promptExecutor = simpleOpenAIExecutor(config.openAiApiKey),
+        promptExecutor = simpleOpenRouterExecutor(config.openRouterKey),
         strategy = githubReleaseStrategy,
-        llmModel = OpenAIModels.CostOptimized.O3Mini,
+        llmModel = model,
         temperature = 0.1
     ) {
         install(AgentMemory) {

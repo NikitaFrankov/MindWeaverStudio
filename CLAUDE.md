@@ -32,12 +32,13 @@ MindWeaver Studio is a Kotlin Multiplatform Compose desktop application targetin
 - Ktor (3.0.3) - Asynchronous HTTP client for API communication
 - kotlinx.serialization (1.6.3) - JSON serialization/deserialization
 - Koin (3.5.6) - Lightweight dependency injection framework
+- Koog (0.5.0) - Jetbrains framework to create multi-agent-systems
 
 ## Directories
 - composeApp/src/jvmMain/kotlin/com/example/mindweaverstudio/components/root - root component
 - composeApp/src/jvmMain/kotlin/com/example/mindweaverstudio/ui/App.kt - root screen
-- composeApp/src/jvmMain/kotlin/com/example/mindweaverstudio/components/pipeline - example of how to create a component and a store for feature
-- composeApp/src/jvmMain/kotlin/com/example/mindweaverstudio/ui/pipeline - example of how to create a ui for feature
+- composeApp/src/jvmMain/kotlin/com/example/mindweaverstudio/components/codeeditor - example of how to create a component and a store for feature
+- composeApp/src/jvmMain/kotlin/com/example/mindweaverstudio/ui/codeeditor - example of how to create a ui for feature
 
 ## Development Workflow
 

@@ -1,0 +1,14 @@
+{
+    "github-repo": [
+        {
+            "type": "ai.koog.agents.memory.model.SingleFact",
+            "concept": {
+                "keyword": "github-repo",
+                "description": "Current GitHub repository in format 'owner/name'",
+                "factType": "SINGLE"
+            },
+            "timestamp": 1760449120577,
+            "value": "NikitaFrankov/MindWeaverStudio"
+        }
+    ]
+}

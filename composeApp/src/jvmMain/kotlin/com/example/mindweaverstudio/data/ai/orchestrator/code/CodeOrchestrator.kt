@@ -5,7 +5,9 @@ import ai.koog.agents.core.tools.ToolRegistry
 import ai.koog.agents.core.tools.reflect.tools
 import ai.koog.agents.features.tracing.feature.Tracing
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.prompt.executor.clients.openrouter.OpenRouterModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+import ai.koog.prompt.executor.llms.all.simpleOpenRouterExecutor
 import com.example.mindweaverstudio.data.ai.tools.pipelines.CodePipelineTools
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
 
@@ -17,9 +19,9 @@ class CodeOrchestrator(
 ) {
 
     private val orchestratorAgent = AIAgent(
-        promptExecutor = simpleOpenAIExecutor(configuration.openAiApiKey),
+        promptExecutor = simpleOpenRouterExecutor(configuration.openRouterKey),
+        llmModel = OpenRouterModels.Gemini2_5Flash,
         systemPrompt = codeOrchestratorPrompt,
-        llmModel = OpenAIModels.Chat.GPT4o,
         toolRegistry = ToolRegistry { tools(tools) },
     ) {
         install(Tracing)

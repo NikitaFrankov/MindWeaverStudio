@@ -4,6 +4,7 @@ import java.util.Properties
 
 data class ApiConfiguration(
     val deepSeekApiKey: String,
+    val openRouterKey: String,
     val openAiApiKey: String,
     val geminiApiKey: String,
     val githubApiKey: String,
@@ -39,6 +40,9 @@ data class ApiConfiguration(
                     ?: "",
                 thinkApiKey = properties.getProperty("think.api.key")
                     ?: System.getenv("think.api.key")
+                    ?: "",
+                openRouterKey = properties.getProperty("openrouter.api.key")
+                    ?: System.getenv("openrouter.api.key")
                     ?: "",
             )
         }

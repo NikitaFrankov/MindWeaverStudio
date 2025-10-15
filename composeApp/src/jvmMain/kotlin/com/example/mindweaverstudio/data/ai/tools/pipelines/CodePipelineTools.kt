@@ -74,8 +74,8 @@ class CodePipelineTools(
         userRequest: String
     ): String {
         return withContext(Dispatchers.Default) {
-            val repoName = "MindWeaverStudio" //settings.getString(SettingsKey.GITHUB_REPO_NAME)
-            val repoOwner = "NikitaFrankov"  //settings.getString(SettingsKey.GITHUB_REPO_OWNER)
+            val repoName = settings.getString(SettingsKey.GITHUB_REPO_NAME)
+            val repoOwner = settings.getString(SettingsKey.GITHUB_REPO_OWNER)
 
             githubReleasePipeline.run(
                 input = userRequest,
