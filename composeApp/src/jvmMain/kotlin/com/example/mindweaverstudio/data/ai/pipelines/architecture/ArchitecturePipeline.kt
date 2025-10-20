@@ -13,7 +13,6 @@ const val ARCHITECTURE_STRATEGY = "ARCHITECTURE_STRATEGY"
 class ArchitecturePipeline(config: ApiConfiguration) {
 
     private val architectureStrategy = strategy<String, String>(ARCHITECTURE_STRATEGY) {
-        // 1. Этап: Анализ требований
         val nodeRequirements by node<String, String> { input: String ->
             llm.writeSession {
                 model = OpenAIModels.CostOptimized.O3Mini
@@ -26,7 +25,6 @@ class ArchitecturePipeline(config: ApiConfiguration) {
             }
         }
 
-        // 2. Этап: Высокоуровневая архитектура
         val nodeHighLevel by node<String, String> { input: String ->
             llm.writeSession {
                 model = OpenAIModels.CostOptimized.O3Mini
@@ -39,7 +37,6 @@ class ArchitecturePipeline(config: ApiConfiguration) {
             }
         }
 
-        // 3. Этап: Детальное проектирование
         val nodeDetailed by node<String, String> { input: String ->
             llm.writeSession {
                 model = OpenAIModels.CostOptimized.O3Mini
@@ -52,7 +49,6 @@ class ArchitecturePipeline(config: ApiConfiguration) {
             }
         }
 
-        // 4. Этап: Валидация и оптимизация
         val nodeValidation by node<String, String> { input: String ->
             llm.writeSession {
                 model = OpenAIModels.CostOptimized.O3Mini

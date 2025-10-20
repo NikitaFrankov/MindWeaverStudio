@@ -22,6 +22,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.kotlinx.io.core)
             
             // Architecture
             implementation(libs.decompose)
@@ -31,7 +32,6 @@ kotlin {
             implementation(libs.mvikotlin)
             implementation(libs.mvikotlin.main)
             implementation(libs.mvikotlin.extensions.coroutines)
-            implementation(libs.redis.jedis)
 
             // Network
             implementation(libs.ktor.client.core)
@@ -40,8 +40,13 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.kotlinx.serialization.json)
-            implementation("com.russhwolf:multiplatform-settings:1.1.1")
-            implementation("ai.koog:koog-agents:0.5.0")
+
+            // Storage
+            implementation(libs.multiplatform.settings)
+
+            // AI
+            implementation(libs.ai.koog)
+            implementation(libs.ai.mcp.kotlin.sdk)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -49,14 +54,15 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+
             implementation(libs.ktor.client.cio)
-            implementation("io.ktor:ktor-server-netty-jvm:3.0.3")
-            implementation("io.modelcontextprotocol:kotlin-sdk:0.6.0")
-            implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.0")
-            implementation("org.slf4j:slf4j-simple:2.0.9")
-            implementation("net.java.dev.jna:jna:5.14.0")
-            implementation("com.alphacephei:vosk:0.3.38")
-            implementation("com.auth0:java-jwt:4.5.0")
+            implementation(libs.ktor.server.netty.jvm)
+
+            implementation(libs.log.slf4j.simple)
+            implementation(libs.jvm.jna)
+            implementation(libs.jvm.auth0.jwt)
+            implementation(libs.jvm.docker.client)
+            implementation(libs.jvm.docker.transport.okhttp)
         }
     }
 }

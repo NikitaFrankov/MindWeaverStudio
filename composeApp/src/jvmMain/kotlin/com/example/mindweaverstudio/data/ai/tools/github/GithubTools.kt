@@ -11,22 +11,7 @@ class GithubTools(
     private val githubClient: GithubClient
 ) : ToolSet {
 
-    @Tool
-    @LLMDescription("Get list of commits for a GitHub repository. Input is owner (username or organization) and repo name (e.g. octocat, Hello-World)")
-    suspend fun getCommits(
-        @LLMDescription("GitHub username or organization")
-        owner: String,
-        @LLMDescription("Repository name")
-        repo: String,
-    ): List<String> {
-        val commits = withContext(Dispatchers.Default) {
-            githubClient.getCommits(owner, repo)
-        }
-
-        return commits
-    }
-
-    @Tool
+    @Tool(customName = "generateReleaseInfo")
     @LLMDescription("Generate next release version and changelog based on commits since last release.")
     suspend fun generateReleaseInfo(
         @LLMDescription("GitHub username or organization")
@@ -39,7 +24,7 @@ class GithubTools(
         return "version: $version,\nchangelog:$changelog"
     }
 
-    @Tool
+    @Tool(customName = "createNextGithubRelease")
     @LLMDescription("Create a new GitHub release. Input includes version (tag), and  changelog.")
     suspend fun createNextGithubRelease(
         @LLMDescription("Release version or tag (e.g. v1.2.0)")

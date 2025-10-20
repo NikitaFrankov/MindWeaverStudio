@@ -5,11 +5,8 @@ import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.features.tracing.feature.Tracing
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
-import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
-import com.example.mindweaverstudio.data.ai.pipelines.architecture.nodeDetailedSystemPrompt
-import com.example.mindweaverstudio.data.ai.pipelines.architecture.nodeHighLevelSystemPrompt
-import com.example.mindweaverstudio.data.ai.pipelines.architecture.nodeRequirementsSystemPrompt
-import com.example.mindweaverstudio.data.ai.pipelines.architecture.nodeValidationSystemPrompt
+import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
+import com.example.mindweaverstudio.data.ai.models.LocalModels
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
 
 const val CHAT_STRATEGY = "CHAT_STRATEGY"
@@ -32,11 +29,12 @@ class ChatPipeline(config: ApiConfiguration) {
         edge(nodeRequirements forwardTo nodeFinish)
     }
 
-    private val promptExecutor = simpleOpenAIExecutor(config.openAiApiKey)
+    private val promptExecutor = simpleOllamaAIExecutor()
     val agent = AIAgent(
+        id = CHAT_STRATEGY,
         promptExecutor = promptExecutor,
         strategy = chatPipelineStrategy,
-        llmModel = OpenAIModels.CostOptimized.O3Mini
+        llmModel = LocalModels.QWEN.LLAMA_3_2_8B
     ) {
         install(Tracing)
     }

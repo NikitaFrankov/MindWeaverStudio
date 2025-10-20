@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
+import kotlinx.coroutines.withContext
 import kotlin.collections.plus
 import kotlin.math.max
 import kotlin.math.min
@@ -162,7 +163,7 @@ class CodeEditorStoreFactory(
             dispatch(ChatInputUpdated(""))
             dispatch(LoadingChanged(true))
 
-            scope.launch {
+            scope.launch(Dispatchers.IO) {
                 try {
                     val result = orchestrator.run(message)
 
@@ -171,13 +172,17 @@ class CodeEditorStoreFactory(
 //                    }
                     val finalMessages = currentMessages + userMessage + listOf(UiChatMessage.createAssistantMessage(result))
 
-                    dispatch(MessagesUpdated(finalMessages))
-                    dispatch(LoadingChanged(false))
+                    withContext(Dispatchers.Main) {
+                        dispatch(MessagesUpdated(finalMessages))
+                        dispatch(LoadingChanged(false))
+                    }
                 } catch (e: Exception) {
                     val errorMessages = currentMessages + userMessage
-                    dispatch(MessagesUpdated(errorMessages))
-                    dispatch(ErrorOccurred(e.message ?: "Unknown error occurred"))
-                    dispatch(LoadingChanged(false))
+                    withContext(Dispatchers.Main) {
+                        dispatch(MessagesUpdated(errorMessages))
+                        dispatch(ErrorOccurred(e.message ?: "Unknown error occurred"))
+                        dispatch(LoadingChanged(false))
+                    }
                 }
             }
         }

@@ -4,8 +4,10 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.dsl.builder.strategy
 import ai.koog.agents.core.tools.ToolRegistry
+import ai.koog.agents.core.tools.reflect.asTools
 import ai.koog.agents.core.tools.reflect.tools
 import ai.koog.agents.ext.agent.subgraphWithTask
+import ai.koog.agents.features.tracing.feature.Tracing
 import ai.koog.agents.memory.feature.AgentMemory
 import ai.koog.agents.memory.model.Concept
 import ai.koog.agents.memory.model.DefaultTimeProvider
@@ -15,48 +17,38 @@ import ai.koog.agents.memory.model.SingleFact
 import ai.koog.agents.memory.providers.LocalFileMemoryProvider
 import ai.koog.agents.memory.providers.LocalMemoryConfig
 import ai.koog.agents.memory.storage.SimpleStorage
-import ai.koog.prompt.executor.clients.openrouter.OpenRouterModels
-import ai.koog.prompt.executor.llms.all.simpleOpenRouterExecutor
+import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
 import ai.koog.prompt.params.LLMParams
 import ai.koog.rag.base.files.JVMFileSystemProvider
+import com.example.mindweaverstudio.data.ai.models.LocalModels
 import com.example.mindweaverstudio.data.ai.tools.github.GithubTools
 import com.example.mindweaverstudio.data.models.ai.memory.ProjectContext
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
-import kotlin.io.path.Path
+import kotlin.io.path.Path as JavaPath
 
 const val GITHUB_RELEASE_STRATEGY = "GITHUB_RELEASE_STRATEGY"
 
 class GithubReleasePipeline(
-    config: ApiConfiguration,
     private val tools: GithubTools,
 ) {
-    private val memoryScope: MemoryScope = MemoryScope.Agent("GithubReleasePipeline")
-//    private val secureStorage = EncryptedStorage(
-//        fs = JVMFileSystemProvider.ReadWrite,
-//        encryption = Aes256GCMEncryptor("my-secret-key")
-//    )
-    private val model = OpenRouterModels.Gemini2_5Flash
-
+    private val model = LocalModels.QWEN.LLAMA_3_2_8B
     private val memoryProvider = LocalFileMemoryProvider(
         config = LocalMemoryConfig("mind-weaver-studio"),
         storage = SimpleStorage(JVMFileSystemProvider.ReadWrite),
         fs = JVMFileSystemProvider.ReadWrite,
-        root = Path("")
+        root = JavaPath("")
     )
 
     private val githubReleaseStrategy = strategy<String, String>(GITHUB_RELEASE_STRATEGY) {
         val releaseNotes by subgraphWithTask<String, String>(
-            tools = ToolRegistry { tools(tools) }.tools,
-            llmModel = model,
+            tools = tools.asTools(),
             llmParams = LLMParams().copy(
                 temperature = 0.3
             ),
         ) { releaseNotesAgentSystemPrompt }
 
-
         val nodeRelease by subgraphWithTask<String, String>(
-            tools = ToolRegistry { tools(tools) }.tools,
-            llmModel = model,
+            tools = tools.asTools(),
             llmParams = LLMParams().copy(
                 temperature = 0.3
             ),
@@ -68,8 +60,11 @@ class GithubReleasePipeline(
     }
 
     val agent = AIAgent(
-        promptExecutor = simpleOpenRouterExecutor(config.openRouterKey),
+        promptExecutor = simpleOllamaAIExecutor(),
         strategy = githubReleaseStrategy,
+        toolRegistry = ToolRegistry {
+            tools(tools)
+        },
         llmModel = model,
         temperature = 0.1
     ) {
@@ -79,6 +74,9 @@ class GithubReleasePipeline(
             featureName = "github-pipeline-feature"
             organizationName = "radionov"
             productName = "mind-weaver-studio"
+        }
+        install(Tracing) {
+
         }
     }
 
@@ -92,14 +90,22 @@ class GithubReleasePipeline(
     }
 
     private suspend fun saveGithubInfo(repoOwner: String, repoName: String) {
-        memoryProvider.save(
-            fact = SingleFact(
-                value = "$repoOwner/$repoName",
-                concept = Concept("github-repo", "Current GitHub repository in format 'owner/name'", FactType.SINGLE),
-                timestamp = DefaultTimeProvider.getCurrentTimestamp()
-            ),
-            subject = ProjectContext,
-            scope = memoryScope,
+        val ownerConcept = Concept("repo-owner", "Repository owner", FactType.MULTIPLE)
+        val repoNameConcept = Concept("repo-name", "Repository name", FactType.MULTIPLE)
+
+        val ownerFact = SingleFact(
+            concept = ownerConcept,
+            value = repoOwner,
+            timestamp = DefaultTimeProvider.getCurrentTimestamp()
         )
+
+        val repoFact = SingleFact(
+            concept = repoNameConcept,
+            value = repoName,
+            timestamp = DefaultTimeProvider.getCurrentTimestamp()
+        )
+
+        memoryProvider.save(ownerFact, ProjectContext, MemoryScope.Agent("mind-weaver-studio"))
+        memoryProvider.save(repoFact, ProjectContext, MemoryScope.Agent("mind-weaver-studio"))
     }
 }

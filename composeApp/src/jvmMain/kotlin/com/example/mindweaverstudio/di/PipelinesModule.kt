@@ -24,6 +24,7 @@ val pipelinesModule = module {
     factory<CodeCreatorPipeline> {
         CodeCreatorPipeline(
             config = get(),
+            codeCheckTools = get(),
         )
     }
 
@@ -35,7 +36,6 @@ val pipelinesModule = module {
 
     factory<GithubReleasePipeline> {
         GithubReleasePipeline(
-            config = get(),
             tools = get(),
         )
     }

@@ -21,4 +21,6 @@ val releaseNotesAgentSystemPrompt = """
         - {change 1}  
         - {change 2}  
         - {change 3}  
+        
+        You have a memory, take from there the name of the repository and the name of the owner.
 """.trimIndent()

@@ -6,7 +6,7 @@ decompose = "3.4.0"
 essenty = "2.2.0"
 junit = "4.13.2"
 koin = "3.5.6"
-kotlin = "2.2.0"
+kotlin = "2.2.20"
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.6.3"
 ktor = "3.0.3"
@@ -14,6 +14,14 @@ mvikotlin = "4.2.0"
 compose-tosts = "0.2.0"
 syntax-area = "3.6.0"
 redis-jedis="5.1.0"
+multiplatform-settings="1.1.1"
+koog = "0.5.1"
+mcp-kotlin-sdk = "0.6.0"
+kotlinx-io = "0.8.0"
+log-slf4j = "2.0.9"
+java-jna = "5.14.0"
+jvm-auth0-jwt = "4.5.0"
+jvm-docker = "3.3.6"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -23,6 +31,7 @@ androidx-lifecycle-viewmodelCompose = { module = "org.jetbrains.androidx.lifecyc
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 compose-tosts = { module = "io.github.ajiekcx:declarative-snackbar-compose", version.ref = "compose-tosts" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
 
 # Decompose
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
@@ -38,6 +47,7 @@ koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 # Ktor
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-server-netty-jvm = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
@@ -47,14 +57,30 @@ mvikotlin = { module = "com.arkivanov.mvikotlin:mvikotlin", version.ref = "mviko
 mvikotlin-main = { module = "com.arkivanov.mvikotlin:mvikotlin-main", version.ref = "mvikotlin" }
 mvikotlin-extensions-coroutines = { module = "com.arkivanov.mvikotlin:mvikotlin-extensions-coroutines", version.ref = "mvikotlin" }
 
-
+# Syntax field
 syntax-area = { module = "com.fifesoft:rsyntaxtextarea", version.ref = "syntax-area" }
 
 # Serialization
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
-#Redis
-redis-jedis = { module = "redis.clients:jedis", version.ref = "redis-jedis" }
+# Storage
+multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatform-settings" }
+
+#AI
+ai-koog = { module = "ai.koog:koog-agents", version.ref = "koog" }
+ai-mcp-kotlin-sdk = { module = "io.modelcontextprotocol:kotlin-sdk", version.ref = "mcp-kotlin-sdk" }
+
+###### JVM libs ######
+
+jvm-jna = { module = "net.java.dev.jna:jna", version.ref = "java-jna" }
+jvm-auth0-jwt = { module = "com.auth0:java-jwt", version.ref = "jvm-auth0-jwt" }
+
+#Docker
+jvm-docker-client = { module = "com.github.docker-java:docker-java", version.ref = "jvm-docker" }
+jvm-docker-transport-okhttp = { module = "com.github.docker-java:docker-java-transport-okhttp", version.ref = "jvm-docker" }
+
+
+log-slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "log-slf4j" }
 
 [plugins]
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }

@@ -1,0 +1,84 @@
+{
+    "github-repo": [
+        {
+            "type": "ai.koog.agents.memory.model.SingleFact",
+            "concept": {
+                "keyword": "github-repo",
+                "description": "Current GitHub repository in format 'owner/name'",
+                "factType": "SINGLE"
+            },
+            "timestamp": 1760966736146,
+            "value": "MindWeaverStudio/NikitaFrankov"
+        },
+        {
+            "type": "ai.koog.agents.memory.model.SingleFact",
+            "concept": {
+                "keyword": "github-repo",
+                "description": "Current GitHub repository in format 'owner/name'",
+                "factType": "SINGLE"
+            },
+            "timestamp": 1760968137195,
+            "value": "MindWeaverStudio/NikitaFrankov"
+        },
+        {
+            "type": "ai.koog.agents.memory.model.SingleFact",
+            "concept": {
+                "keyword": "github-repo",
+                "description": "Current GitHub repository in format 'owner/name'",
+                "factType": "SINGLE"
+            },
+            "timestamp": 1760968347835,
+            "value": "MindWeaverStudio/NikitaFrankov"
+        },
+        {
+            "type": "ai.koog.agents.memory.model.SingleFact",
+            "concept": {
+                "keyword": "github-repo",
+                "description": "Current GitHub repository in format 'owner/name'",
+                "factType": "SINGLE"
+            },
+            "timestamp": 1760968507153,
+            "value": "MindWeaverStudio/NikitaFrankov"
+        },
+        {
+            "type": "ai.koog.agents.memory.model.SingleFact",
+            "concept": {
+                "keyword": "github-repo",
+                "description": "Current GitHub repository in format 'owner/name'",
+                "factType": "SINGLE"
+            },
+            "timestamp": 1760969155505,
+            "value": "MindWeaverStudio/NikitaFrankov"
+        },
+        {
+            "type": "ai.koog.agents.memory.model.SingleFact",
+            "concept": {
+                "keyword": "github-repo",
+                "description": "Current GitHub repository in format 'owner/name'",
+                "factType": "SINGLE"
+            },
+            "timestamp": 1760969260057,
+            "value": "MindWeaverStudio/NikitaFrankov"
+        },
+        {
+            "type": "ai.koog.agents.memory.model.SingleFact",
+            "concept": {
+                "keyword": "github-repo",
+                "description": "Current GitHub repository in format 'owner/name'",
+                "factType": "SINGLE"
+            },
+            "timestamp": 1760969559658,
+            "value": "MindWeaverStudio/NikitaFrankov"
+        },
+        {
+            "type": "ai.koog.agents.memory.model.SingleFact",
+            "concept": {
+                "keyword": "github-repo",
+                "description": "Current GitHub repository in format 'owner/name'",
+                "factType": "SINGLE"
+            },
+            "timestamp": 1760969648873,
+            "value": "MindWeaverStudio/NikitaFrankov"
+        }
+    ]
+}
