@@ -8,8 +8,10 @@ import ai.koog.agents.core.tools.reflect.asTools
 import ai.koog.agents.core.tools.reflect.tools
 import ai.koog.agents.ext.agent.subgraphWithTask
 import ai.koog.agents.features.tracing.feature.Tracing
+import ai.koog.agents.memory.config.MemoryScopeType
 import ai.koog.agents.memory.feature.AgentMemory
 import ai.koog.agents.memory.feature.nodes.nodeLoadAllFactsFromMemory
+import ai.koog.agents.memory.feature.nodes.nodeLoadFromMemory
 import ai.koog.agents.memory.model.DefaultTimeProvider
 import ai.koog.agents.memory.model.SingleFact
 import ai.koog.agents.memory.providers.LocalFileMemoryProvider
@@ -42,7 +44,12 @@ class GithubReleasePipeline(
     )
 
     private val githubReleaseStrategy = strategy<String, String>(GITHUB_RELEASE_STRATEGY) {
-        val nodeLoadFacts by nodeLoadAllFactsFromMemory<String>(name = "nodeLoadFacts")
+        val nodeLoadFacts by nodeLoadFromMemory<String>(
+            concepts = listOf(githubOwnerConcept, githubRepoConcept),
+            scope = MemoryScopeType.AGENT,
+            subject = ProjectContext,
+            name = "nodeLoadFacts",
+        )
 
         val releaseNotes by subgraphWithTask<String, String>(
             tools = tools.asTools(),
