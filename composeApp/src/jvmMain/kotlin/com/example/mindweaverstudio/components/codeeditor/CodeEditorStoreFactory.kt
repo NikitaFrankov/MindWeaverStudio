@@ -5,6 +5,7 @@ import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
+import com.example.mindweaverstudio.ai.orchestrator.code.CodeOrchestrator
 import com.example.mindweaverstudio.components.codeeditor.models.FileNode
 import com.example.mindweaverstudio.components.codeeditor.models.LogEntry
 import com.example.mindweaverstudio.components.codeeditor.models.UiLogLevel
@@ -14,7 +15,6 @@ import com.example.mindweaverstudio.components.codeeditor.utils.scanDirectoryToF
 import com.example.mindweaverstudio.components.projectselection.Project
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg.*
-import com.example.mindweaverstudio.data.ai.orchestrator.code.CodeOrchestrator
 import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

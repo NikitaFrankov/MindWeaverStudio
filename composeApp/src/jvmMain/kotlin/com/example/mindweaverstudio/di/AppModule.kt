@@ -8,7 +8,7 @@ import com.example.mindweaverstudio.components.projectselection.ProjectSelection
 import com.example.mindweaverstudio.components.repoInfoInput.RepoInfoInputStoreFactory
 import com.example.mindweaverstudio.components.userconfiguration.UserConfigurationStoreFactory
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
-import com.example.mindweaverstudio.data.ai.orchestrator.code.CodeOrchestrator
+import com.example.mindweaverstudio.ai.orchestrator.code.CodeOrchestrator
 import com.example.mindweaverstudio.data.auth.AuthManager
 import com.example.mindweaverstudio.data.limits.LimitManager
 import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver

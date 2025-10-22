@@ -70,7 +70,7 @@ private fun RepoInfoInputDialog(
                             ),
                         label = {
                             Text(
-                                text = "Repository owner",
+                                text = "Repository name",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MindWeaverTheme.colors.textSecondary
                             )
@@ -98,7 +98,7 @@ private fun RepoInfoInputDialog(
                             ),
                         label = {
                             Text(
-                                text = "Repository name",
+                                text = "Repository owner",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MindWeaverTheme.colors.textSecondary
                             )
