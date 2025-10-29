@@ -3,6 +3,7 @@ package com.example.mindweaverstudio.di
 import com.example.mindweaverstudio.ai.tools.codeCheck.CodeCheckTools
 import com.example.mindweaverstudio.ai.tools.github.GithubTools
 import com.example.mindweaverstudio.ai.tools.pipelines.CodePipelineTools
+import com.example.mindweaverstudio.ai.tools.user.UserTools
 import org.koin.dsl.module
 
 val toolsModule = module {
@@ -17,6 +18,10 @@ val toolsModule = module {
         CodeCheckTools(
             dockerClient = get(),
         )
+    }
+
+    factory<UserTools> {
+        UserTools(systemInterruptionsProvider = get())
     }
 
     factory<CodePipelineTools> {

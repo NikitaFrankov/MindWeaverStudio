@@ -10,6 +10,8 @@ import com.example.mindweaverstudio.components.userconfiguration.UserConfigurati
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
 import com.example.mindweaverstudio.ai.orchestrator.code.CodeOrchestrator
 import com.example.mindweaverstudio.data.auth.AuthManager
+import com.example.mindweaverstudio.data.interruptions.InterruptionsBus
+import com.example.mindweaverstudio.data.interruptions.SystemInterruptionsProvider
 import com.example.mindweaverstudio.data.limits.LimitManager
 import com.example.mindweaverstudio.data.receivers.CodeEditorLogReceiver
 import com.example.mindweaverstudio.data.settings.Settings
@@ -46,6 +48,10 @@ val appModule = module {
             configuration = get(),
         )
     }
+
+    // Interruptions
+    singleOf(::InterruptionsBus)
+    singleOf(::SystemInterruptionsProvider)
 
     // Stores
     singleOf(::DefaultStoreFactory) bind StoreFactory::class

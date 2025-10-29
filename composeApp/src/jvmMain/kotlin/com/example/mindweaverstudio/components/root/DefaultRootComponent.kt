@@ -51,7 +51,10 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
                 project = config.project
             ))
             is Config.UserConfiguration -> Child.UserConfiguration(userConfigurationComponent(componentContext))
-            is Config.RepoInfoInput -> Child.RepoInfoInput(repoInfoInputComponent(componentContext))
+            is Config.RepoInfoInput -> Child.RepoInfoInput(repoInfoInputComponent(
+                componentContext = componentContext,
+                project = config.project
+            ))
         }
     }
 
@@ -93,8 +96,12 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
         )
     }
 
-    private fun repoInfoInputComponent(componentContext: ComponentContext): RepoInfoInputComponent {
+    private fun repoInfoInputComponent(
+        componentContext: ComponentContext,
+        project: Project
+    ): RepoInfoInputComponent {
         return DefaultRepoInfoInputComponent(
+            project = project,
             componentContext = componentContext,
             storeFactory = get(),
             callbackHandler = ::handleRepoInfoInputCallbacks,
@@ -112,8 +119,8 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
         CodeEditorComponent.Callback.ShowUserConfiguration ->
             navigation.bringToFront(Config.UserConfiguration)
 
-        CodeEditorComponent.Callback.ShowRepoInfoInput ->
-            navigation.pushNew(Config.RepoInfoInput)
+        is CodeEditorComponent.Callback.ShowRepoInfoInput ->
+            navigation.pushNew(Config.RepoInfoInput(project = callback.project))
     }
 
     private fun handleProjectSelectionCallbacks(callback: ProjectSelectionComponent.Callback) = when(callback) {
@@ -145,6 +152,6 @@ class DefaultRootComponent(componentContext: ComponentContext) : RootComponent, 
         data object UserConfiguration : Config
 
         @Serializable
-        data object RepoInfoInput : Config
+        class RepoInfoInput(val project: Project) : Config
     }
 }

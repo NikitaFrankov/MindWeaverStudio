@@ -46,9 +46,9 @@ class AuthManager(
         }
     }
 
-    suspend fun saveToken(token: String) { settings.putString(TOKEN_KEY, token) }
-    suspend fun getToken(): String? = settings.getString(TOKEN_KEY, "")
-    suspend fun clearToken() { settings.remove(TOKEN_KEY) }
+    suspend fun saveToken(token: String) { settings.putString(TokenKey, token) }
+    suspend fun getToken(): String? = settings.getString(TokenKey, "")
+    suspend fun clearToken() { settings.remove(TokenKey) }
 
     // Добавь пользователя (для динамики)
     fun registerUser(username: String, password: String, role: String) {

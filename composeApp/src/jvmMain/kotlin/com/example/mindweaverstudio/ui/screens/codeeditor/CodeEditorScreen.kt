@@ -434,18 +434,6 @@ private fun ChatPanel(
                 Spacer(modifier = Modifier.width(8.dp))
 
                 IconButton(
-                    onClick = { intentHandler(CodeEditorStore.Intent.RecordVoiceClick) }
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.SpeakerNotes,
-                        contentDescription = "Recording Voice",
-                        tint = MindWeaverTheme.colors.accent400
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                IconButton(
                     onClick = { intentHandler(CodeEditorStore.Intent.SendChatMessage) },
                     enabled = chatInput.isNotBlank() && !isLoading,
                     colors = IconButtonDefaults.iconButtonColors()

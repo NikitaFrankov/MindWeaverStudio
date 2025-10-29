@@ -29,7 +29,7 @@ class DefaultCodeEditorComponent(
             store.labels.collect { label ->
                 when (label) {
                     is CodeEditorStore.Label.ShowGithubInfoInputDialog ->
-                        callbackHandler.invoke(Callback.ShowRepoInfoInput)
+                        callbackHandler.invoke(Callback.ShowRepoInfoInput(project = project))
                 }
             }
         }

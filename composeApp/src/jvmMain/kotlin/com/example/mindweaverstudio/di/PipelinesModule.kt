@@ -36,8 +36,9 @@ val pipelinesModule = module {
 
     factory<GithubReleasePipeline> {
         GithubReleasePipeline(
-            tools = get(),
+            githubTools = get(),
             configuration = get(),
+            userTools = get(),
         )
     }
 }

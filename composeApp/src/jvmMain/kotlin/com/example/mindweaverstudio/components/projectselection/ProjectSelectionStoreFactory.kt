@@ -5,6 +5,8 @@ import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
+import com.example.mindweaverstudio.data.settings.Settings
+import com.example.mindweaverstudio.data.settings.SettingsKey.CurrentProjectPath
 import com.example.mindweaverstudio.data.utils.ragchunking.RAGChunkingUtility
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,6 +20,7 @@ import javax.swing.SwingUtilities
 
 class ProjectSelectionStoreFactory(
     private val storeFactory: StoreFactory,
+    private val settings: Settings,
 ) {
 
     fun create(): ProjectSelectionStore =
@@ -189,6 +192,7 @@ class ProjectSelectionStoreFactory(
         // Select file and create RAG chunk file
         private fun selectProject(project: Project) {
             scope.launch(Dispatchers.IO) {
+                settings.putString(CurrentProjectPath, project.path)
                 RAGChunkingUtility().processRepositoryStreaming(
                     repositoryPath = project.path,
                     outputBasePath = "/Users/nikitaradionov/IdeaProjects/MindWeaver Studio/truly_streaming_output",

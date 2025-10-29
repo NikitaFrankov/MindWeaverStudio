@@ -5,30 +5,36 @@ import com.arkivanov.mvikotlin.core.store.SimpleBootstrapper
 import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
+import com.example.mindweaverstudio.components.projectselection.Project
 import com.example.mindweaverstudio.components.repoInfoInput.RepoInfoInputStore.*
+import com.example.mindweaverstudio.data.models.repository.RepositoryInfo
 import com.example.mindweaverstudio.data.settings.Settings
 import com.example.mindweaverstudio.data.settings.SettingsKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
+import kotlinx.serialization.json.Json
 
 class RepoInfoInputStoreFactory(
     private val storeFactory: StoreFactory,
     private val settings: Settings
 ) {
 
-    fun create(): RepoInfoInputStore =
+    private val json = Json {  }
+
+    fun create(project: Project): RepoInfoInputStore =
         object : RepoInfoInputStore, Store<Intent, State, Label> by storeFactory.create(
             name = "ProjectSelectionStore",
-            initialState = State(),
+            initialState = State(project = project),
             bootstrapper = SimpleBootstrapper(Action.Init),
             executorFactory = ::ExecutorImpl,
             reducer = ReducerImpl
         ) {}
 
     private sealed class Msg {
-        data class RepoNameUpdates(val newValue: String) : Msg()
-        data class RepoOwnerUpdates(val newValue: String) : Msg()
+        class CurrentRepositoryInfo(val value: RepositoryInfo) : Msg()
+        class RepoOwnerUpdates(val newValue: String) : Msg()
+        class RepoNameUpdates(val newValue: String) : Msg()
     }
 
     private sealed interface Action {
@@ -52,26 +58,29 @@ class RepoInfoInputStoreFactory(
 
         private fun fetchRepoInformation() {
             scope.launch {
-                val (repoName, repoOwner) = settings.getString(key = SettingsKey.GITHUB_REPO_NAME) to
-                        settings.getString(key = SettingsKey.GITHUB_REPO_OWNER)
+                val repoPath = state().project.path
+                val repoInfoString = settings.getString(key = SettingsKey.ProjectRepoInformation(repoPath))
+                val repoInfo = when(repoInfoString.isEmpty()) {
+                    true -> RepositoryInfo()
+                    else -> json.decodeFromString(
+                        deserializer = RepositoryInfo.serializer(),
+                        string = repoInfoString,
+                    )
+                }
 
-                dispatch(Msg.RepoOwnerUpdates(repoOwner))
-                dispatch(Msg.RepoNameUpdates(repoName))
+                dispatch(Msg.CurrentRepositoryInfo(repoInfo))
             }
         }
 
         private fun confirmChanges() {
             scope.launch {
-                val (newRepoOwner, newRepoName) = state().repoOwner to state().repoName
-                val (currentRepoName, currentRepoOwner) = settings.getString(key = SettingsKey.GITHUB_REPO_NAME) to
-                        settings.getString(key = SettingsKey.GITHUB_REPO_OWNER)
+                val repoPath = state().project.path
+                val repoInfo = json.encodeToString(
+                    serializer = RepositoryInfo.serializer(),
+                    value = state().repoInfo,
+                )
+                settings.putString(key = SettingsKey.ProjectRepoInformation(repoPath), repoInfo)
 
-                if (newRepoOwner != currentRepoOwner) {
-                    settings.putString(SettingsKey.GITHUB_REPO_OWNER, state().repoOwner)
-                }
-                if (newRepoName != currentRepoName) {
-                    settings.putString(SettingsKey.GITHUB_REPO_NAME, state().repoName)
-                }
                 publish(Label.ConfirmChanges)
             }
         }
@@ -80,8 +89,9 @@ class RepoInfoInputStoreFactory(
     private object ReducerImpl : Reducer<State, Msg> {
         override fun State.reduce(msg: Msg): State =
             when (msg) {
-                is Msg.RepoNameUpdates -> copy(repoName = msg.newValue)
-                is Msg.RepoOwnerUpdates -> copy(repoOwner = msg.newValue)
+                is Msg.RepoNameUpdates -> copy(repoInfo = repoInfo.copy(name = msg.newValue))
+                is Msg.RepoOwnerUpdates -> copy(repoInfo = repoInfo.copy(owner = msg.newValue))
+                is Msg.CurrentRepositoryInfo -> copy(repoInfo = msg.value)
             }
     }
 }

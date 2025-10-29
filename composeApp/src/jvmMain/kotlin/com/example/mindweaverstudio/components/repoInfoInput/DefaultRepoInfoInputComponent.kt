@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.mvikotlin.core.instancekeeper.getStore
 import com.arkivanov.mvikotlin.extensions.coroutines.labels
 import com.arkivanov.mvikotlin.extensions.coroutines.stateFlow
+import com.example.mindweaverstudio.components.projectselection.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,13 +13,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class DefaultRepoInfoInputComponent(
+    private val project: Project,
     private val storeFactory: RepoInfoInputStoreFactory,
     private val callbackHandler: (RepoInfoInputComponent.Callback) -> Unit,
     componentContext: ComponentContext,
 ) : RepoInfoInputComponent, ComponentContext by componentContext {
 
     private val store = instanceKeeper.getStore {
-        storeFactory.create()
+        storeFactory.create(project = project)
     }
     private val componentScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 

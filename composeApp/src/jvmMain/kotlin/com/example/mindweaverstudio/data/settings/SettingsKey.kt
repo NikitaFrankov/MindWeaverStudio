@@ -1,7 +1,10 @@
 package com.example.mindweaverstudio.data.settings
 
-enum class SettingsKey(val value: String) {
-    TOKEN_KEY("auth_token"),
-    GITHUB_REPO_NAME("github_repo_name"),
-    GITHUB_REPO_OWNER("github_repo_owner")
+sealed class SettingsKey(val value: String) {
+    class ProjectRepoInformation(val path: String) : SettingsKey(value = path)
+
+    data object CurrentProjectPath : SettingsKey(value = "current_project_path")
+    data object GithubRepoOwner : SettingsKey(value = "github_repo_owner")
+    data object GithubRepoName : SettingsKey(value = "github_repo_name")
+    data object TokenKey : SettingsKey(value = "auth_token")
 }

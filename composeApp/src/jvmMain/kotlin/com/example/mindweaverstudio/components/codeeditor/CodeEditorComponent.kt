@@ -1,5 +1,6 @@
 package com.example.mindweaverstudio.components.codeeditor
 
+import com.example.mindweaverstudio.components.projectselection.Project
 import kotlinx.coroutines.flow.StateFlow
 
 interface CodeEditorComponent {
@@ -10,6 +11,6 @@ interface CodeEditorComponent {
 
     sealed interface Callback {
         data object ShowUserConfiguration : Callback
-        data object ShowRepoInfoInput: Callback
+        class ShowRepoInfoInput(val project: Project): Callback
     }
 }

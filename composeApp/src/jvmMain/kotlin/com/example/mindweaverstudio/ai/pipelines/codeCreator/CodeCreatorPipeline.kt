@@ -38,7 +38,7 @@ class CodeCreatorPipeline(
             tools = ToolRegistry { tools(codeCheckTools) }.tools,
             llmParams = LLMParams().copy(temperature = 0.3),
             llmModel = llmModel,
-        ) { releaseNotesAgentSystemPrompt }
+        ) { "" }
 
         edge(nodeStart forwardTo nodeRequirements)
         edge(nodeRequirements forwardTo codeCheck)

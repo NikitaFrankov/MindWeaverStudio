@@ -52,7 +52,7 @@ private fun RepoInfoInputDialog(
                 Column {
                     Spacer(modifier = Modifier.size(16.dp))
                     TextField(
-                        value = state.repoName,
+                        value = state.repoInfo.name,
                         onValueChange = { intentHandler(OnRepoNameChange(it)) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = TextFieldDefaults.colors()
@@ -80,7 +80,7 @@ private fun RepoInfoInputDialog(
                     Spacer(modifier = Modifier.size(16.dp))
 
                     TextField(
-                        value = state.repoOwner,
+                        value = state.repoInfo.owner,
                         onValueChange = { intentHandler(OnRepoOwnerChange(it)) },
                         modifier = Modifier.fillMaxWidth(),
                         colors = TextFieldDefaults.colors()

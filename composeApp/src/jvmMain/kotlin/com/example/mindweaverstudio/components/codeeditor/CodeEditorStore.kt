@@ -23,6 +23,8 @@ interface CodeEditorStore : Store<CodeEditorStore.Intent, CodeEditorStore.State,
         val isLoading: Boolean = false,
         val error: String? = null,
         val isVoiceRecording: Boolean = false,
+        val isInterruptionMode: Boolean = false,
+        val interruptionSignalId: String = "",
     )
 
     sealed class Intent {
@@ -55,12 +57,15 @@ interface CodeEditorStore : Store<CodeEditorStore.Intent, CodeEditorStore.State,
         class MessagesUpdated(val messages: List<UiChatMessage>) : Msg()
         class LoadingChanged(val isLoading: Boolean) : Msg()
         class ErrorOccurred(val error: String) : Msg()
-        data object ErrorCleared : Msg()
         class PanelWidthUpdated(val uiPanel: UiPanel, val width: Float) : Msg()
         class BottomPanelHeightUpdated(val height: Float) : Msg()
         class LogEntryAdded(val entry: LogEntry) : Msg()
         class OnNodesReceived(val node: FileNode) : Msg()
         class ProjectTreeUpdated(val tree: List<FileNode>) : Msg()
+        class HandleInterruption(val signalId: String) : Msg()
+
         data object VoiceRecordingStateChange : Msg()
+        data object StopHandlingInterruption : Msg()
+        data object ErrorCleared : Msg()
     }
 }

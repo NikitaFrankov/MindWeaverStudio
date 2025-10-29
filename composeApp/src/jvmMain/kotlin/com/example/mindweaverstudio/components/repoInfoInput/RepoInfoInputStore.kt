@@ -1,13 +1,15 @@
 package com.example.mindweaverstudio.components.repoInfoInput
 
 import com.arkivanov.mvikotlin.core.store.Store
+import com.example.mindweaverstudio.components.projectselection.Project
 import com.example.mindweaverstudio.components.repoInfoInput.RepoInfoInputStore.*
+import com.example.mindweaverstudio.data.models.repository.RepositoryInfo
 
 interface RepoInfoInputStore : Store<Intent, State, Label> {
 
     data class State(
-        val repoName: String = "",
-        val repoOwner: String = ""
+        val project: Project,
+        val repoInfo: RepositoryInfo = RepositoryInfo(),
     )
 
     sealed interface Intent {
