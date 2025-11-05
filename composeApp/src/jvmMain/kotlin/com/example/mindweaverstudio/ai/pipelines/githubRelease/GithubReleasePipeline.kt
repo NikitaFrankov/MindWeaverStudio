@@ -13,24 +13,21 @@ import ai.koog.agents.memory.config.MemoryScopeType
 import ai.koog.agents.memory.feature.AgentMemory
 import ai.koog.agents.memory.feature.nodes.nodeLoadFromMemory
 import ai.koog.agents.memory.model.Concept
-import ai.koog.agents.memory.model.DefaultTimeProvider
 import ai.koog.agents.memory.model.SingleFact
-import ai.koog.agents.memory.providers.LocalFileMemoryProvider
-import ai.koog.agents.memory.providers.LocalMemoryConfig
-import ai.koog.agents.memory.storage.SimpleStorage
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
 import ai.koog.prompt.params.LLMParams
-import ai.koog.rag.base.files.JVMFileSystemProvider
 import com.example.mindweaverstudio.ai.memory.github.githubAgentScope
 import com.example.mindweaverstudio.ai.memory.github.githubOwnerConcept
 import com.example.mindweaverstudio.ai.memory.github.githubRepoConcept
 import com.example.mindweaverstudio.ai.tools.github.GithubTools
 import com.example.mindweaverstudio.ai.memory.project.ProjectContext
 import com.example.mindweaverstudio.ai.customStrategy.subgraphs.askMissingFacts.subgraphAskUserMissingFacts
+import com.example.mindweaverstudio.ai.memory.DefaultAgentMemoryProvider
 import com.example.mindweaverstudio.ai.tools.user.UserTools
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
-import kotlin.io.path.Path as JavaPath
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 const val GITHUB_RELEASE_STRATEGY = "GITHUB_RELEASE_STRATEGY"
 
@@ -38,14 +35,9 @@ class GithubReleasePipeline(
     private val configuration: ApiConfiguration,
     private val githubTools: GithubTools,
     private val userTools: UserTools,
+    private val memoryProvider: DefaultAgentMemoryProvider,
 ) {
     private val model = OpenAIModels.CostOptimized.GPT4oMini
-    private val memoryProvider = LocalFileMemoryProvider(
-        config = LocalMemoryConfig("mind-weaver-studio"),
-        storage = SimpleStorage(JVMFileSystemProvider.ReadWrite),
-        fs = JVMFileSystemProvider.ReadWrite,
-        root = JavaPath("")
-    )
     private val requiredConcepts: List<Concept> = listOf(githubOwnerConcept, githubRepoConcept)
 
     @OptIn(InternalAgentsApi::class)
@@ -119,12 +111,13 @@ class GithubReleasePipeline(
         return agent.run(input)
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun saveGithubInfo(repoOwner: String, repoName: String) {
         if (repoOwner.isNotEmpty()) {
             val ownerFact = SingleFact(
                 concept = githubOwnerConcept,
                 value = repoOwner,
-                timestamp = DefaultTimeProvider.getCurrentTimestamp()
+                timestamp = Clock.System.now().toEpochMilliseconds()
             )
 
             memoryProvider.save(
@@ -137,7 +130,7 @@ class GithubReleasePipeline(
             val repoFact = SingleFact(
                 concept = githubRepoConcept,
                 value = repoName,
-                timestamp = DefaultTimeProvider.getCurrentTimestamp()
+                timestamp = Clock.System.now().toEpochMilliseconds()
             )
 
             memoryProvider.save(

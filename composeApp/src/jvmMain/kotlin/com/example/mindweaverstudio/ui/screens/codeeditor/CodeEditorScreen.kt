@@ -72,8 +72,8 @@ private fun CodeEditorScreen(
         )
     }
 
-    var leftPanelWidth by remember { mutableStateOf(250.dp) }
-    var rightPanelWidth by remember { mutableStateOf(250.dp) }
+    var leftPanelWidth by remember { mutableStateOf(300.dp) }
+    var rightPanelWidth by remember { mutableStateOf(400.dp) }
     var bottomPanelHeight by remember { mutableStateOf(100.dp) }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -540,16 +540,6 @@ private fun AssistantChatMessageItem(
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-
-                IconButton(
-                    onClick = { intentHandler(CodeEditorStore.Intent.PlayMessage(message.content)) },
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.VolumeUp,
-                        contentDescription = "Recording Voice",
-                        tint = MindWeaverTheme.colors.accent400
-                    )
-                }
 
                 Text(
                     text = timeFormat.format(Date(message.timestamp)),

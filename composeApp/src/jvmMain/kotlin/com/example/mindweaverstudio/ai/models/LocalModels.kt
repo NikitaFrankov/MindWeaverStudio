@@ -8,9 +8,9 @@ object LocalModels {
 
     object QWEN {
 
-        val QWEN_2_5_CODER_7B: LLModel = LLModel(
+        val QWEN_3_8B: LLModel = LLModel(
             provider = LLMProvider.Ollama,
-            id = "qwen2.5-coder:7b",
+            id = "qwen3:8b",
             capabilities = listOf(
                 LLMCapability.Temperature,
                 LLMCapability.Schema.JSON.Basic,
@@ -19,17 +19,6 @@ object LocalModels {
                 LLMCapability.Completion,
             ),
             contextLength = 128_000,
-        )
-
-        val LLAMA_3_2_8B: LLModel = LLModel(
-            provider = LLMProvider.Ollama,
-            id = "llama3.1:8b",
-            capabilities = listOf(
-                LLMCapability.Temperature,
-                LLMCapability.Schema.JSON.Basic,
-                LLMCapability.Tools
-            ),
-            contextLength = 131_072,
         )
     }
 }
