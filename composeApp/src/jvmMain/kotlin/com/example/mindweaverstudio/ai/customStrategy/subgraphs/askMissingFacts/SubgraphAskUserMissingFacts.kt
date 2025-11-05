@@ -5,7 +5,6 @@ import ai.koog.agents.core.dsl.builder.AIAgentSubgraphBuilderBase
 import ai.koog.agents.core.dsl.builder.AIAgentSubgraphDelegate
 import ai.koog.agents.core.dsl.builder.forwardTo
 import ai.koog.agents.core.tools.Tool
-import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.ext.agent.subgraphWithTask
 import ai.koog.agents.memory.config.MemoryScopeType
 import ai.koog.agents.memory.feature.nodes.nodeSaveToMemory
@@ -18,6 +17,7 @@ import ai.koog.prompt.params.LLMParams
 import ai.koog.prompt.structure.StructureFixingParser
 import com.example.mindweaverstudio.ai.customStrategy.subgraphs.askMissingFacts.models.FactsRequest
 import com.example.mindweaverstudio.ai.customStrategy.subgraphs.askMissingFacts.models.MissingFactsResponse
+import com.example.mindweaverstudio.ai.pipelines.githubRelease.nodeMissingFactsSystemPrompt
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -81,11 +81,7 @@ inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.subgraphAskUserMissi
                 llm.writeSession {
                     updatePrompt {
                         // Instruct LLM to identify which concepts are not present in loaded facts
-                        system("""
-                              You are a list comparison agent. 
-                              A list of required concepts and facts loaded from memory is submitted at the input. 
-                              You need to compare these two lists and output a list of concepts that do not have a pair in the list of loaded facts.
-                          """.trimIndent())
+                        system(nodeMissingFactsSystemPrompt)
 
                         user("""
                               Required concepts: 
@@ -118,7 +114,7 @@ inline fun <reified Input> AIAgentSubgraphBuilderBase<*, *>.subgraphAskUserMissi
 
                             // Case 2: Some facts are missing - store them and proceed to user request
                             storage.set(requestingFactsKey, FactsRequest(value = requiredFacts))
-                            storage.set(hasMissingFactsKey, true) // Есть недостающие факты
+                            storage.set(hasMissingFactsKey, true)
                             return@fold true
                         },
                         onFailure = { error ->

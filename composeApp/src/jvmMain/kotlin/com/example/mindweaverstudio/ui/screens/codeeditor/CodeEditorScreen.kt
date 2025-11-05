@@ -13,8 +13,6 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.automirrored.filled.SpeakerNotes
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,8 +26,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.arkivanov.decompose.extensions.compose.subscribeAsState
-import com.arkivanov.decompose.router.slot.child
 import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorComponent
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore
@@ -40,7 +36,6 @@ import com.example.mindweaverstudio.components.codeeditor.models.FileNode
 import com.example.mindweaverstudio.ui.theme.MindWeaverTheme
 import com.example.mindweaverstudio.ui.components.toolbar.EditorMenuBar
 import com.example.mindweaverstudio.ui.components.toolbar.MenuActionHandler
-import com.example.mindweaverstudio.ui.screens.repoInfoInput.RepoInfoInputDialog
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -323,7 +318,7 @@ private fun EditorPanel(
     Card(
         modifier = modifier.fillMaxHeight(),
         colors = CardDefaults.cardColors(
-            containerColor = MindWeaverTheme.colors.surface1
+            containerColor = MindWeaverTheme.colors.surface2
         )
     ) {
 

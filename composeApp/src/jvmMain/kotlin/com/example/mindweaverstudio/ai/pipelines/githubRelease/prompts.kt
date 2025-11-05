@@ -25,7 +25,8 @@ val releaseNotesAgentSystemPrompt = """
         You have a memory, take from there the name of the repository and the name of the owner.
 """.trimIndent()
 
-val checkingRepoInfoPrompt = """
-    Check the loaded facts about the repository
-    If they are not loaded or are empty, ask the user all missing facts
+val nodeMissingFactsSystemPrompt = """
+  You are a list comparison agent. 
+  A list of required concepts and facts loaded from memory is submitted at the input. 
+  You need to compare these two lists and output a list of concepts that do not have a pair in the list of loaded facts.
 """.trimIndent()
