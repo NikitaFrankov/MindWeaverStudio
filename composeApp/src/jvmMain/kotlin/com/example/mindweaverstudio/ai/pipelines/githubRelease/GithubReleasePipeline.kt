@@ -24,7 +24,7 @@ import com.example.mindweaverstudio.ai.tools.github.GithubTools
 import com.example.mindweaverstudio.ai.memory.project.ProjectContext
 import com.example.mindweaverstudio.ai.customStrategy.subgraphs.askMissingFacts.subgraphAskUserMissingFacts
 import com.example.mindweaverstudio.ai.memory.DefaultAgentMemoryProvider
-import com.example.mindweaverstudio.ai.tools.user.UserTools
+import com.example.mindweaverstudio.ai.tools.user.UserInteractionTools
 import com.example.mindweaverstudio.data.utils.config.ApiConfiguration
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -34,7 +34,7 @@ const val GITHUB_RELEASE_STRATEGY = "GITHUB_RELEASE_STRATEGY"
 class GithubReleasePipeline(
     private val configuration: ApiConfiguration,
     private val githubTools: GithubTools,
-    private val userTools: UserTools,
+    private val userInteractionTools: UserInteractionTools,
     private val memoryProvider: DefaultAgentMemoryProvider,
 ) {
     private val model = OpenAIModels.CostOptimized.GPT4oMini
@@ -44,7 +44,7 @@ class GithubReleasePipeline(
     private val githubReleaseStrategy = strategy<String, String>(GITHUB_RELEASE_STRATEGY) {
         val subgraphCheckMissingFacts by subgraphAskUserMissingFacts<String>(
             name = "subgraphCheckMissingFacts",
-            userConnectionTools = userTools.asTools(),
+            userConnectionTools = userInteractionTools.asTools(),
             requiredConcepts = requiredConcepts,
             memorySubject = ProjectContext,
             memoryScope = githubAgentScope,
@@ -60,14 +60,14 @@ class GithubReleasePipeline(
         )
 
         val releaseNotes by subgraphWithTask<String, String>(
-            tools = githubTools.asTools() + userTools.asTools(),
+            tools = githubTools.asTools() + userInteractionTools.asTools(),
             llmParams = LLMParams().copy(
                 temperature = 0.3
             ),
         ) { releaseNotesAgentSystemPrompt }
 
         val nodeRelease by subgraphWithTask<String, String>(
-            tools = githubTools.asTools()+ userTools.asTools(),
+            tools = githubTools.asTools()+ userInteractionTools.asTools(),
             llmParams = LLMParams().copy(
                 temperature = 0.3
             ),
@@ -85,7 +85,7 @@ class GithubReleasePipeline(
         strategy = githubReleaseStrategy,
         toolRegistry = ToolRegistry {
             tools(githubTools)
-            tools(userTools)
+            tools(userInteractionTools)
         },
         llmModel = model,
         temperature = 0.1

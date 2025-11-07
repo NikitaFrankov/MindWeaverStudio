@@ -17,6 +17,7 @@ import com.example.mindweaverstudio.components.projectselection.Project
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg
 import com.example.mindweaverstudio.components.codeeditor.CodeEditorStore.Msg.*
 import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage.Companion.createUserMessage
+import com.example.mindweaverstudio.components.codeeditor.models.UiChatMessage.ThinkingMessage
 import com.example.mindweaverstudio.data.interruptions.InterruptionsBus
 import com.example.mindweaverstudio.data.interruptions.SystemInterruptionsProvider
 import com.example.mindweaverstudio.data.models.interruptions.Signal
@@ -208,7 +209,7 @@ class CodeEditorStoreFactory(
             message: String,
             currentMessages: List<UiChatMessage>,
         ) {
-            val userMessage = UiChatMessage.createUserMessage(message)
+            val userMessage = createUserMessage(message)
             val thinkingMessage = UiChatMessage.createThinkingMessage()
 
             val updatedMessages = currentMessages + userMessage + thinkingMessage
@@ -219,7 +220,9 @@ class CodeEditorStoreFactory(
             scope.launch(Dispatchers.IO) {
                 try {
                     val result = orchestrator.run(message)
-                    val finalMessages = currentMessages + userMessage + listOf(UiChatMessage.createAssistantMessage(result))
+                    val currentMessages = state().chatMessages
+                        .filter { it !is ThinkingMessage }
+                    val finalMessages = currentMessages + listOf(UiChatMessage.createAssistantMessage(result))
 
                     withContext(Dispatchers.Main) {
                         dispatch(MessagesUpdated(finalMessages))

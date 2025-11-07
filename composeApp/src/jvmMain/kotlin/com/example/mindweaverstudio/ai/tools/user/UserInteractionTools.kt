@@ -8,7 +8,7 @@ import com.example.mindweaverstudio.data.interruptions.sendUserInformationReques
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class UserTools(
+class UserInteractionTools(
     private val systemInterruptionsProvider: SystemInterruptionsProvider,
 ) : ToolSet {
 

@@ -4,6 +4,7 @@ import ai.koog.agents.core.tools.annotations.LLMDescription
 import ai.koog.agents.core.tools.annotations.Tool
 import ai.koog.agents.core.tools.reflect.ToolSet
 import com.example.mindweaverstudio.ai.pipelines.architecture.ArchitecturePipeline
+import com.example.mindweaverstudio.ai.pipelines.bugTriage.BugTriagePipeline
 import com.example.mindweaverstudio.ai.pipelines.chat.ChatPipeline
 import com.example.mindweaverstudio.ai.pipelines.codeCreator.CodeCreatorPipeline
 import com.example.mindweaverstudio.ai.pipelines.codeFix.CodeFixPipeline
@@ -19,6 +20,7 @@ class CodePipelineTools(
     private val githubReleasePipeline: GithubReleasePipeline,
     private val architecturePipeline: ArchitecturePipeline,
     private val codeCreatorPipeline: CodeCreatorPipeline,
+    private val bugTriagePipeline: BugTriagePipeline,
     private val codeFixPipeline: CodeFixPipeline,
     private val chatPipeline: ChatPipeline,
     private val settings: Settings,
@@ -83,6 +85,19 @@ class CodePipelineTools(
                 input = userRequest,
                 repoName = repositoryInfo.name,
                 repoOwner = repositoryInfo.owner,
+            )
+        }
+    }
+
+    @Tool
+    @LLMDescription("Starts the pipeline for triage the bug")
+    suspend fun runBugTriagePipeline(
+        @LLMDescription("Initial description of the task from the user")
+        userRequest: String
+    ): String {
+        return withContext(Dispatchers.Default) {
+            bugTriagePipeline.run(
+                input = userRequest,
             )
         }
     }

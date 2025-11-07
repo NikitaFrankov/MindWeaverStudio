@@ -2,6 +2,7 @@ package com.example.mindweaverstudio.di
 
 import com.example.mindweaverstudio.ai.memory.DEFAULT_AGENT_MEMORY
 import com.example.mindweaverstudio.ai.pipelines.architecture.ArchitecturePipeline
+import com.example.mindweaverstudio.ai.pipelines.bugTriage.BugTriagePipeline
 import com.example.mindweaverstudio.ai.pipelines.chat.ChatPipeline
 import com.example.mindweaverstudio.ai.pipelines.codeCreator.CodeCreatorPipeline
 import com.example.mindweaverstudio.ai.pipelines.codeFix.CodeFixPipeline
@@ -36,11 +37,18 @@ val pipelinesModule = module {
         )
     }
 
+    factory<BugTriagePipeline> {
+        BugTriagePipeline(
+            config = get(),
+            userInteractionTools = get(),
+        )
+    }
+
     factory<GithubReleasePipeline> {
         GithubReleasePipeline(
             githubTools = get(),
             configuration = get(),
-            userTools = get(),
+            userInteractionTools = get(),
             memoryProvider = get(qualifier = named(DEFAULT_AGENT_MEMORY)),
         )
     }

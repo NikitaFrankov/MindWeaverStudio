@@ -18,8 +18,6 @@ import ai.koog.prompt.structure.StructureFixingParser
 import com.example.mindweaverstudio.ai.customStrategy.subgraphs.askMissingFacts.models.FactsRequest
 import com.example.mindweaverstudio.ai.customStrategy.subgraphs.askMissingFacts.models.MissingFactsResponse
 import com.example.mindweaverstudio.ai.pipelines.githubRelease.nodeMissingFactsSystemPrompt
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
 /**
  * Creates a subgraph that identifies missing facts in memory and requests them from the user.
